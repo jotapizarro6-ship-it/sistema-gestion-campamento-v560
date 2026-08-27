@@ -24,7 +24,11 @@ assert.equal(f.normalizeRut('183540265'),'18354026-5');
 assert.equal(f.normalizeRut('18.354.026-5'),'18354026-5');
 assert.equal(f.normalizeRut('18.354.0265'),'18354026-5');
 assert.equal(f.formatRut('183540265'),'18.354.026-5');
-assert.equal(f.rutValid('183540265'),true);
+assert.equal(f.rutValid('123456785'),true,'RUT con DV módulo 11 correcto debe ser válido');
+assert.equal(f.rutValid('12.345.678-5'),true,'RUT formateado con DV correcto debe ser válido');
+assert.equal(f.rutValid('10003K'),true,'Debe aceptar DV K cuando corresponde');
+assert.equal(f.rutValid('123456789'),false,'DV incorrecto debe rechazarse');
+assert.equal(f.rutValid('183540265'),false,'Estructura correcta no basta si el DV no corresponde');
 assert.equal(f.rutValid('1234'),false);
 
 const today=f.todayISO();

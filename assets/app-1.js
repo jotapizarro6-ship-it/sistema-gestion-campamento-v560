@@ -1,7 +1,7 @@
 'use strict';
 
 const WEB_API='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-web-api';
-const ADV_API='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-v560-raw';
+const ADV_API='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-v560-safe';
 const TZ='America/Santiago';
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -18,8 +18,9 @@ const todayISO=()=>{const p=dateParts();return `${p.year}-${p.month}-${p.day}`};
 const addDays=(iso,n)=>{const d=new Date(`${iso}T12:00:00Z`);d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const fmtDate=(iso)=>{if(!iso)return'—';const [y,m,d]=String(iso).slice(0,10).split('-');return y&&m&&d?`${d}-${m}-${y}`:String(iso)};
 const fmtShort=(iso)=>{if(!iso)return'';const [y,m,d]=String(iso).slice(0,10).split('-');return `${d}/${m}`};
-const normalizeRut=(v)=>{let s=clean(v).toUpperCase().replace(/\./g,'').replace(/\s+/g,'').replace(/[^0-9K-]/g,'');if(!s.includes('-')&&s.length>1)s=s.slice(0,-1)+'-'+s.slice(-1);return s};
-const formatRut=(v)=>{const r=normalizeRut(v);const [num,dv]=r.split('-');if(!num)return r;return `${num.replace(/\B(?=(\d{3})+(?!\d))/g,'.')}${dv?'-'+dv:''}`};
+const rutChars=(v)=>clean(v).toUpperCase().replace(/[^0-9K]/g,'').slice(0,10);
+const normalizeRut=(v)=>{const s=rutChars(v);return s.length>1?`${s.slice(0,-1)}-${s.slice(-1)}`:s};
+const formatRut=(v)=>{const s=rutChars(v);if(!s)return'';if(s.length<=5)return s;const num=s.slice(0,-1),dv=s.slice(-1);return `${num.replace(/\B(?=(\d{3})+(?!\d))/g,'.')}-${dv}`};
 function rutDV(num){let s=1,m=0;for(;num;num=Math.floor(num/10))s=(s+num%10*(9-m++%6))%11;return s?'K':'0'}
 function rutValid(v){const r=normalizeRut(v),m=r.match(/^(\d{5,9})-([0-9K])$/);return !!m&&rutDV(Number(m[1]))===m[2]}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
@@ -45,8 +46,11 @@ async function advApi(action,{method='GET',body=null,token=null}={}){
 function initPublic(){
   const form=$('#workerLookupForm');if(!form)return;
   const input=$('#workerRut'),out=$('#workerLookupResult');
-  input.addEventListener('input',()=>{input.value=formatRut(input.value)});
-  form.addEventListener('submit',async e=>{e.preventDefault();const r=normalizeRut(input.value);out.innerHTML=htmlNotice('Consultando asignación…','info');
+  const reformat=()=>{const end=input.selectionStart===input.value.length;input.value=formatRut(input.value);if(end)requestAnimationFrame(()=>input.setSelectionRange(input.value.length,input.value.length))};
+  input.addEventListener('input',reformat);
+  input.addEventListener('blur',reformat);
+  input.addEventListener('paste',()=>setTimeout(reformat,0));
+  form.addEventListener('submit',async e=>{e.preventDefault();const r=normalizeRut(input.value);input.value=formatRut(r);if(!rutValid(r)){out.innerHTML=htmlNotice('RUT no válido. Revisa los números o dígito verificador.','error');return}out.innerHTML=htmlNotice('Consultando asignación…','info');
     try{
       const data=await webApi('lookup',{method:'POST',body:{rut:r}}),st=data.status,w=data.worker;
       if(st==='RUT_INVALIDO'){out.innerHTML=htmlNotice('RUT no válido. Revisa que esté escrito correctamente.','error');return}

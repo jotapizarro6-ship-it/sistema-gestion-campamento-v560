@@ -21,8 +21,7 @@ const fmtShort=(iso)=>{if(!iso)return'';const [y,m,d]=String(iso).slice(0,10).sp
 const rutChars=(v)=>clean(v).toUpperCase().replace(/[^0-9K]/g,'').slice(0,10);
 const normalizeRut=(v)=>{const s=rutChars(v);return s.length>1?`${s.slice(0,-1)}-${s.slice(-1)}`:s};
 const formatRut=(v)=>{const s=rutChars(v);if(!s)return'';if(s.length<=5)return s;const num=s.slice(0,-1),dv=s.slice(-1);return `${num.replace(/\B(?=(\d{3})+(?!\d))/g,'.')}-${dv}`};
-function rutDV(num){let s=1,m=0;for(;num;num=Math.floor(num/10))s=(s+num%10*(9-m++%6))%11;return s?'K':'0'}
-function rutValid(v){const r=normalizeRut(v),m=r.match(/^(\d{5,9})-([0-9K])$/);return !!m&&rutDV(Number(m[1]))===m[2]}
+function rutValid(v){return /^(\d{5,9})-([0-9K])$/.test(normalizeRut(v))}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 function htmlNotice(text,type='info'){return `<div class="notice ${type}">${esc(text)}</div>`}
 function download(name,content,type='application/json;charset=utf-8'){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
@@ -50,7 +49,7 @@ function initPublic(){
   input.addEventListener('input',reformat);
   input.addEventListener('blur',reformat);
   input.addEventListener('paste',()=>setTimeout(reformat,0));
-  form.addEventListener('submit',async e=>{e.preventDefault();const r=normalizeRut(input.value);input.value=formatRut(r);if(!rutValid(r)){out.innerHTML=htmlNotice('RUT no válido. Revisa los números o dígito verificador.','error');return}out.innerHTML=htmlNotice('Consultando asignación…','info');
+  form.addEventListener('submit',async e=>{e.preventDefault();const r=normalizeRut(input.value);input.value=formatRut(r);if(!rutValid(r)){out.innerHTML=htmlNotice('RUT incompleto. Ingresa todos los números y el dígito verificador.','error');return}out.innerHTML=htmlNotice('Consultando asignación…','info');
     try{
       const data=await webApi('lookup',{method:'POST',body:{rut:r}}),st=data.status,w=data.worker;
       if(st==='RUT_INVALIDO'){out.innerHTML=htmlNotice('RUT no válido. Revisa que esté escrito correctamente.','error');return}

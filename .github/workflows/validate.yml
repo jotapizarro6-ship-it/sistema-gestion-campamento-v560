@@ -18,6 +18,8 @@ jobs:
         run: |
           cat assets/app-1.js assets/app-2a.js assets/app-2b.js assets/app-3a.js assets/app-3b.js assets/app-4.js > /tmp/campamento-app.js
           node --check /tmp/campamento-app.js
+      - name: Pruebas funcionales v5.6.0
+        run: node tests/functional-smoke.mjs
       - name: Validar estructura web
         run: |
           test -f index.html

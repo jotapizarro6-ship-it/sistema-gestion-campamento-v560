@@ -20,7 +20,7 @@ const fmtDate=(iso)=>{if(!iso)return'—';const [y,m,d]=String(iso).slice(0,10).
 const fmtShort=(iso)=>{if(!iso)return'';const [y,m,d]=String(iso).slice(0,10).split('-');return `${d}/${m}`};
 const rutChars=(v)=>clean(v).toUpperCase().replace(/[^0-9K]/g,'').slice(0,10);
 const normalizeRut=(v)=>{const s=rutChars(v);return s.length>1?`${s.slice(0,-1)}-${s.slice(-1)}`:s};
-const formatRut=(v)=>{const s=rutChars(v);if(!s)return'';if(s.length<=5)return s;const num=s.slice(0,-1),dv=s.slice(-1);return `${num.replace(/\B(?=(\d{3})+(?!\d))/g,'.')}-${dv}`};
+const formatRut=(v)=>{const s=rutChars(v);if(s.length<2)return s;const num=s.slice(0,-1),dv=s.slice(-1);return `${num.replace(/\B(?=(\d{3})+(?!\d))/g,'.')}-${dv}`};
 function rutValid(v){return /^(\d{5,9})-([0-9K])$/.test(normalizeRut(v))}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 function htmlNotice(text,type='info'){return `<div class="notice ${type}">${esc(text)}</div>`}
@@ -54,7 +54,7 @@ function initPublic(){
       const data=await webApi('lookup',{method:'POST',body:{rut:r}}),st=data.status,w=data.worker;
       if(st==='RUT_INVALIDO'){out.innerHTML=htmlNotice('RUT no válido. Revisa que esté escrito correctamente.','error');return}
       if(st==='NO_ENCONTRADO'){out.innerHTML=htmlNotice('RUT no encontrado. Contacta a Administración de Campamento.','error');return}
-      if(st==='SIN_ASIGNACION'||!w){out.innerHTML=`${htmlNotice('Tu registro está activo, pero todavía no tienes una habitación asignada.','warn')}${w?.nombre?`<p><strong>${esc(w.nombre)}</strong></p>`:''}`;return}
+      if(st==='SIN_ASIGNACION'||!w){out.innerHTML=`${htmlNotice('Tu registro está activo, pero todavía no tienes una habitación/cama asignada.','warn')}${w?.nombre?`<p><strong>${esc(w.nombre)}</strong></p>`:''}`;return}
       out.innerHTML=`<div class="notice ok"><strong>${esc(w.nombre||'Trabajador')}</strong><div class="assignment-grid"><div class="assignment-item"><small>Módulo</small><b>${esc(w.modulo||'—')}</b></div><div class="assignment-item"><small>Habitación</small><b>${esc(w.habitacion||'—')}</b></div><div class="assignment-item"><small>Cama</small><b>${esc(w.cama||'—')}</b></div><div class="assignment-item"><small>Turno</small><b>${esc(w.turno||'—')}</b></div></div></div>`;
     }catch(err){out.innerHTML=htmlNotice(err.message||'No fue posible realizar la consulta.','error')}
   });

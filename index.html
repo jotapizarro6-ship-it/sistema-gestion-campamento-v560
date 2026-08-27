@@ -21,11 +21,11 @@
     <section class="panel public-card">
       <div class="eyebrow">Asignación vigente</div>
       <h1>Consulta tu alojamiento</h1>
-      <p class="muted">Ingresa tu RUT para ver únicamente tu módulo, habitación, cama y turno actual.</p>
+      <p class="muted">Ingresa tu RUT. Los puntos y el guion se agregarán automáticamente para consultar tu módulo, habitación, cama y turno actual.</p>
       <form id="workerLookupForm" class="stack gap-lg">
         <label class="field">
           <span>RUT</span>
-          <input id="workerRut" name="rut" inputmode="text" autocomplete="off" autocapitalize="characters" placeholder="12.345.678-9" required>
+          <input id="workerRut" name="rut" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="13" enterkeyhint="search" placeholder="12.345.678-9" required>
         </label>
         <button class="btn btn-primary btn-lg" type="submit">Consultar asignación</button>
       </form>

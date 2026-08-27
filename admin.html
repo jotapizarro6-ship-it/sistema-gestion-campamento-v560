@@ -92,5 +92,29 @@
   <script src="assets/app-3a.js"></script>
   <script src="assets/app-3b.js"></script>
   <script src="assets/app-4.js"></script>
+  <script>
+    (()=>{
+      const view=document.getElementById('view-workers');
+      if(!view)return;
+      const addSearchButton=()=>{
+        const input=document.getElementById('workerSearch');
+        if(!input||document.getElementById('workerSearchBtn'))return;
+        const toolbar=input.closest('.toolbar');
+        if(!toolbar)return;
+        const button=document.createElement('button');
+        button.id='workerSearchBtn';
+        button.type='button';
+        button.className='btn btn-primary';
+        button.textContent='Buscar';
+        button.setAttribute('aria-label','Buscar trabajador');
+        const runSearch=()=>input.dispatchEvent(new Event('input',{bubbles:true}));
+        button.addEventListener('click',runSearch);
+        input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();runSearch()}});
+        toolbar.appendChild(button);
+      };
+      new MutationObserver(addSearchButton).observe(view,{childList:true,subtree:true});
+      addSearchButton();
+    })();
+  </script>
 </body>
 </html>

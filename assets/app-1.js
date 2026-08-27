@@ -5,7 +5,7 @@ const ADV_API='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-
 const TZ='America/Santiago';
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const esc=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clean=(v)=>String(v??'').trim();
 const plain=(v)=>clean(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
 const loc=(v,k='x')=>{let s=plain(v);if(!s)return'';if(k==='room'){const n=Number(s.replace(',','.'));if(Number.isFinite(n))return Number.isInteger(n)?String(n):String(n).replace(/\.0+$/,'')}if(k==='bed')s=s.replace(/^CAMA\s+/,'');return s};

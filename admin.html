@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#0f2d4a">
+  <title>Administración · Sistema de Gestión de Campamento</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="admin-page">
+  <div id="adminLoginScreen" class="login-screen">
+    <section class="panel login-card">
+      <div class="eyebrow">Jefatura / Gerencia</div>
+      <h1>Acceso administración</h1>
+      <p class="muted">Ingresa la contraseña administrativa. La credencial no se almacena en esta página.</p>
+      <form id="adminLoginForm" class="stack gap-lg">
+        <label class="field"><span>Contraseña</span><input id="adminPassword" type="password" autocomplete="current-password" required></label>
+        <button class="btn btn-primary btn-lg" type="submit">Ingresar</button>
+      </form>
+      <div id="adminLoginMessage" class="result-zone" aria-live="polite"></div>
+      <a class="link-back" href="./">← Ir a consulta de trabajadores</a>
+    </section>
+  </div>
+
+  <div id="adminApp" class="app-shell hidden">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand">Gestión Campamento</div>
+        <div class="subtitle">Cloud v5.6.0 · Jefatura / Gerencia</div>
+      </div>
+      <nav class="nav-list" id="adminNav">
+        <button data-view="overview" class="nav-btn active">Resumen operativo</button>
+        <button data-view="control" class="nav-btn">Centro de Gestión</button>
+        <button data-view="planning" class="nav-btn">Planificación 30 días</button>
+        <button data-view="management" class="nav-btn">Dashboard gerencial</button>
+        <button data-view="history" class="nav-btn">Histórico / Cierre</button>
+        <button data-view="movements" class="nav-btn">Movimientos</button>
+        <button data-view="reservations" class="nav-btn">Reservas</button>
+        <button data-view="blocks" class="nav-btn">Bloqueos de camas</button>
+        <button data-view="workers" class="nav-btn">Trabajadores</button>
+        <button data-view="consults" class="nav-btn">Consultas RUT</button>
+        <button data-view="excel" class="nav-btn">Cargar Excel</button>
+        <button data-view="exports" class="nav-btn">Reportes / Respaldo</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logoutBtn" class="btn btn-secondary full">Cerrar sesión</button>
+      </div>
+    </aside>
+
+    <div class="main-shell">
+      <header class="topbar admin-topbar">
+        <div class="topbar-inner topbar-admin">
+          <button id="menuBtn" class="icon-btn mobile-only" aria-label="Abrir menú">☰</button>
+          <div>
+            <div id="pageTitle" class="brand">Resumen operativo</div>
+            <div id="systemMeta" class="subtitle">Base central Supabase · cargando…</div>
+          </div>
+          <div class="top-actions">
+            <span id="syncBadge" class="status-pill">Sincronizando</span>
+            <button id="refreshAllBtn" class="btn btn-secondary">Actualizar</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="content">
+        <div id="globalMessage" class="global-message hidden" aria-live="polite"></div>
+        <section id="view-overview" class="view active"></section>
+        <section id="view-control" class="view"></section>
+        <section id="view-planning" class="view"></section>
+        <section id="view-management" class="view"></section>
+        <section id="view-history" class="view"></section>
+        <section id="view-movements" class="view"></section>
+        <section id="view-reservations" class="view"></section>
+        <section id="view-blocks" class="view"></section>
+        <section id="view-workers" class="view"></section>
+        <section id="view-consults" class="view"></section>
+        <section id="view-excel" class="view"></section>
+        <section id="view-exports" class="view"></section>
+      </main>
+    </div>
+  </div>
+
+  <dialog id="detailDialog" class="detail-dialog">
+    <div class="dialog-head"><h3 id="detailTitle">Detalle</h3><button id="detailClose" class="icon-btn" aria-label="Cerrar">×</button></div>
+    <div id="detailBody" class="dialog-body"></div>
+  </dialog>
+
+  <script src="assets/app.js" defer></script>
+</body>
+</html>

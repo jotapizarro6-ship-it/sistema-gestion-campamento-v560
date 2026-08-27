@@ -1,0 +1,29 @@
+name: Validar Sistema Campamento
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Validar JavaScript combinado
+        run: |
+          cat assets/app-1.js assets/app-2a.js assets/app-2b.js assets/app-3a.js assets/app-3b.js assets/app-4.js > /tmp/campamento-app.js
+          node --check /tmp/campamento-app.js
+      - name: Validar estructura web
+        run: |
+          test -f index.html
+          test -f admin.html
+          test -f assets/styles.css
+          grep -q "Consulta tu alojamiento" index.html
+          grep -q "Centro de Gestión" admin.html
+          grep -q "Dashboard gerencial" admin.html
+          grep -q "Cargar Excel" admin.html

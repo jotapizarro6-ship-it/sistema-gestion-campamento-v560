@@ -1,0 +1,26 @@
+name: Validar Corrección Consulta Duplicada
+
+on:
+  push:
+    branches: ["dev-fix-duplicado-consulta-20260828"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Validar JavaScript
+        run: node --check assets/public-worker-v2.js
+      - name: Pruebas funcionales v5.6.0
+        run: node tests/functional-smoke.mjs
+      - name: Validar corrección visual
+        run: |
+          grep -q "No se crea un segundo resumen" assets/public-worker-v2.js
+          ! grep -q "summary.className='public-location-path'" assets/public-worker-v2.js
+          grep -q "COPIAR ASIGNACIÓN" assets/public-worker-v2.js
+          grep -q "NUEVA CONSULTA" assets/public-worker-v2.js

@@ -94,26 +94,42 @@
   <script src="assets/app-4.js"></script>
   <script>
     (()=>{
-      const view=document.getElementById('view-workers');
-      if(!view)return;
-      const addSearchButton=()=>{
-        const input=document.getElementById('workerSearch');
-        if(!input||document.getElementById('workerSearchBtn'))return;
-        const toolbar=input.closest('.toolbar');
-        if(!toolbar)return;
-        const button=document.createElement('button');
-        button.id='workerSearchBtn';
-        button.type='button';
-        button.className='btn btn-primary';
-        button.textContent='Buscar';
-        button.setAttribute('aria-label','Buscar trabajador');
-        const runSearch=()=>input.dispatchEvent(new Event('input',{bubbles:true}));
-        button.addEventListener('click',runSearch);
-        input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();runSearch()}});
-        toolbar.appendChild(button);
+      const fold=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim().replace(/\s+/g,' ');
+      const rutCompact=v=>String(v??'').toUpperCase().replace(/[^0-9K]/g,'');
+      const workerMatches=(worker,query)=>{
+        const raw=String(query??'').trim();
+        if(!raw)return false;
+        const rq=rutCompact(raw);
+        if(rq.length>=4&&rutCompact(worker.rut).includes(rq))return true;
+        const tokens=fold(raw).split(' ').filter(Boolean);
+        const haystack=fold([worker.nombre,worker.rut,worker.empresa,worker.turno,worker.modulo,worker.habitacion,worker.cama,worker.especialidad,worker.categoria,worker.sexo].join(' '));
+        return tokens.length>0&&tokens.every(token=>haystack.includes(token));
       };
-      new MutationObserver(addSearchButton).observe(view,{childList:true,subtree:true});
-      addSearchButton();
+      const workerDetail=worker=>{
+        const assigned=clean(worker.modulo)&&clean(worker.habitacion)&&clean(worker.cama);
+        const value=v=>esc(clean(v)||'No informado');
+        return `<section class="panel mb"><div class="section-head"><div><div class="eyebrow">TRABAJADOR ENCONTRADO</div><h2>${value(worker.nombre)}</h2><div class="muted">RUT ${value(worker.rut)}</div></div><span class="badge ${assigned?'green':'amber'}">${assigned?'Asignación vigente':'Asignación incompleta'}</span></div><section class="kpis"><div class="kpi"><span>🏢 MÓDULO</span><strong>${value(worker.modulo)}</strong><small>Pabellón / piso</small></div><div class="kpi accent"><span>🚪 HABITACIÓN</span><strong>${value(worker.habitacion)}</strong><small>Habitación asignada</small></div><div class="kpi"><span>🛏️ CAMA</span><strong>${value(worker.cama)}</strong><small>Cama asignada</small></div></section><div class="mt">${table([worker],[{label:'RUT',key:'rut'},{label:'Trabajador',key:'nombre'},{label:'Empresa',key:'empresa'},{label:'Turno',key:'turno'},{label:'Especialidad',key:'especialidad'},{label:'Categoría',key:'categoria'},{label:'Sexo',key:'sexo'}],{limit:1})}</div></section>`;
+      };
+      renderWorkers=function(){
+        const d=A.data;
+        $('#view-workers').innerHTML=`<div class="section-head"><div><h2>Trabajadores y asignaciones</h2><div class="muted">Consulta la asignación vigente cargada desde la planilla Excel base.</div></div></div><section class="panel mb"><div class="toolbar"><label class="field"><span>Buscar trabajador</span><input id="workerSearch" autocomplete="off" placeholder="Ingresa RUT, nombre o apellido"></label><button id="workerSearchBtn" class="btn btn-primary" type="button">Buscar</button></div><p class="muted">Puedes escribir el RUT con o sin puntos y guion. También puedes buscar por nombre completo o por uno o más apellidos.</p></section><div id="workerSearchResults"><div class="notice info">Ingresa un RUT, nombre o apellido para visualizar la asignación del trabajador.</div></div>`;
+        const input=$('#workerSearch'),results=$('#workerSearchResults');
+        const render=query=>{
+          const q=String(query??'').trim();
+          if(!q){results.innerHTML='<div class="notice info">Ingresa un RUT, nombre o apellido para visualizar la asignación del trabajador.</div>';return}
+          const rows=d.workers.filter(w=>workerMatches(w,q)).sort((a,b)=>clean(a.nombre).localeCompare(clean(b.nombre),'es'));
+          if(!rows.length){results.innerHTML=`<div class="notice error">No se encontraron trabajadores para <strong>${esc(q)}</strong>. Revisa el RUT, nombre o apellido ingresado.</div>`;return}
+          if(rows.length===1){results.innerHTML=workerDetail(rows[0]);return}
+          results.innerHTML=`<div class="notice info mb">Se encontraron ${rows.length} coincidencias. Revisa la asignación en la tabla o selecciona <strong>Ver detalle</strong>.</div>${table(rows,[{label:'RUT',key:'rut'},{label:'Trabajador',key:'nombre'},{label:'Empresa',key:'empresa'},{label:'Turno',key:'turno'},{label:'Módulo',key:'modulo'},{label:'Hab.',key:'habitacion'},{label:'Cama',key:'cama'},{label:'Especialidad',key:'especialidad'},{label:'Categoría',key:'categoria'},{label:'Acción',render:w=>`<button class="btn btn-secondary small-btn" type="button" data-worker-rut="${esc(w.rut)}">Ver detalle</button>`}],{limit:1000})}`;
+          $$('[data-worker-rut]',results).forEach(button=>button.addEventListener('click',()=>{
+            const worker=rows.find(w=>clean(w.rut)===clean(button.dataset.workerRut));
+            if(worker){results.innerHTML=workerDetail(worker);results.scrollIntoView({behavior:'smooth',block:'start'})}
+          }));
+        };
+        $('#workerSearchBtn').addEventListener('click',()=>render(input.value));
+        input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();render(input.value)}});
+        input.addEventListener('input',()=>{if(input.value.trim().length>=3)render(input.value);else if(!input.value.trim())render('')});
+      };
     })();
 
     document.addEventListener('submit',async e=>{

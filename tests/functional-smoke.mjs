@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
-const files=['assets/app-1.js','assets/app-2a.js','assets/app-2b.js','assets/app-3a.js','assets/app-3b.js','assets/app-4.js'];
-const source=files.map(f=>fs.readFileSync(f,'utf8')).join('\n')+`\n;globalThis.__campTest={normalizeRut,formatRut,rutValid,todayISO,addDays,physicalOccupied,reservedCount,capacityFor,blocksOn,forecast30,heatmap,planningRows,analytics};`;
+const files=['assets/app-1.js','assets/app-2a.js','assets/app-2b.js','assets/app-3a.js','assets/app-3b.js','assets/app-4.js','assets/final-audit-fixes.js'];
+const source=files.map(f=>fs.readFileSync(f,'utf8')).join('\n')+`\n;globalThis.__campTest={normalizeRut,formatRut,rutValid,todayISO,addDays,physicalOccupied,reservedCount,capacityFor,blocksOn,forecast30,heatmap,planningRows,analytics,calcAnomalies};`;
 
 const sandbox={
   console,Intl,Date,Math,JSON,String,Number,Array,Object,Map,Set,RegExp,Error,Promise,
@@ -95,5 +95,20 @@ const fc=f.forecast30(data);
 assert.equal(fc[0].capacity,3);
 assert.equal(fc[1].physical,4);
 assert.equal(fc[1].reserved,1);
+
+// v5.5.8: el promedio histórico usa hasta los 7 cierres confirmados inmediatamente anteriores,
+// no solamente cierres dentro de los últimos 7 días calendario.
+const closedValues=[10,20,30,40,50,60,70,80];
+const closedOffsets=[-29,-25,-20,-16,-12,-8,-4,-2];
+const histData={...data,movements:[],snapshots:closedValues.map((v,i)=>({snapshot_date:f.addDays(today,closedOffsets[i]),closed_at:'cerrado',committed_occupancy:v,occupied:0,companies_json:'[]',shifts_json:'[]',modules_json:'[]'}))};
+assert.equal(f.analytics(histData).histAvg,50,'promedio reciente debe usar los últimos 7 cierres confirmados');
+
+// v5.5.8: el promedio de movimientos usa una ventana fija de 30 días e incluye días sin movimiento.
+const moveData={...data,snapshots:[],movements:[
+  {movement_date:f.addDays(today,-10),movement_type:'SUBIDA',people_count:30},
+  {movement_date:today,movement_type:'SUBIDA',people_count:12}
+]};
+const anomalies=f.calcAnomalies(moveData,{committedPct:0,mv:{SUBIDA:12,BAJADA:0}});
+assert.equal(anomalies.some(x=>x.title==='Subida inusual'),true,'promedio de movimientos debe incluir días sin movimiento en la ventana de 30 días');
 
 console.log('Smoke funcional v5.6.0: OK');

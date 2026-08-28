@@ -4,5 +4,6 @@
 if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/app-4-core.js"></script>');
   document.write('<script src="assets/audit-fixes.js"></script>');
+  document.write('<script src="assets/final-audit-fixes.js"></script>');
   document.write('<script src="assets/responsive-admin.js"></script>');
 }

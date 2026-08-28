@@ -3,16 +3,20 @@
   if(typeof document==='undefined')return;
   const VERSION='6.1.0';
   const SRC=`https://cdn.jsdelivr.net/npm/echarts@${VERSION}/dist/echarts.min.js`;
+  const addEnhancement=(src,attr)=>{
+    if(document.querySelector(`script[${attr}]`))return;
+    const s=document.createElement('script');
+    s.src=src;
+    s.async=false;
+    s.setAttribute(attr,'1');
+    document.head.appendChild(s);
+  };
   const loadEnhancement=()=>{
     // A es un binding global lexical del núcleo, no una propiedad de window.
-    // Se expone solo como referencia en memoria para que la capa gráfica lea el mismo estado.
+    // Se expone solo como referencia en memoria para que las capas gráficas lean el mismo estado.
     if(typeof A!=='undefined'&&!window.A)window.A=A;
-    if(document.querySelector('script[data-camp-echarts-enhancement]'))return;
-    const s=document.createElement('script');
-    s.src='assets/echarts-dashboard.js';
-    s.defer=true;
-    s.dataset.campEchartsEnhancement='1';
-    document.head.appendChild(s);
+    addEnhancement('assets/echarts-dashboard.js','data-camp-echarts-enhancement');
+    addEnhancement('assets/control-center-echarts.js','data-camp-control-echarts');
   };
   if(window.echarts){loadEnhancement();return;}
   const script=document.createElement('script');

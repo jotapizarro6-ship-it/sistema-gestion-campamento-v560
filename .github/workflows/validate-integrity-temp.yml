@@ -1,0 +1,34 @@
+name: Validación temporal integridad y gerencia
+
+on:
+  push:
+    branches: ["dev-integridad-semaforo-respaldo-reporte-20260828"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validar sintaxis
+        run: |
+          node --check assets/integrity-executive.js
+          node --check assets/app-4.js
+      - name: Pruebas funcionales existentes
+        run: node tests/functional-smoke.mjs
+      - name: Pruebas What-if existentes
+        run: node tests/operations-suite-smoke.mjs
+      - name: Pruebas Integridad y Semáforo
+        run: node tests/integrity-executive-smoke.mjs
+      - name: Validar integración
+        run: |
+          test -f assets/integrity-executive.js
+          test -f assets/integrity-executive.css
+          grep -q "Semáforo General del Campamento" assets/integrity-executive.js
+          grep -q "Centro de Integridad de Datos" assets/integrity-executive.js
+          grep -q "Salud del respaldo y recuperación" assets/integrity-executive.js
+          grep -q "Informe Ejecutivo Automático" assets/integrity-executive.js
+          grep -q "integrity-executive.js" assets/app-4.js
+          grep -q "integrity-executive.css" assets/app-4.js

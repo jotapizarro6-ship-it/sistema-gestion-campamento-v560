@@ -2,37 +2,46 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="theme-color" content="#0f2d4a">
-  <title>Consulta de alojamiento · Campamento</title>
+  <meta name="theme-color" content="#f4f7fb">
+  <title>Consulta de asignación · Campamento</title>
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/public-assignment.css?v=20260828-1">
 </head>
 <body class="public-page">
-  <header class="topbar public-topbar">
-    <div class="topbar-inner">
-      <div>
-        <div class="brand">Sistema de Gestión de Campamento</div>
-        <div class="subtitle">Consulta de alojamiento · acceso trabajador</div>
+  <main class="public-wrap public-assignment-wrap">
+    <section class="panel public-card public-assignment-card" aria-labelledby="publicTitle">
+      <div class="public-hero">
+        <div class="public-icon" aria-hidden="true">🏨</div>
+        <div class="public-heading-row">
+          <div>
+            <div class="eyebrow public-eyebrow">Asignación vigente</div>
+            <h1 id="publicTitle">CONSULTA DE ASIGNACIÓN</h1>
+          </div>
+          <div class="public-date" aria-label="Fecha de consulta">
+            <span aria-hidden="true">🗓️</span>
+            <strong id="publicDate">--</strong>
+          </div>
+        </div>
+        <p class="public-intro">Ingrese su Rut para conocer claramente su Módulo / Piso, Habitación y Cama.</p>
       </div>
-    </div>
-  </header>
-  <main class="public-wrap">
-    <section class="panel public-card">
-      <div class="eyebrow">Asignación vigente</div>
-      <h1>Consulta tu alojamiento</h1>
-      <p class="muted">Ingresa tu RUT. Los puntos y el guion se agregarán automáticamente para consultar tu módulo, habitación, cama y turno actual.</p>
-      <form id="workerLookupForm" class="stack gap-lg">
-        <label class="field">
-          <span>RUT</span>
-          <input id="workerRut" name="rut" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="13" enterkeyhint="search" placeholder="12.345.678-9" required>
+
+      <form id="workerLookupForm" class="stack gap-lg public-form">
+        <label class="field public-rut-field">
+          <span>RUT DEL TRABAJADOR</span>
+          <input id="workerRut" name="rut" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="13" enterkeyhint="search" placeholder="12.345.678-9" aria-describedby="rutHelp" required>
         </label>
-        <button class="btn btn-primary btn-lg" type="submit">Consultar asignación</button>
+        <p id="rutHelp" class="public-help">Puede escribir el RUT con o sin puntos y guion.</p>
+        <button class="btn btn-primary btn-lg public-submit" type="submit"><span aria-hidden="true">🔎</span> VER MI ASIGNACIÓN</button>
       </form>
-      <div id="workerLookupResult" class="result-zone" aria-live="polite"></div>
-      <p class="footnote">La información corresponde a la última asignación cargada por Administración de Campamento.</p>
+
+      <div id="workerLookupResult" class="result-zone public-result" aria-live="polite"></div>
+      <p class="footnote public-footnote">La información corresponde a la última asignación cargada por Administración de Campamento.</p>
     </section>
   </main>
+
+  <script src="assets/public-date.js?v=20260828-1"></script>
   <script src="assets/app-1.js"></script>
   <script src="assets/app-2a.js"></script>
   <script src="assets/app-2b.js"></script>

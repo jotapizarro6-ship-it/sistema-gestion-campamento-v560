@@ -44,15 +44,8 @@
     const shiftValue=items[3]?itemValue(items[3]):'—';
     const worker=text(notice.querySelector(':scope > strong:first-of-type')?.textContent)||'Trabajador';
 
-    const summary=document.createElement('div');
-    summary.className='public-location-path';
-    summary.setAttribute('aria-label','Ubicación asignada');
-    summary.innerHTML=`
-      <div class="public-location-node"><small>${itemLabel(items[0])}</small><strong>${moduleValue}</strong></div>
-      <div class="public-location-node"><small>${itemLabel(items[1])}</small><strong>${roomValue}</strong></div>
-      <div class="public-location-node"><small>${itemLabel(items[2])}</small><strong>${bedValue}</strong></div>`;
-    grid.insertAdjacentElement('beforebegin',summary);
-
+    // La cuadrícula original ya muestra Módulo, Habitación y Cama con la jerarquía visual
+    // correcta. No se crea un segundo resumen para evitar duplicar la asignación.
     const toolbar=document.createElement('div');
     toolbar.className='public-result-toolbar';
     toolbar.innerHTML=`

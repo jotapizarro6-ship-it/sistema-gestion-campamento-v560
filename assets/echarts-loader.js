@@ -12,11 +12,10 @@
     document.head.appendChild(s);
   };
   const loadEnhancement=()=>{
-    // A es un binding global lexical del núcleo, no una propiedad de window.
-    // Se expone solo como referencia en memoria para que las capas gráficas lean el mismo estado.
     if(typeof A!=='undefined'&&!window.A)window.A=A;
     addEnhancement('assets/echarts-dashboard.js','data-camp-echarts-enhancement');
     addEnhancement('assets/control-center-echarts.js','data-camp-control-echarts');
+    addEnhancement('assets/advanced-sections-echarts.js','data-camp-advanced-echarts');
   };
   if(window.echarts){loadEnhancement();return;}
   const script=document.createElement('script');

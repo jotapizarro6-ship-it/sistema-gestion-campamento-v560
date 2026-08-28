@@ -9,6 +9,7 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   addStyle('assets/control-center.css');
   addStyle('assets/advanced-sections.css');
   addStyle('assets/operations-suite.css');
+  addStyle('assets/whatif-clarity.css');
   document.write('<script src="assets/app-4-core.js"></script>');
   document.write('<script src="assets/audit-fixes.js"></script>');
   document.write('<script src="assets/final-audit-fixes.js"></script>');
@@ -21,6 +22,7 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/operations-core.js"></script>');
   document.write('<script src="assets/command-center.js"></script>');
   document.write('<script src="assets/planning-suite.js"></script>');
+  document.write('<script src="assets/whatif-clarity.js"></script>');
   document.write('<script src="assets/governance.js"></script>');
   document.write('<script src="assets/echarts-loader.js"></script>');
 }

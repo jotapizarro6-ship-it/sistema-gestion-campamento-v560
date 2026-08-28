@@ -32,6 +32,7 @@ jobs:
           node --check assets/planning-suite.js
           node --check assets/whatif-clarity.js
           node --check assets/governance.js
+          node --check assets/integrity-executive.js
           node --check assets/echarts-loader.js
           node --check assets/echarts-dashboard.js
           node --check assets/control-center-echarts.js
@@ -44,6 +45,8 @@ jobs:
         run: node tests/functional-smoke.mjs
       - name: Pruebas Centro de Control y What-if
         run: node tests/operations-suite-smoke.mjs
+      - name: Pruebas Integridad y Semáforo
+        run: node tests/integrity-executive-smoke.mjs
       - name: Validar estructura web
         run: |
           test -f index.html
@@ -70,6 +73,8 @@ jobs:
           test -f assets/whatif-clarity.css
           test -f assets/governance.js
           test -f assets/operations-suite.css
+          test -f assets/integrity-executive.js
+          test -f assets/integrity-executive.css
           test -f assets/echarts-loader.js
           test -f assets/echarts-dashboard.js
           test -f assets/echarts-dashboard.css
@@ -78,6 +83,7 @@ jobs:
           test -f assets/advanced-gauge-fix.js
           test -f assets/operations-suite-echarts.js
           test -f tests/operations-suite-smoke.mjs
+          test -f tests/integrity-executive-smoke.mjs
           grep -q "CONSULTA DE ASIGNACIÓN" index.html
           grep -q "VER MI ASIGNACIÓN" index.html
           grep -q "Consulta rápida de alojamiento" index.html
@@ -102,6 +108,13 @@ jobs:
           grep -q "whatif-clarity.js" assets/app-4.js
           grep -q "whatif-clarity.css" assets/app-4.js
           grep -q "Resiliencia, Trazabilidad y Perfiles" assets/governance.js
+          grep -q "Semáforo General del Campamento" assets/integrity-executive.js
+          grep -q "Centro de Integridad de Datos" assets/integrity-executive.js
+          grep -q "Salud del respaldo y recuperación" assets/integrity-executive.js
+          grep -q "Informe Ejecutivo Automático" assets/integrity-executive.js
+          grep -q "campamento-recovery-api" assets/integrity-executive.js
+          grep -q "integrity-executive.js" assets/app-4.js
+          grep -q "integrity-executive.css" assets/app-4.js
           grep -q "campamento-control-api" assets/operations-core.js
           grep -q "operations-suite-echarts.js" assets/echarts-loader.js
           grep -q "Calidad de Base" assets/bi-dashboard.js

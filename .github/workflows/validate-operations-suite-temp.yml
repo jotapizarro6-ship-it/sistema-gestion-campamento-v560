@@ -1,0 +1,40 @@
+name: Validar Suite Control Operacional
+
+on:
+  push:
+    branches: ["dev-centro-control-whatif-trazabilidad-20260828"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Validar JavaScript
+        run: |
+          node --check assets/operations-shell.js
+          node --check assets/operations-core.js
+          node --check assets/command-center.js
+          node --check assets/planning-suite.js
+          node --check assets/governance.js
+          node --check assets/operations-suite-echarts.js
+          node --check assets/echarts-loader.js
+      - name: Pruebas funcionales v5.6.0
+        run: node tests/functional-smoke.mjs
+      - name: Pruebas What-if y Plan Maestro
+        run: node tests/operations-suite-smoke.mjs
+      - name: Validar integración
+        run: |
+          test -f assets/operations-suite.css
+          grep -q "operations-core.js" assets/app-4.js
+          grep -q "planning-suite.js" assets/app-4.js
+          grep -q "governance.js" assets/app-4.js
+          grep -q "operations-suite-echarts.js" assets/echarts-loader.js
+          grep -q "Centro de Control" assets/operations-shell.js
+          grep -q "What-if" assets/planning-suite.js
+          grep -q "Plan Maestro Operacional" assets/planning-suite.js
+          grep -q "Trazabilidad" assets/governance.js

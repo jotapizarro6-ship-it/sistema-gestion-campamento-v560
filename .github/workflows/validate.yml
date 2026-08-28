@@ -18,6 +18,7 @@ jobs:
         run: |
           cat assets/app-1.js assets/app-2a.js assets/app-2b.js assets/app-3a.js assets/app-3b.js assets/app-4.js > /tmp/campamento-app.js
           node --check /tmp/campamento-app.js
+          node --check assets/public-date.js
       - name: Pruebas funcionales v5.6.0
         run: node tests/functional-smoke.mjs
       - name: Validar estructura web
@@ -25,7 +26,10 @@ jobs:
           test -f index.html
           test -f admin.html
           test -f assets/styles.css
-          grep -q "Consulta tu alojamiento" index.html
+          test -f assets/public-assignment.css
+          test -f assets/public-date.js
+          grep -q "CONSULTA DE ASIGNACIÓN" index.html
+          grep -q "VER MI ASIGNACIÓN" index.html
           grep -q "Centro de Gestión" admin.html
           grep -q "Dashboard gerencial" admin.html
           grep -q "Cargar Excel" admin.html

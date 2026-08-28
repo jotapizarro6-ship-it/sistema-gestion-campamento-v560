@@ -1,0 +1,30 @@
+name: Validar Etapa 1 BI
+
+on:
+  push:
+    branches: ["etapa1-bi-dashboard"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-bi:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Validar JavaScript BI
+        run: |
+          node --check assets/bi-dashboard.js
+          node --check assets/app-4.js
+          node --check assets/final-audit-fixes.js
+          node --check assets/responsive-admin.js
+      - name: Pruebas funcionales existentes
+        run: node tests/functional-smoke.mjs
+      - name: Validar capa BI
+        run: |
+          test -f assets/bi-dashboard.css
+          grep -q "Calidad de Base" assets/bi-dashboard.js
+          grep -q "Heatmap de capacidad" assets/bi-dashboard.js
+          grep -q "Subidas / Bajadas / Neto" assets/bi-dashboard.js
+          grep -q "bi-dashboard.js" assets/app-4.js

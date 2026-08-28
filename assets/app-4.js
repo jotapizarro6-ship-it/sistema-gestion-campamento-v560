@@ -24,5 +24,5 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/planning-suite.js"></script>');
   document.write('<script src="assets/whatif-clarity.js"></script>');
   document.write('<script src="assets/governance.js"></script>');
-  document.write('<script src="assets/echarts-loader.js"></script>');
+  document.write('<script src="assets/echarts-loader.js?v=20260828-chartfix1"></script>');
 }

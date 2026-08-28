@@ -1,0 +1,35 @@
+name: Validar ajuste de gráficos
+
+on:
+  push:
+    branches: ["dev-fix-graficos-responsive-20260828"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-chartfix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Sintaxis JavaScript
+        run: |
+          node --check assets/echarts-layout-stabilizer.js
+          node --check assets/echarts-loader.js
+          node --check assets/app-4.js
+      - name: Integración del corrector
+        run: |
+          grep -q "echarts-layout-stabilizer.js" assets/echarts-loader.js
+          grep -q "ResizeObserver" assets/echarts-layout-stabilizer.js
+          grep -q "MutationObserver" assets/echarts-layout-stabilizer.js
+          grep -q "view-change" assets/echarts-layout-stabilizer.js
+          grep -q "orientationchange" assets/echarts-layout-stabilizer.js
+          grep -q "pageshow" assets/echarts-layout-stabilizer.js
+          grep -q "chart.resize" assets/echarts-layout-stabilizer.js
+          grep -q "20260828-chartfix1" assets/app-4.js
+      - name: Pruebas existentes
+        run: |
+          node tests/functional-smoke.mjs
+          node tests/operations-suite-smoke.mjs

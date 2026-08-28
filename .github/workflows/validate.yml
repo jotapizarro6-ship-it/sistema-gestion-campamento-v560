@@ -30,6 +30,7 @@ jobs:
           node --check assets/operations-core.js
           node --check assets/command-center.js
           node --check assets/planning-suite.js
+          node --check assets/whatif-clarity.js
           node --check assets/governance.js
           node --check assets/echarts-loader.js
           node --check assets/echarts-dashboard.js
@@ -65,6 +66,8 @@ jobs:
           test -f assets/operations-core.js
           test -f assets/command-center.js
           test -f assets/planning-suite.js
+          test -f assets/whatif-clarity.js
+          test -f assets/whatif-clarity.css
           test -f assets/governance.js
           test -f assets/operations-suite.css
           test -f assets/echarts-loader.js
@@ -92,6 +95,12 @@ jobs:
           grep -q "Centro de Alertas y Acciones Operacionales" assets/command-center.js
           grep -q "What-if" assets/planning-suite.js
           grep -q "Plan Maestro Operacional" assets/planning-suite.js
+          grep -q "Variación de camas-día" assets/whatif-clarity.js
+          grep -q "Capacidad diaria" assets/whatif-clarity.js
+          grep -q "Capacidad total ventana" assets/whatif-clarity.js
+          grep -q "No son 300 camas físicas" assets/whatif-clarity.js
+          grep -q "whatif-clarity.js" assets/app-4.js
+          grep -q "whatif-clarity.css" assets/app-4.js
           grep -q "Resiliencia, Trazabilidad y Perfiles" assets/governance.js
           grep -q "campamento-control-api" assets/operations-core.js
           grep -q "operations-suite-echarts.js" assets/echarts-loader.js

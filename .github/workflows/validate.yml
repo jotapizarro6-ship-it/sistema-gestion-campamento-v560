@@ -69,6 +69,9 @@ jobs:
           grep -q "Capacidad y demanda proyectada" assets/advanced-sections.js
           grep -q "Estado operacional" assets/advanced-sections.js
           grep -q "Evolución histórica" assets/advanced-sections.js
+          grep -q "RESUMEN EJECUTIVO" assets/advanced-sections.css
+          grep -q "adv-gauge-legend" assets/advanced-sections.css
+          grep -q "installGaugeHelp" assets/advanced-sections-echarts.js
           grep -q "6.1.0" assets/echarts-loader.js
           grep -q "Distribución por turno" assets/echarts-dashboard.js
           grep -q "Evolución de ocupación" assets/echarts-dashboard.js

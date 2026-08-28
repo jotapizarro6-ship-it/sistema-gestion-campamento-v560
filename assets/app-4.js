@@ -10,6 +10,7 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   addStyle('assets/advanced-sections.css');
   addStyle('assets/operations-suite.css');
   addStyle('assets/whatif-clarity.css');
+  addStyle('assets/integrity-executive.css?v=20260828-integrity1');
   document.write('<script src="assets/app-4-core.js"></script>');
   document.write('<script src="assets/audit-fixes.js"></script>');
   document.write('<script src="assets/final-audit-fixes.js"></script>');
@@ -24,5 +25,6 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/planning-suite.js"></script>');
   document.write('<script src="assets/whatif-clarity.js"></script>');
   document.write('<script src="assets/governance.js"></script>');
+  document.write('<script src="assets/integrity-executive.js?v=20260828-integrity1"></script>');
   document.write('<script src="assets/echarts-loader.js?v=20260828-chartfix1"></script>');
 }

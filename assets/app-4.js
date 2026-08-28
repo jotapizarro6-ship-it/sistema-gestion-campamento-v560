@@ -16,5 +16,6 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/final-audit-fixes.js"></script>');
   document.write('<script src="assets/responsive-admin.js"></script>');
   document.write('<script src="assets/bi-dashboard.js"></script>');
+  document.write('<script src="assets/persistent-errors.js"></script>');
   document.write('<script src="assets/echarts-loader.js"></script>');
 }

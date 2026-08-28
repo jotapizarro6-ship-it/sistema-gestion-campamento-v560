@@ -24,10 +24,12 @@ jobs:
           node --check assets/responsive-admin.js
           node --check assets/bi-dashboard.js
           node --check assets/control-center.js
+          node --check assets/advanced-sections.js
           node --check assets/persistent-errors.js
           node --check assets/echarts-loader.js
           node --check assets/echarts-dashboard.js
           node --check assets/control-center-echarts.js
+          node --check assets/advanced-sections-echarts.js
           node --check assets/public-date.js
       - name: Pruebas funcionales v5.6.0
         run: node tests/functional-smoke.mjs
@@ -43,11 +45,14 @@ jobs:
           test -f assets/bi-dashboard.css
           test -f assets/control-center.js
           test -f assets/control-center.css
+          test -f assets/advanced-sections.js
+          test -f assets/advanced-sections.css
           test -f assets/persistent-errors.js
           test -f assets/echarts-loader.js
           test -f assets/echarts-dashboard.js
           test -f assets/echarts-dashboard.css
           test -f assets/control-center-echarts.js
+          test -f assets/advanced-sections-echarts.js
           grep -q "CONSULTA DE ASIGNACIÓN" index.html
           grep -q "VER MI ASIGNACIÓN" index.html
           grep -q "Centro de Gestión" admin.html
@@ -59,7 +64,11 @@ jobs:
           grep -q "Estado y composición del módulo" assets/control-center.js
           grep -q "Presión de capacidad por módulo" assets/control-center.js
           grep -q "Excepciones del módulo" assets/control-center.js
+          grep -q "Capacidad y demanda proyectada" assets/advanced-sections.js
+          grep -q "Estado operacional" assets/advanced-sections.js
+          grep -q "Evolución histórica" assets/advanced-sections.js
           grep -q "6.1.0" assets/echarts-loader.js
           grep -q "Distribución por turno" assets/echarts-dashboard.js
           grep -q "Evolución de ocupación" assets/echarts-dashboard.js
           grep -q "control-center-echarts.js" assets/echarts-loader.js
+          grep -q "advanced-sections-echarts.js" assets/echarts-loader.js

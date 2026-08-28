@@ -7,6 +7,77 @@
   <meta name="theme-color" content="#0f2d4a">
   <title>Administración · Sistema de Gestión de Campamento</title>
   <link rel="stylesheet" href="assets/styles.css">
+  <style>
+    /* Vista Trabajadores: diseño responsivo aislado, sin afectar otras secciones */
+    #view-workers .worker-consult-shell{max-width:1180px;margin:0 auto}
+    #view-workers .worker-search-panel{padding:18px 20px}
+    #view-workers .worker-search-row{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:12px;align-items:end}
+    #view-workers .worker-search-row .field{margin:0}
+    #view-workers .worker-search-row input{min-height:44px;font-size:16px}
+    #view-workers .worker-search-row .btn{min-height:44px;padding-left:24px;padding-right:24px}
+    #view-workers .worker-search-help{margin:9px 0 0;font-size:12px;color:#6b7a86}
+
+    #view-workers .worker-result-card{background:#fff;border:1px solid #dfe7ec;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(15,45,74,.06)}
+    #view-workers .worker-result-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:18px 20px 15px;border-bottom:1px solid #e8eef2}
+    #view-workers .worker-result-header .eyebrow{margin-bottom:5px}
+    #view-workers .worker-name{margin:0;color:#152a3a;font-size:24px;line-height:1.2}
+    #view-workers .worker-rut{margin-top:5px;color:#6b7a86;font-size:13px;font-weight:700}
+
+    #view-workers .worker-assignment-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:14px 20px;background:#f7fafc}
+    #view-workers .worker-assignment-tile{min-width:0;border:1px solid #dce6eb;border-radius:12px;background:#fff;padding:13px 15px}
+    #view-workers .worker-assignment-tile span{display:block;color:#6b7a86;font-size:10px;font-weight:900;letter-spacing:.7px;text-transform:uppercase}
+    #view-workers .worker-assignment-tile strong{display:block;margin-top:5px;color:#17344a;font-size:25px;line-height:1.15;overflow-wrap:anywhere}
+    #view-workers .worker-assignment-tile small{display:block;margin-top:4px;color:#82909a;font-size:10px}
+    #view-workers .worker-assignment-tile.room{border-left:4px solid #176984}
+    #view-workers .worker-assignment-tile.bed{border-left:4px solid #2f7a56}
+
+    #view-workers .worker-meta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid #e8eef2}
+    #view-workers .worker-meta-item{min-width:0;padding:13px 16px;border-right:1px solid #edf1f4;border-bottom:1px solid #edf1f4}
+    #view-workers .worker-meta-item:nth-child(3n){border-right:0}
+    #view-workers .worker-meta-item span{display:block;color:#7a8791;font-size:10px;font-weight:900;letter-spacing:.45px;text-transform:uppercase}
+    #view-workers .worker-meta-item strong{display:block;margin-top:4px;color:#263b49;font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+    #view-workers .worker-meta-wide{grid-column:span 2}
+
+    #view-workers .worker-match-summary{margin-bottom:12px}
+    #view-workers .worker-match-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    #view-workers .worker-match-card{min-width:0;background:#fff;border:1px solid #dfe7ec;border-radius:14px;padding:15px;box-shadow:0 6px 18px rgba(15,45,74,.05)}
+    #view-workers .worker-match-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    #view-workers .worker-match-name{margin:0;color:#17344a;font-size:16px;line-height:1.25}
+    #view-workers .worker-match-rut{margin-top:3px;color:#788690;font-size:11px;font-weight:700}
+    #view-workers .worker-match-assignment{display:grid;grid-template-columns:1.4fr .8fr .65fr;gap:7px;margin:12px 0}
+    #view-workers .worker-match-assignment>div{min-width:0;background:#f5f8fa;border-radius:8px;padding:8px 9px}
+    #view-workers .worker-match-assignment span{display:block;color:#7a8791;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.4px}
+    #view-workers .worker-match-assignment b{display:block;margin-top:3px;color:#234052;font-size:12px;overflow-wrap:anywhere}
+    #view-workers .worker-match-meta{color:#657681;font-size:11px;line-height:1.45;margin-bottom:12px}
+    #view-workers .worker-match-card .btn{width:100%;padding:9px 12px}
+
+    @media(max-width:760px){
+      #view-workers .section-head{align-items:flex-start}
+      #view-workers .worker-search-panel{padding:15px}
+      #view-workers .worker-search-row{grid-template-columns:1fr;gap:9px}
+      #view-workers .worker-search-row .btn{width:100%}
+      #view-workers .worker-result-header{padding:16px;flex-direction:column;gap:10px}
+      #view-workers .worker-name{font-size:20px}
+      #view-workers .worker-assignment-grid{grid-template-columns:1fr 1fr;padding:12px 14px;gap:8px}
+      #view-workers .worker-assignment-tile.module{grid-column:1/-1}
+      #view-workers .worker-assignment-tile{padding:12px}
+      #view-workers .worker-assignment-tile strong{font-size:22px}
+      #view-workers .worker-meta-grid{grid-template-columns:1fr 1fr}
+      #view-workers .worker-meta-item:nth-child(3n){border-right:1px solid #edf1f4}
+      #view-workers .worker-meta-item:nth-child(2n){border-right:0}
+      #view-workers .worker-meta-wide{grid-column:1/-1}
+      #view-workers .worker-match-grid{grid-template-columns:1fr}
+    }
+    @media(max-width:390px){
+      #view-workers .worker-assignment-grid{grid-template-columns:1fr}
+      #view-workers .worker-assignment-tile.module{grid-column:auto}
+      #view-workers .worker-meta-grid{grid-template-columns:1fr}
+      #view-workers .worker-meta-item,#view-workers .worker-meta-item:nth-child(2n),#view-workers .worker-meta-item:nth-child(3n){border-right:0}
+      #view-workers .worker-meta-wide{grid-column:auto}
+      #view-workers .worker-match-assignment{grid-template-columns:1fr 1fr}
+      #view-workers .worker-match-assignment>div:first-child{grid-column:1/-1}
+    }
+  </style>
 </head>
 <body class="admin-page">
   <div id="adminLoginScreen" class="login-screen">
@@ -105,14 +176,47 @@
         const haystack=fold([worker.nombre,worker.rut,worker.empresa,worker.turno,worker.modulo,worker.habitacion,worker.cama,worker.especialidad,worker.categoria,worker.sexo].join(' '));
         return tokens.length>0&&tokens.every(token=>haystack.includes(token));
       };
+      const safeValue=v=>esc(clean(v)||'No informado');
       const workerDetail=worker=>{
-        const assigned=clean(worker.modulo)&&clean(worker.habitacion)&&clean(worker.cama);
-        const value=v=>esc(clean(v)||'No informado');
-        return `<section class="panel mb"><div class="section-head"><div><div class="eyebrow">TRABAJADOR ENCONTRADO</div><h2>${value(worker.nombre)}</h2><div class="muted">RUT ${value(worker.rut)}</div></div><span class="badge ${assigned?'green':'amber'}">${assigned?'Asignación vigente':'Asignación incompleta'}</span></div><section class="kpis"><div class="kpi"><span>🏢 MÓDULO</span><strong>${value(worker.modulo)}</strong><small>Pabellón / piso</small></div><div class="kpi accent"><span>🚪 HABITACIÓN</span><strong>${value(worker.habitacion)}</strong><small>Habitación asignada</small></div><div class="kpi"><span>🛏️ CAMA</span><strong>${value(worker.cama)}</strong><small>Cama asignada</small></div></section><div class="mt">${table([worker],[{label:'RUT',key:'rut'},{label:'Trabajador',key:'nombre'},{label:'Empresa',key:'empresa'},{label:'Turno',key:'turno'},{label:'Especialidad',key:'especialidad'},{label:'Categoría',key:'categoria'},{label:'Sexo',key:'sexo'}],{limit:1})}</div></section>`;
+        const assigned=Boolean(clean(worker.modulo)&&clean(worker.habitacion)&&clean(worker.cama));
+        return `<section class="worker-result-card mb">
+          <div class="worker-result-header">
+            <div><div class="eyebrow">TRABAJADOR ENCONTRADO</div><h2 class="worker-name">${safeValue(worker.nombre)}</h2><div class="worker-rut">RUT ${safeValue(worker.rut)}</div></div>
+            <span class="badge ${assigned?'green':'amber'}">${assigned?'Asignación vigente':'Asignación incompleta'}</span>
+          </div>
+          <div class="worker-assignment-grid">
+            <div class="worker-assignment-tile module"><span>Módulo</span><strong>${safeValue(worker.modulo)}</strong><small>Pabellón / piso</small></div>
+            <div class="worker-assignment-tile room"><span>Habitación</span><strong>${safeValue(worker.habitacion)}</strong><small>Habitación asignada</small></div>
+            <div class="worker-assignment-tile bed"><span>Cama</span><strong>${safeValue(worker.cama)}</strong><small>Cama asignada</small></div>
+          </div>
+          <div class="worker-meta-grid">
+            <div class="worker-meta-item worker-meta-wide"><span>Empresa</span><strong>${safeValue(worker.empresa)}</strong></div>
+            <div class="worker-meta-item"><span>Turno</span><strong>${safeValue(worker.turno)}</strong></div>
+            <div class="worker-meta-item"><span>Especialidad</span><strong>${safeValue(worker.especialidad)}</strong></div>
+            <div class="worker-meta-item"><span>Categoría</span><strong>${safeValue(worker.categoria)}</strong></div>
+            <div class="worker-meta-item"><span>Sexo</span><strong>${safeValue(worker.sexo)}</strong></div>
+          </div>
+        </section>`;
+      };
+      const workerMatchCard=worker=>{
+        const assigned=Boolean(clean(worker.modulo)&&clean(worker.habitacion)&&clean(worker.cama));
+        return `<article class="worker-match-card">
+          <div class="worker-match-head"><div><h3 class="worker-match-name">${safeValue(worker.nombre)}</h3><div class="worker-match-rut">RUT ${safeValue(worker.rut)}</div></div><span class="badge ${assigned?'green':'amber'}">${assigned?'Asignado':'Pendiente'}</span></div>
+          <div class="worker-match-assignment"><div><span>Módulo</span><b>${safeValue(worker.modulo)}</b></div><div><span>Hab.</span><b>${safeValue(worker.habitacion)}</b></div><div><span>Cama</span><b>${safeValue(worker.cama)}</b></div></div>
+          <div class="worker-match-meta">${safeValue(worker.empresa)} · ${safeValue(worker.turno)}</div>
+          <button class="btn btn-secondary small-btn" type="button" data-worker-rut="${esc(worker.rut)}">Ver asignación</button>
+        </article>`;
       };
       renderWorkers=function(){
         const d=A.data;
-        $('#view-workers').innerHTML=`<div class="section-head"><div><h2>Trabajadores y asignaciones</h2><div class="muted">Consulta la asignación vigente cargada desde la planilla Excel base.</div></div></div><section class="panel mb"><div class="toolbar"><label class="field"><span>Buscar trabajador</span><input id="workerSearch" autocomplete="off" placeholder="Ingresa RUT, nombre o apellido"></label><button id="workerSearchBtn" class="btn btn-primary" type="button">Buscar</button></div><p class="muted">Puedes escribir el RUT con o sin puntos y guion. También puedes buscar por nombre completo o por uno o más apellidos.</p></section><div id="workerSearchResults"><div class="notice info">Ingresa un RUT, nombre o apellido para visualizar la asignación del trabajador.</div></div>`;
+        $('#view-workers').innerHTML=`<div class="worker-consult-shell">
+          <div class="section-head"><div><h2>Trabajadores y asignaciones</h2><div class="muted">Consulta rápida de la asignación vigente cargada desde la planilla Excel base.</div></div></div>
+          <section class="panel worker-search-panel mb">
+            <div class="worker-search-row"><label class="field"><span>Buscar trabajador</span><input id="workerSearch" autocomplete="off" placeholder="RUT, nombre o apellido"></label><button id="workerSearchBtn" class="btn btn-primary" type="button">Buscar</button></div>
+            <p class="worker-search-help">RUT con o sin puntos/guion · nombre completo · uno o más apellidos.</p>
+          </section>
+          <div id="workerSearchResults"><div class="notice info">Ingresa un RUT, nombre o apellido para visualizar la asignación del trabajador.</div></div>
+        </div>`;
         const input=$('#workerSearch'),results=$('#workerSearchResults');
         const render=query=>{
           const q=String(query??'').trim();
@@ -120,7 +224,7 @@
           const rows=d.workers.filter(w=>workerMatches(w,q)).sort((a,b)=>clean(a.nombre).localeCompare(clean(b.nombre),'es'));
           if(!rows.length){results.innerHTML=`<div class="notice error">No se encontraron trabajadores para <strong>${esc(q)}</strong>. Revisa el RUT, nombre o apellido ingresado.</div>`;return}
           if(rows.length===1){results.innerHTML=workerDetail(rows[0]);return}
-          results.innerHTML=`<div class="notice info mb">Se encontraron ${rows.length} coincidencias. Revisa la asignación en la tabla o selecciona <strong>Ver detalle</strong>.</div>${table(rows,[{label:'RUT',key:'rut'},{label:'Trabajador',key:'nombre'},{label:'Empresa',key:'empresa'},{label:'Turno',key:'turno'},{label:'Módulo',key:'modulo'},{label:'Hab.',key:'habitacion'},{label:'Cama',key:'cama'},{label:'Especialidad',key:'especialidad'},{label:'Categoría',key:'categoria'},{label:'Acción',render:w=>`<button class="btn btn-secondary small-btn" type="button" data-worker-rut="${esc(w.rut)}">Ver detalle</button>`}],{limit:1000})}`;
+          results.innerHTML=`<div class="notice info worker-match-summary">Se encontraron ${rows.length} coincidencias. Selecciona la asignación que deseas revisar.</div><div class="worker-match-grid">${rows.map(workerMatchCard).join('')}</div>`;
           $$('[data-worker-rut]',results).forEach(button=>button.addEventListener('click',()=>{
             const worker=rows.find(w=>clean(w.rut)===clean(button.dataset.workerRut));
             if(worker){results.innerHTML=workerDetail(worker);results.scrollIntoView({behavior:'smooth',block:'start'})}

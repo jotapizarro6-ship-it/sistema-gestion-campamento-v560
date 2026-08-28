@@ -173,7 +173,7 @@
         const rq=rutCompact(raw);
         if(rq.length>=4&&rutCompact(worker.rut).includes(rq))return true;
         const tokens=fold(raw).split(' ').filter(Boolean);
-        const haystack=fold([worker.nombre,worker.rut,worker.empresa,worker.turno,worker.modulo,worker.habitacion,worker.cama,worker.especialidad,worker.categoria,worker.sexo].join(' '));
+        const haystack=fold([worker.nombre,worker.rut,worker.empresa,worker.turno,worker.modulo,worker.habitacion,worker.cama,worker.especialidad,worker.categoria,worker.sexo,worker.residencia].join(' '));
         return tokens.length>0&&tokens.every(token=>haystack.includes(token));
       };
       const safeValue=v=>esc(clean(v)||'No informado');
@@ -192,9 +192,10 @@
           <div class="worker-meta-grid">
             <div class="worker-meta-item worker-meta-wide"><span>Empresa</span><strong>${safeValue(worker.empresa)}</strong></div>
             <div class="worker-meta-item"><span>Turno</span><strong>${safeValue(worker.turno)}</strong></div>
-            <div class="worker-meta-item"><span>Especialidad</span><strong>${safeValue(worker.especialidad)}</strong></div>
-            <div class="worker-meta-item"><span>Categoría</span><strong>${safeValue(worker.categoria)}</strong></div>
+            <div class="worker-meta-item worker-meta-wide"><span>Residencia</span><strong>${safeValue(worker.residencia)}</strong></div>
             <div class="worker-meta-item"><span>Sexo</span><strong>${safeValue(worker.sexo)}</strong></div>
+            <div class="worker-meta-item"><span>Especialidad</span><strong>${safeValue(worker.especialidad)}</strong></div>
+            <div class="worker-meta-item worker-meta-wide"><span>Categoría</span><strong>${safeValue(worker.categoria)}</strong></div>
           </div>
         </section>`;
       };
@@ -203,7 +204,7 @@
         return `<article class="worker-match-card">
           <div class="worker-match-head"><div><h3 class="worker-match-name">${safeValue(worker.nombre)}</h3><div class="worker-match-rut">RUT ${safeValue(worker.rut)}</div></div><span class="badge ${assigned?'green':'amber'}">${assigned?'Asignado':'Pendiente'}</span></div>
           <div class="worker-match-assignment"><div><span>Módulo</span><b>${safeValue(worker.modulo)}</b></div><div><span>Hab.</span><b>${safeValue(worker.habitacion)}</b></div><div><span>Cama</span><b>${safeValue(worker.cama)}</b></div></div>
-          <div class="worker-match-meta">${safeValue(worker.empresa)} · ${safeValue(worker.turno)}</div>
+          <div class="worker-match-meta">${safeValue(worker.empresa)} · ${safeValue(worker.turno)} · ${safeValue(worker.residencia)}</div>
           <button class="btn btn-secondary small-btn" type="button" data-worker-rut="${esc(worker.rut)}">Ver asignación</button>
         </article>`;
       };

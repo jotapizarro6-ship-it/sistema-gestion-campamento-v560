@@ -2,6 +2,7 @@
   'use strict';
   if(typeof document==='undefined')return;
   const VERSION='6.1.0';
+  const BUST='20260828-chartfix1';
   const SRC=`https://cdn.jsdelivr.net/npm/echarts@${VERSION}/dist/echarts.min.js`;
   const addEnhancement=(src,attr)=>{
     if(document.querySelector(`script[${attr}]`))return;
@@ -18,6 +19,7 @@
     addEnhancement('assets/advanced-sections-echarts.js','data-camp-advanced-echarts');
     addEnhancement('assets/advanced-gauge-fix.js','data-camp-gauge-fix');
     addEnhancement('assets/operations-suite-echarts.js','data-camp-operations-echarts');
+    addEnhancement(`assets/echarts-layout-stabilizer.js?v=${BUST}`,'data-camp-echarts-layout-stabilizer');
   };
   if(window.echarts){loadEnhancement();return;}
   const script=document.createElement('script');

@@ -7,7 +7,7 @@
   const timers=new Set();
   const observed=new WeakSet();
   let resizeObserver=null;
-  let mutationTimer=null;
+  let layoutTimer=null;
   let lastViewport=`${window.innerWidth}x${window.innerHeight}`;
 
   const echartsReady=()=>window.echarts&&typeof window.echarts.getInstanceByDom==='function';
@@ -52,7 +52,6 @@
     }
     return count;
   };
-  const clearTimers=()=>{for(const t of timers)clearTimeout(t);timers.clear()};
   const schedule=(reason='layout',scope=document)=>{
     if(!echartsReady())return;
     const active=document.querySelector('.view.active')||scope||document;
@@ -62,7 +61,7 @@
       const t=setTimeout(()=>{timers.delete(t);run()},delay);
       timers.add(t);
     }
-    window.dispatchEvent(new CustomEvent('camp:charts:layout',{detail:{reason}}));
+    try{window.dispatchEvent(new CustomEvent('camp:charts:layout',{detail:{reason}}))}catch(_){}
   };
   const installInitHook=()=>{
     if(!echartsReady()||window.echarts.__campInitHooked)return;
@@ -95,6 +94,10 @@
     schedule('install');
     return true;
   };
+  const queueLayout=(reason,delay=30)=>{
+    clearTimeout(layoutTimer);
+    layoutTimer=setTimeout(()=>{chartNodes().forEach(observeChart);schedule(reason)},delay);
+  };
 
   document.addEventListener('click',event=>{
     const nav=event.target.closest?.('.nav-btn,[data-view]');
@@ -108,24 +111,28 @@
     const viewport=`${window.innerWidth}x${window.innerHeight}`;
     if(viewport===lastViewport)return;
     lastViewport=viewport;
-    clearTimeout(mutationTimer);
-    mutationTimer=setTimeout(()=>schedule('viewport-resize'),90);
+    queueLayout('viewport-resize',90);
   },{passive:true});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule('visibility')});
 
   if(typeof MutationObserver==='function'){
+    const layoutTarget=el=>el?.matches?.('.view,.app-shell,.main-shell,.content,.sidebar,.bi-grid,.ec-advanced-grid,.cc-grid,.adv-grid,.ops-grid');
     const mo=new MutationObserver(mutations=>{
       let relevant=false;
       for(const m of mutations){
-        if(m.type==='attributes'&&(m.attributeName==='class'||m.attributeName==='style'||m.attributeName===ATTR)){relevant=true;break}
+        if(m.type==='attributes'){
+          if(m.attributeName===ATTR){relevant=true;break}
+          if((m.attributeName==='class'||m.attributeName==='style')&&layoutTarget(m.target)){relevant=true;break}
+        }
         if(m.addedNodes?.length){
-          for(const n of m.addedNodes){if(n.nodeType===1&&(n.hasAttribute?.(ATTR)||n.querySelector?.(`[${ATTR}]`))){relevant=true;break}}
+          for(const n of m.addedNodes){
+            if(n.nodeType!==1)continue;
+            if(n.hasAttribute?.(ATTR)||n.querySelector?.(`[${ATTR}]`)||layoutTarget(n)){relevant=true;break}
+          }
           if(relevant)break;
         }
       }
-      if(!relevant)return;
-      clearTimeout(mutationTimer);
-      mutationTimer=setTimeout(()=>{chartNodes().forEach(observeChart);schedule('dom-change')},30);
+      if(relevant)queueLayout('dom-change',30);
     });
     mo.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style',ATTR]});
   }

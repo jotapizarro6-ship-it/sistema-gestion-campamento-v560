@@ -23,6 +23,8 @@ jobs:
           node --check assets/final-audit-fixes.js
           node --check assets/responsive-admin.js
           node --check assets/bi-dashboard.js
+          node --check assets/echarts-loader.js
+          node --check assets/echarts-dashboard.js
           node --check assets/public-date.js
       - name: Pruebas funcionales v5.6.0
         run: node tests/functional-smoke.mjs
@@ -36,6 +38,9 @@ jobs:
           test -f assets/final-audit-fixes.js
           test -f assets/bi-dashboard.js
           test -f assets/bi-dashboard.css
+          test -f assets/echarts-loader.js
+          test -f assets/echarts-dashboard.js
+          test -f assets/echarts-dashboard.css
           grep -q "CONSULTA DE ASIGNACIÓN" index.html
           grep -q "VER MI ASIGNACIÓN" index.html
           grep -q "Centro de Gestión" admin.html
@@ -44,3 +49,6 @@ jobs:
           grep -q "Calidad de Base" assets/bi-dashboard.js
           grep -q "Heatmap de capacidad" assets/bi-dashboard.js
           grep -q "Subidas / Bajadas / Neto" assets/bi-dashboard.js
+          grep -q "6.1.0" assets/echarts-loader.js
+          grep -q "Distribución por turno" assets/echarts-dashboard.js
+          grep -q "Evolución de ocupación" assets/echarts-dashboard.js

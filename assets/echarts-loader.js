@@ -4,6 +4,9 @@
   const VERSION='6.1.0';
   const SRC=`https://cdn.jsdelivr.net/npm/echarts@${VERSION}/dist/echarts.min.js`;
   const loadEnhancement=()=>{
+    // A es un binding global lexical del núcleo, no una propiedad de window.
+    // Se expone solo como referencia en memoria para que la capa gráfica lea el mismo estado.
+    if(typeof A!=='undefined'&&!window.A)window.A=A;
     if(document.querySelector('script[data-camp-echarts-enhancement]'))return;
     const s=document.createElement('script');
     s.src='assets/echarts-dashboard.js';

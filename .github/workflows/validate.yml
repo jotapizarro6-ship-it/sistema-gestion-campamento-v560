@@ -16,8 +16,12 @@ jobs:
         uses: actions/checkout@v6
       - name: Validar JavaScript combinado
         run: |
-          cat assets/app-1.js assets/app-2a.js assets/app-2b.js assets/app-3a.js assets/app-3b.js assets/app-4.js > /tmp/campamento-app.js
+          cat assets/app-1.js assets/app-2a.js assets/app-2b.js assets/app-3a.js assets/app-3b.js assets/app-4.js assets/final-audit-fixes.js > /tmp/campamento-app.js
           node --check /tmp/campamento-app.js
+          node --check assets/app-4-core.js
+          node --check assets/audit-fixes.js
+          node --check assets/final-audit-fixes.js
+          node --check assets/responsive-admin.js
           node --check assets/public-date.js
       - name: Pruebas funcionales v5.6.0
         run: node tests/functional-smoke.mjs
@@ -28,6 +32,7 @@ jobs:
           test -f assets/styles.css
           test -f assets/public-assignment.css
           test -f assets/public-date.js
+          test -f assets/final-audit-fixes.js
           grep -q "CONSULTA DE ASIGNACIÓN" index.html
           grep -q "VER MI ASIGNACIÓN" index.html
           grep -q "Centro de Gestión" admin.html

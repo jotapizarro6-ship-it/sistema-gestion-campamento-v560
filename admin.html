@@ -115,6 +115,24 @@
       new MutationObserver(addSearchButton).observe(view,{childList:true,subtree:true});
       addSearchButton();
     })();
+
+    document.addEventListener('submit',async e=>{
+      const form=e.target;
+      if(!(form instanceof HTMLFormElement)||form.id!=='excelForm')return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const file=form.querySelector('#excelFile')?.files?.[0];
+      if(!file)return;
+      try{
+        showMessage('Cargando y validando Excel…','info');
+        const r=await webApi('upload_excel',{method:'POST',file,token:A.token});
+        form.reset();
+        await loadAll();
+        showMessage(`Excel cargado correctamente${r.data?.workers?`: ${r.data.workers} trabajadores · ${r.data.beds} camas`:''}.`);
+      }catch(err){
+        showMessage(err.message||'No se pudo cargar la planilla Excel.','error');
+      }
+    },true);
   </script>
 </body>
 </html>

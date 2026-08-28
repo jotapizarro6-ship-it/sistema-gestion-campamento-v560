@@ -26,15 +26,23 @@ jobs:
           node --check assets/control-center.js
           node --check assets/advanced-sections.js
           node --check assets/persistent-errors.js
+          node --check assets/operations-shell.js
+          node --check assets/operations-core.js
+          node --check assets/command-center.js
+          node --check assets/planning-suite.js
+          node --check assets/governance.js
           node --check assets/echarts-loader.js
           node --check assets/echarts-dashboard.js
           node --check assets/control-center-echarts.js
           node --check assets/advanced-sections-echarts.js
           node --check assets/advanced-gauge-fix.js
+          node --check assets/operations-suite-echarts.js
           node --check assets/public-date.js
           node --check assets/public-worker-v2.js
       - name: Pruebas funcionales v5.6.0
         run: node tests/functional-smoke.mjs
+      - name: Pruebas Centro de Control y What-if
+        run: node tests/operations-suite-smoke.mjs
       - name: Validar estructura web
         run: |
           test -f index.html
@@ -53,12 +61,20 @@ jobs:
           test -f assets/advanced-sections.js
           test -f assets/advanced-sections.css
           test -f assets/persistent-errors.js
+          test -f assets/operations-shell.js
+          test -f assets/operations-core.js
+          test -f assets/command-center.js
+          test -f assets/planning-suite.js
+          test -f assets/governance.js
+          test -f assets/operations-suite.css
           test -f assets/echarts-loader.js
           test -f assets/echarts-dashboard.js
           test -f assets/echarts-dashboard.css
           test -f assets/control-center-echarts.js
           test -f assets/advanced-sections-echarts.js
           test -f assets/advanced-gauge-fix.js
+          test -f assets/operations-suite-echarts.js
+          test -f tests/operations-suite-smoke.mjs
           grep -q "CONSULTA DE ASIGNACIÓN" index.html
           grep -q "VER MI ASIGNACIÓN" index.html
           grep -q "Consulta rápida de alojamiento" index.html
@@ -71,6 +87,14 @@ jobs:
           grep -q "Centro de Gestión" admin.html
           grep -q "Dashboard gerencial" admin.html
           grep -q "Cargar Excel" admin.html
+          grep -q "Centro de Control" assets/operations-shell.js
+          grep -q "Seguridad / Trazabilidad" assets/operations-shell.js
+          grep -q "Centro de Alertas y Acciones Operacionales" assets/command-center.js
+          grep -q "What-if" assets/planning-suite.js
+          grep -q "Plan Maestro Operacional" assets/planning-suite.js
+          grep -q "Resiliencia, Trazabilidad y Perfiles" assets/governance.js
+          grep -q "campamento-control-api" assets/operations-core.js
+          grep -q "operations-suite-echarts.js" assets/echarts-loader.js
           grep -q "Calidad de Base" assets/bi-dashboard.js
           grep -q "Heatmap de capacidad" assets/bi-dashboard.js
           grep -q "Subidas / Bajadas / Neto" assets/bi-dashboard.js

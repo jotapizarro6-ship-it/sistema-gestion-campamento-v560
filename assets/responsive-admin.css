@@ -1,0 +1,134 @@
+/* Capa responsiva administrador — inspirada en patrones BI, sin cambiar lógica operacional */
+:root{--bi-gap:12px;--bi-soft:#f7f9fc;--bi-line:#e3eaf1;--bi-ink:#183247}
+body.admin-page{font-variant-numeric:tabular-nums}
+.admin-page .content{max-width:1680px;padding:20px 24px 34px}
+.admin-page .panel{box-shadow:0 4px 16px rgba(20,40,70,.055)}
+.admin-page .section-head{margin-bottom:16px}
+.admin-page .section-head h2{letter-spacing:-.015em}
+.admin-page .kpi-grid{gap:12px}
+.admin-page .kpi{min-width:0;padding:14px 15px;transition:box-shadow .15s ease,transform .15s ease}
+.admin-page .kpi .value{letter-spacing:-.035em}
+.admin-page .kpi .detail{line-height:1.35}
+.admin-page .grid-2,.admin-page .grid-3,.admin-page .grid-4{align-items:start}
+.admin-page .svg-chart{display:block;max-width:100%;height:auto;min-height:220px;aspect-ratio:980/260}
+.admin-page .chart-legend{row-gap:7px}
+.admin-page .table-wrap{background:#fff;box-shadow:0 2px 8px rgba(20,40,70,.035)}
+.admin-page .data-table th{top:0;box-shadow:0 1px 0 var(--border)}
+.admin-page .data-table td{line-height:1.35}
+.admin-page .toolbar{row-gap:9px}
+.admin-page .field input,.admin-page .field select,.admin-page .field textarea{min-height:42px}
+.admin-page .btn{min-height:40px}
+.admin-page .bed-chip{min-height:38px}
+.admin-page .forecast-day{min-width:0}
+.admin-page .summary-box{box-shadow:0 8px 22px rgba(15,45,74,.13)}
+.admin-page .detail-dialog{max-height:90vh}
+.admin-page .dialog-body{overscroll-behavior:contain}
+.admin-page [data-admin-layout="desktop"] .topbar-admin{box-shadow:0 3px 12px rgba(10,35,60,.12)}
+
+/* Tablet: mantiene comparaciones, pero reduce densidad */
+@media(max-width:1100px){
+  .admin-page .content{padding:16px 16px 28px}
+  .admin-page .kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .admin-page .grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-page .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-page .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* Teléfono: lectura vertical tipo Power BI/Tableau device layout */
+@media(max-width:720px){
+  html{scroll-padding-top:62px}
+  body.admin-page{overflow-x:hidden}
+  body.admin-page.admin-nav-open{overflow:hidden}
+  body.admin-page.admin-nav-open::after{content:"";position:fixed;inset:0;background:rgba(7,24,40,.45);z-index:25;backdrop-filter:blur(1px)}
+  .admin-page .sidebar{width:min(88vw,310px);padding:14px 12px;box-shadow:10px 0 30px rgba(7,24,40,.22)}
+  .admin-page .sidebar.open{z-index:35}
+  .admin-page .sidebar-brand{padding-bottom:13px}
+  .admin-page .nav-list{gap:3px;padding:10px 0}
+  .admin-page .nav-btn{min-height:44px;padding:10px 12px;font-size:13px}
+  .admin-page .admin-topbar{position:sticky;top:0;z-index:20}
+  .admin-page .topbar-inner{padding:10px 11px;gap:9px}
+  .admin-page .topbar-admin>div:nth-child(2){min-width:0;flex:1}
+  .admin-page #pageTitle{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .admin-page #systemMeta{display:none}
+  .admin-page .top-actions{gap:6px}
+  .admin-page #refreshAllBtn{min-width:42px;padding:8px 10px;font-size:0}
+  .admin-page #refreshAllBtn::before{content:"↻";font-size:20px;line-height:1}
+  .admin-page .icon-btn{width:42px;height:42px;min-width:42px}
+  .admin-page .content{padding:11px 10px 24px;max-width:none}
+  .admin-page .global-message{position:sticky;top:62px;z-index:18}
+  .admin-page .section-head{align-items:stretch;flex-direction:column;gap:9px;margin-bottom:11px}
+  .admin-page .section-head h2{font-size:20px;margin-bottom:3px}
+  .admin-page .section-head .muted{font-size:12px;line-height:1.4}
+  .admin-page .section-actions,.admin-page .toolbar{width:100%;display:grid;grid-template-columns:1fr;gap:8px}
+  .admin-page .toolbar .field,.admin-page .toolbar .field.small{min-width:0;max-width:none;width:100%;flex:none}
+  .admin-page .toolbar>.btn,.admin-page .section-actions>.btn{width:100%;min-height:44px}
+  .admin-page .panel{padding:14px;border-radius:12px;box-shadow:0 3px 12px rgba(20,40,70,.055)}
+  .admin-page .panel h3{font-size:16px}
+  .admin-page .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .admin-page .kpi{min-height:91px;padding:12px;border-radius:11px}
+  .admin-page .kpi .label{font-size:9.5px;line-height:1.25}
+  .admin-page .kpi .value{font-size:clamp(21px,7vw,27px);margin-top:5px}
+  .admin-page .kpi .detail{font-size:10px;margin-top:6px}
+  .admin-page .grid-2,.admin-page .grid-3,.admin-page .grid-4{grid-template-columns:1fr;gap:10px}
+  .admin-page .form-grid{grid-template-columns:1fr;gap:9px}
+  .admin-page .form-grid .span2,.admin-page .form-grid .span4{grid-column:auto}
+  .admin-page .field input,.admin-page .field select,.admin-page .field textarea{font-size:16px;min-height:44px}
+  .admin-page .btn{min-height:44px}
+  .admin-page .summary-box{padding:14px;border-radius:11px}
+  .admin-page .summary-box p{font-size:13px;line-height:1.48}
+  .admin-page .forecast-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .admin-page .forecast-day{padding:9px 6px}
+  .admin-page .forecast-day .pct{font-size:18px}
+  .admin-page .svg-chart{width:100%;min-height:0;height:auto;aspect-ratio:1.65/1;border-radius:9px}
+  .admin-page .chart-legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;font-size:10px}
+  .admin-page .bar-row{grid-template-columns:minmax(82px,1fr) minmax(80px,2fr) 38px;gap:6px;font-size:11px}
+  .admin-page .metric-row{font-size:12px;align-items:flex-start}
+  .admin-page .metric-row strong{text-align:right;font-size:13px}
+  .admin-page .bed-map{grid-template-columns:1fr;gap:8px}
+  .admin-page .room-card{padding:10px}
+  .admin-page .bed-chip{min-height:42px;padding:9px 11px}
+  .admin-page .legend{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .admin-page .legend span{text-align:center}
+  .admin-page .tabs-inline{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .admin-page .tab-chip{min-height:42px}
+  .admin-page .exception{padding:10px}
+  .admin-page .exception .exception-head{align-items:flex-start}
+  .admin-page .action-cell{display:grid;grid-template-columns:1fr;gap:6px}
+  .admin-page .small-btn{width:100%;min-height:38px}
+  .admin-page .drop-zone{padding:14px}
+
+  /* Tablas se convierten en fichas: sin scroll horizontal */
+  .admin-page .responsive-data-wrap{overflow:visible;border:0;background:transparent;box-shadow:none}
+  .admin-page .responsive-data-wrap .data-table{display:block;background:transparent}
+  .admin-page .responsive-data-wrap .data-table thead{display:none}
+  .admin-page .responsive-data-wrap .data-table tbody{display:grid;grid-template-columns:1fr;gap:9px}
+  .admin-page .responsive-data-wrap .data-table tr{display:block;background:#fff;border:1px solid var(--bi-line);border-radius:11px;overflow:hidden;box-shadow:0 2px 8px rgba(20,40,70,.04)}
+  .admin-page .responsive-data-wrap .data-table td{display:grid;grid-template-columns:minmax(92px,38%) minmax(0,1fr);gap:8px;align-items:start;width:100%;padding:8px 10px;border-bottom:1px solid #edf1f4;white-space:normal;overflow-wrap:anywhere;font-size:12px}
+  .admin-page .responsive-data-wrap .data-table td:last-child{border-bottom:0}
+  .admin-page .responsive-data-wrap .data-table td::before{content:attr(data-label);color:#71808d;font-size:9px;font-weight:900;letter-spacing:.045em;text-transform:uppercase;line-height:1.4}
+  .admin-page .responsive-data-wrap .data-table td:empty::after{content:"—";color:var(--muted)}
+  .admin-page .responsive-data-wrap .data-table tr:hover td{background:#fff}
+  .admin-page .responsive-data-wrap+.footnote{text-align:left;margin:8px 2px 0}
+  .admin-page .detail-dialog{width:calc(100% - 16px);max-height:92vh;border-radius:12px}
+  .admin-page .dialog-head{padding:11px 12px}
+  .admin-page .dialog-body{padding:12px;max-height:78vh}
+}
+
+@media(max-width:380px){
+  .admin-page .kpi-grid{grid-template-columns:1fr}
+  .admin-page .forecast-grid{grid-template-columns:1fr 1fr}
+  .admin-page .chart-legend{grid-template-columns:1fr}
+  .admin-page .responsive-data-wrap .data-table td{grid-template-columns:1fr;gap:3px}
+}
+
+@media(min-width:721px) and (max-width:900px){
+  .admin-page .sidebar{width:280px}
+  .admin-page .content{padding:14px}
+}
+
+@media(min-width:1400px){
+  .admin-page .kpi-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .admin-page .panel{padding:21px}
+}
+
+@media(prefers-reduced-motion:reduce){.admin-page *{scroll-behavior:auto!important;transition:none!important}}

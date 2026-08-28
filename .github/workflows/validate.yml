@@ -30,6 +30,7 @@ jobs:
           node --check assets/echarts-dashboard.js
           node --check assets/control-center-echarts.js
           node --check assets/advanced-sections-echarts.js
+          node --check assets/advanced-gauge-fix.js
           node --check assets/public-date.js
       - name: Pruebas funcionales v5.6.0
         run: node tests/functional-smoke.mjs
@@ -53,6 +54,7 @@ jobs:
           test -f assets/echarts-dashboard.css
           test -f assets/control-center-echarts.js
           test -f assets/advanced-sections-echarts.js
+          test -f assets/advanced-gauge-fix.js
           grep -q "CONSULTA DE ASIGNACIÓN" index.html
           grep -q "VER MI ASIGNACIÓN" index.html
           grep -q "Centro de Gestión" admin.html
@@ -72,3 +74,4 @@ jobs:
           grep -q "Evolución de ocupación" assets/echarts-dashboard.js
           grep -q "control-center-echarts.js" assets/echarts-loader.js
           grep -q "advanced-sections-echarts.js" assets/echarts-loader.js
+          grep -q "advanced-gauge-fix.js" assets/echarts-loader.js

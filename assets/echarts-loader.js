@@ -17,6 +17,7 @@
     addEnhancement('assets/control-center-echarts.js','data-camp-control-echarts');
     addEnhancement('assets/advanced-sections-echarts.js','data-camp-advanced-echarts');
     addEnhancement('assets/advanced-gauge-fix.js','data-camp-gauge-fix');
+    addEnhancement('assets/operations-suite-echarts.js','data-camp-operations-echarts');
   };
   if(window.echarts){loadEnhancement();return;}
   const script=document.createElement('script');

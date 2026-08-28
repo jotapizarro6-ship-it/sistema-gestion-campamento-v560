@@ -67,6 +67,7 @@ jobs:
           grep -q "COPIAR ASIGNACIÓN" assets/public-worker-v2.js
           grep -q "NUEVA CONSULTA" assets/public-worker-v2.js
           grep -q "CONSULTANDO" assets/public-worker-v2.js
+          ! grep -q "summary.className='public-location-path'" assets/public-worker-v2.js
           grep -q "Centro de Gestión" admin.html
           grep -q "Dashboard gerencial" admin.html
           grep -q "Cargar Excel" admin.html

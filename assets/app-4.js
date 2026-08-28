@@ -11,11 +11,16 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   ecStyle.rel='stylesheet';
   ecStyle.href='assets/echarts-dashboard.css';
   document.head.appendChild(ecStyle);
+  const ccStyle=document.createElement('link');
+  ccStyle.rel='stylesheet';
+  ccStyle.href='assets/control-center.css';
+  document.head.appendChild(ccStyle);
   document.write('<script src="assets/app-4-core.js"></script>');
   document.write('<script src="assets/audit-fixes.js"></script>');
   document.write('<script src="assets/final-audit-fixes.js"></script>');
   document.write('<script src="assets/responsive-admin.js"></script>');
   document.write('<script src="assets/bi-dashboard.js"></script>');
+  document.write('<script src="assets/control-center.js"></script>');
   document.write('<script src="assets/persistent-errors.js"></script>');
   document.write('<script src="assets/echarts-loader.js"></script>');
 }

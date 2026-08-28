@@ -1,0 +1,296 @@
+/* Capa visual exclusiva de la consulta pública. No modifica lógica ni APIs. */
+.public-page{
+  min-height:100vh;
+  min-height:100svh;
+  background:
+    radial-gradient(circle at 50% -10%,rgba(23,105,170,.14),transparent 42%),
+    linear-gradient(180deg,#eef3f8 0%,#f7f9fc 42%,#eef3f7 100%);
+  color:#111827;
+}
+.public-assignment-wrap{
+  width:min(1180px,100%);
+  max-width:1180px;
+  margin:0 auto;
+  padding:clamp(18px,3vw,42px);
+  display:flex;
+  align-items:center;
+  min-height:100vh;
+  min-height:100svh;
+}
+.public-assignment-card{
+  width:100%;
+  padding:clamp(26px,4.8vw,58px);
+  border:1px solid rgba(148,163,184,.35);
+  border-radius:28px;
+  background:rgba(255,255,255,.96);
+  box-shadow:0 28px 80px rgba(15,45,74,.14),0 3px 12px rgba(15,45,74,.06);
+  overflow:hidden;
+}
+.public-hero{max-width:100%;}
+.public-icon{
+  width:64px;
+  height:64px;
+  margin:0 auto 20px;
+  display:grid;
+  place-items:center;
+  border-radius:18px;
+  background:linear-gradient(145deg,#fff4df,#ffe7c2);
+  border:1px solid #f3d7a8;
+  font-size:36px;
+  box-shadow:0 10px 24px rgba(148,94,26,.12);
+}
+.public-heading-row{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:24px;
+}
+.public-eyebrow{margin-bottom:8px;color:#1769aa;}
+.public-assignment-card h1{
+  margin:0;
+  font-size:clamp(34px,5vw,64px);
+  line-height:.98;
+  letter-spacing:-.035em;
+  font-weight:950;
+  color:#0d1726;
+}
+.public-date{
+  flex:0 0 auto;
+  min-width:176px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:14px 18px;
+  border-radius:16px;
+  background:#f1f5f9;
+  border:1px solid #dde5ee;
+  color:#172236;
+  font-size:18px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+}
+.public-date span{font-size:20px;}
+.public-date strong{font-variant-numeric:tabular-nums;letter-spacing:.01em;}
+.public-intro{
+  margin:26px 0 30px;
+  color:#536176;
+  font-size:clamp(17px,2vw,22px);
+  line-height:1.5;
+  max-width:940px;
+}
+.public-form{gap:12px;}
+.public-rut-field>span{
+  color:#26364a;
+  font-size:13px;
+  letter-spacing:.12em;
+  font-weight:900;
+}
+.public-rut-field input{
+  min-height:84px;
+  padding:14px 22px;
+  border:2px solid #c9d4e2;
+  border-radius:18px;
+  text-align:center;
+  font-size:clamp(27px,4vw,42px);
+  font-weight:900;
+  letter-spacing:.055em;
+  color:#182235;
+  background:#fff;
+  font-variant-numeric:tabular-nums;
+  transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+.public-rut-field input::placeholder{color:#7f8998;opacity:.72;}
+.public-rut-field input:focus{
+  border-color:#1769aa;
+  box-shadow:0 0 0 5px rgba(23,105,170,.13),0 10px 28px rgba(23,105,170,.08);
+}
+.public-help{
+  margin:-2px 2px 2px;
+  color:#718096;
+  font-size:13px;
+  line-height:1.4;
+}
+.public-submit{
+  width:100%;
+  min-height:72px;
+  margin-top:2px;
+  border-radius:18px;
+  background:linear-gradient(135deg,#0b1626,#111d30);
+  color:#fff;
+  font-size:clamp(17px,2vw,22px);
+  letter-spacing:.025em;
+  font-weight:950;
+  box-shadow:0 14px 30px rgba(10,22,38,.2);
+  transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;
+}
+.public-submit:hover{transform:translateY(-1px);box-shadow:0 17px 34px rgba(10,22,38,.24);filter:brightness(1.04);}
+.public-submit:active{transform:translateY(0);}
+.public-submit:focus-visible{outline:4px solid rgba(23,105,170,.28);outline-offset:3px;}
+.public-result{margin-top:24px;}
+.public-result:empty{margin-top:0;}
+.public-result .notice{
+  border-radius:20px;
+  padding:20px 22px;
+  font-size:16px;
+  line-height:1.5;
+  box-shadow:0 10px 30px rgba(15,45,74,.08);
+}
+.public-result .notice.info{background:#edf6fd;border:1px solid #c7e0f3;color:#23577f;}
+.public-result .notice.warn{background:#fff8e8;border:1px solid #efd69f;color:#72500d;}
+.public-result .notice.error{background:#fff0f2;border:1px solid #efc4cb;color:#8d2430;}
+.public-result .notice.ok{
+  position:relative;
+  background:linear-gradient(145deg,#ffffff 0%,#f5fbff 100%);
+  border:1px solid #bcd8ec;
+  color:#172236;
+  padding:26px;
+  box-shadow:0 18px 46px rgba(23,105,170,.12);
+}
+.public-result .notice.ok::before{
+  content:'✓ ASIGNACIÓN ENCONTRADA';
+  display:inline-flex;
+  margin-bottom:12px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#e8f7ef;
+  color:#0e6841;
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:.08em;
+}
+.public-result .notice.ok>strong:first-of-type{
+  display:block;
+  margin:0 0 16px;
+  color:#0d1726;
+  font-size:clamp(22px,3vw,32px);
+  line-height:1.15;
+  font-weight:950;
+}
+.public-result .assignment-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+  margin-top:0;
+}
+.public-result .assignment-item{
+  position:relative;
+  min-height:116px;
+  padding:18px 16px 14px;
+  border:1px solid #dbe5ef;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 6px 18px rgba(18,45,74,.05);
+}
+.public-result .assignment-item::before{
+  display:block;
+  margin-bottom:10px;
+  font-size:22px;
+  line-height:1;
+}
+.public-result .assignment-item:nth-child(1)::before{content:'🏢';}
+.public-result .assignment-item:nth-child(2)::before{content:'🚪';}
+.public-result .assignment-item:nth-child(3)::before{content:'🛏️';}
+.public-result .assignment-item:nth-child(4)::before{content:'🕒';}
+.public-result .assignment-item small{
+  color:#66758a;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+  font-weight:900;
+}
+.public-result .assignment-item b{
+  margin-top:6px;
+  color:#142033;
+  font-size:clamp(19px,2vw,25px);
+  line-height:1.18;
+  font-weight:950;
+  overflow-wrap:anywhere;
+}
+.public-footnote{
+  margin-top:24px;
+  color:#7a8798;
+  font-size:12px;
+  line-height:1.5;
+}
+
+/* Tablet: mismo contenido, jerarquía en dos columnas. */
+@media (min-width:501px) and (max-width:800px){
+  .public-assignment-wrap{padding:24px;align-items:flex-start;}
+  .public-assignment-card{padding:34px;border-radius:22px;}
+  .public-heading-row{align-items:flex-start;}
+  .public-assignment-card h1{font-size:42px;}
+  .public-date{min-width:156px;padding:12px 14px;font-size:16px;}
+  .public-result .assignment-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+
+/* Smartphone: lectura vertical, controles táctiles grandes y sin desplazamiento horizontal. */
+@media (max-width:500px){
+  .public-assignment-wrap{
+    width:100%;
+    min-height:100svh;
+    padding:12px;
+    align-items:flex-start;
+  }
+  .public-assignment-card{
+    padding:24px 18px 22px;
+    border-radius:20px;
+    box-shadow:0 15px 38px rgba(15,45,74,.12);
+  }
+  .public-icon{width:54px;height:54px;margin-bottom:16px;border-radius:15px;font-size:30px;}
+  .public-heading-row{display:block;}
+  .public-eyebrow{text-align:center;font-size:10px;}
+  .public-assignment-card h1{
+    text-align:center;
+    font-size:clamp(30px,10vw,40px);
+    line-height:1.02;
+    letter-spacing:-.025em;
+  }
+  .public-date{
+    width:max-content;
+    min-width:0;
+    margin:16px auto 0;
+    padding:10px 14px;
+    font-size:15px;
+    border-radius:13px;
+  }
+  .public-intro{
+    margin:20px 0 24px;
+    text-align:center;
+    font-size:16px;
+    line-height:1.5;
+  }
+  .public-rut-field>span{font-size:12px;}
+  .public-rut-field input{
+    min-height:70px;
+    padding:12px 10px;
+    border-radius:15px;
+    font-size:clamp(25px,8vw,34px);
+    letter-spacing:.025em;
+  }
+  .public-help{text-align:center;font-size:12px;}
+  .public-submit{
+    min-height:64px;
+    border-radius:15px;
+    font-size:17px;
+  }
+  .public-result{margin-top:18px;}
+  .public-result .notice{padding:17px;font-size:14px;border-radius:16px;}
+  .public-result .notice.ok{padding:20px 16px;}
+  .public-result .notice.ok::before{font-size:10px;}
+  .public-result .notice.ok>strong:first-of-type{text-align:center;font-size:23px;}
+  .public-result .assignment-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+  .public-result .assignment-item{min-height:106px;padding:14px 10px;border-radius:14px;text-align:center;}
+  .public-result .assignment-item::before{font-size:20px;margin-bottom:8px;}
+  .public-result .assignment-item small{font-size:10px;}
+  .public-result .assignment-item b{font-size:18px;}
+  .public-footnote{margin-top:20px;font-size:11px;}
+}
+
+@media (max-width:350px){
+  .public-result .assignment-grid{grid-template-columns:1fr;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .public-rut-field input,.public-submit{transition:none;}
+  .public-submit:hover{transform:none;}
+}

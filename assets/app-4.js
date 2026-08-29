@@ -11,6 +11,7 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   addStyle('assets/operations-suite.css');
   addStyle('assets/whatif-clarity.css');
   addStyle('assets/integrity-executive.css?v=20260828-integrity1');
+  addStyle('assets/workforce-mod-moi.css?v=20260829-modmoi1');
   document.write('<script src="assets/app-4-core.js"></script>');
   document.write('<script src="assets/consults-export-xlsx.js?v=20260829-cleanup1"></script>');
   document.write('<script src="assets/audit-fixes.js"></script>');
@@ -28,6 +29,7 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/whatif-clarity.js"></script>');
   document.write('<script src="assets/governance.js"></script>');
   document.write('<script src="assets/integrity-executive.js?v=20260828-integrity1"></script>');
+  document.write('<script src="assets/workforce-mod-moi.js?v=20260829-modmoi1"></script>');
   document.write('<script src="assets/progressive-admin-render.js?v=20260829-deepnav1"></script>');
   document.write('<script src="assets/high-volume-runtime.js?v=20260829-hv2"></script>');
   document.write('<script src="assets/high-volume-post-inline.js?v=20260829-hv1"></script>');

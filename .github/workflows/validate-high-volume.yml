@@ -2,18 +2,29 @@ name: Validar Rendimiento Alto Volumen
 
 on:
   push:
+    branches: ["main", "dev-*"]
+  pull_request:
     branches: ["main"]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: high-volume-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   high-volume:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Fijar Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
       - name: Validar capas de rendimiento
         run: |
           node --check assets/semantic-model-runtime.js

@@ -2,6 +2,7 @@
 (()=>{
   const SHEETJS_URL='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
   let sheetJsPromise=null;
+  let consultsObserver=null;
 
   const text=v=>String(v??'').trim();
   const validDate=v=>{
@@ -12,6 +13,12 @@
     const d=new Date();
     const pad=n=>String(n).padStart(2,'0');
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  };
+  const getConsults=()=>{
+    try{
+      if(typeof A!=='undefined'&&A&&Array.isArray(A.consults))return A.consults;
+    }catch{}
+    return Array.isArray(window.A?.consults)?window.A.consults:[];
   };
 
   function consultsToRows(consults){
@@ -49,7 +56,7 @@
   }
 
   async function exportConsultsXlsx(){
-    const rows=consultsToRows(window.A?.consults||[]);
+    const rows=consultsToRows(getConsults());
     if(!rows.length){
       if(typeof showMessage==='function')showMessage('No hay consultas RUT para exportar.','error');
       return;
@@ -84,26 +91,51 @@
   }
 
   function enhanceConsultsView(){
-    const view=document.querySelector('#view-consults');
-    if(!view)return;
-    const head=view.querySelector('.section-head');
-    if(!head||head.querySelector('#consultsExcelBtn'))return;
-    const count=(window.A?.consults||[]).length;
-    const actions=document.createElement('div');
+    const view=document.querySelector?.('#view-consults');
+    if(!view)return false;
+    const head=view.querySelector?.('.section-head');
+    if(!head)return false;
+    let actions=head.querySelector?.('#consultsExportActions');
+    const count=getConsults().length;
+    if(actions){
+      const badge=actions.querySelector?.('[data-consults-count]');
+      if(badge)badge.textContent=`${count} consulta${count===1?'':'s'}`;
+      return true;
+    }
+    actions=document.createElement('div');
+    actions.id='consultsExportActions';
     actions.className='toolbar';
-    actions.innerHTML=`<span class="badge blue">${count} consulta${count===1?'':'s'}</span><button id="consultsExcelBtn" class="btn btn-success" type="button">Descargar Excel (.xlsx)</button>`;
+    actions.innerHTML=`<span class="badge blue" data-consults-count>${count} consulta${count===1?'':'s'}</span><button id="consultsExcelBtn" class="btn btn-success" type="button">Descargar Excel (.xlsx)</button>`;
     head.appendChild(actions);
-    actions.querySelector('#consultsExcelBtn')?.addEventListener('click',exportConsultsXlsx);
+    actions.querySelector?.('#consultsExcelBtn')?.addEventListener('click',exportConsultsXlsx);
+    return true;
   }
 
-  if(typeof window.renderConsults==='function'){
-    const baseRenderConsults=window.renderConsults;
-    window.renderConsults=function(){
-      const out=baseRenderConsults.apply(this,arguments);
-      enhanceConsultsView();
-      return out;
-    };
+  function installConsultsObserver(){
+    const view=document.querySelector?.('#view-consults');
+    if(!view)return false;
+    enhanceConsultsView();
+    if(typeof MutationObserver==='function'&&!consultsObserver){
+      consultsObserver=new MutationObserver(()=>enhanceConsultsView());
+      consultsObserver.observe(view,{childList:true,subtree:true});
+    }
+    return true;
   }
 
-  window.CampConsultExport={consultsToRows,exportConsultsXlsx,enhanceConsultsView};
+  const boot=()=>{
+    if(installConsultsObserver())return;
+    if(typeof setInterval!=='function')return;
+    let tries=0;
+    const timer=setInterval(()=>{
+      tries++;
+      if(installConsultsObserver()||tries>=40)clearInterval(timer);
+    },250);
+  };
+
+  if(document.readyState==='loading'&&typeof document.addEventListener==='function')document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
+  window.addEventListener?.('hashchange',()=>setTimeout(enhanceConsultsView,0));
+  window.addEventListener?.('focus',()=>setTimeout(enhanceConsultsView,0));
+
+  window.CampConsultExport={consultsToRows,exportConsultsXlsx,enhanceConsultsView,getConsults,installConsultsObserver};
 })();

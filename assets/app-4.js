@@ -32,4 +32,5 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/high-volume-runtime.js?v=20260829-hv2"></script>');
   document.write('<script src="assets/high-volume-post-inline.js?v=20260829-hv1"></script>');
   document.write('<script src="assets/echarts-loader.js?v=20260829-hv1"></script>');
+  document.write('<script src="assets/admin-performance-guard.js?v=20260829-adminperf1"></script>');
 }

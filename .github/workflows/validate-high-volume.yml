@@ -31,5 +31,5 @@ jobs:
           grep -q "CampSemanticModel" assets/semantic-model-runtime.js
           grep -q "CampEChartsLazy" assets/echarts-loader.js
           grep -q "forceFunctionRegion" assets/high-volume-runtime.js
-      - name: Prueba sintética 800 trabajadores y 1200 camas
+      - name: Prueba sintética 2000 trabajadores y 2000 camas
         run: node tests/high-volume-performance-smoke.mjs

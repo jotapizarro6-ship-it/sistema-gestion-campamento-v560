@@ -16,6 +16,7 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/audit-fixes.js"></script>');
   document.write('<script src="assets/final-audit-fixes.js"></script>');
   document.write('<script src="assets/responsive-admin.js"></script>');
+  document.write('<script src="assets/semantic-model-runtime.js?v=20260829-semantic1"></script>');
   document.write('<script src="assets/bi-dashboard.js"></script>');
   document.write('<script src="assets/control-center.js"></script>');
   document.write('<script src="assets/advanced-sections.js"></script>');
@@ -28,7 +29,7 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/governance.js"></script>');
   document.write('<script src="assets/integrity-executive.js?v=20260828-integrity1"></script>');
   document.write('<script src="assets/progressive-admin-render.js?v=20260829-progressive1"></script>');
-  document.write('<script src="assets/high-volume-runtime.js?v=20260829-hv1"></script>');
+  document.write('<script src="assets/high-volume-runtime.js?v=20260829-hv2"></script>');
   document.write('<script src="assets/high-volume-post-inline.js?v=20260829-hv1"></script>');
   document.write('<script src="assets/echarts-loader.js?v=20260829-hv1"></script>');
 }

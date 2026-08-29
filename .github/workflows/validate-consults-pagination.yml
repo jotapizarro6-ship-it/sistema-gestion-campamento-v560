@@ -29,3 +29,5 @@ jobs:
         run: node --check assets/consults-export-xlsx.js
       - name: Probar 2050 consultas con paginación de servidor
         run: node tests/consults-export-smoke.mjs
+      - name: Validar seguridad de limpieza por fecha
+        run: node tests/consults-cleanup-api-smoke.mjs

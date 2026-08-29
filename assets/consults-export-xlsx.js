@@ -97,15 +97,16 @@
     if(!head)return false;
     let actions=head.querySelector?.('#consultsExportActions');
     const count=getConsults().length;
+    const label=`${count} consulta${count===1?'':'s'}`;
     if(actions){
       const badge=actions.querySelector?.('[data-consults-count]');
-      if(badge)badge.textContent=`${count} consulta${count===1?'':'s'}`;
+      if(badge&&badge.textContent!==label)badge.textContent=label;
       return true;
     }
     actions=document.createElement('div');
     actions.id='consultsExportActions';
     actions.className='toolbar';
-    actions.innerHTML=`<span class="badge blue" data-consults-count>${count} consulta${count===1?'':'s'}</span><button id="consultsExcelBtn" class="btn btn-success" type="button">Descargar Excel (.xlsx)</button>`;
+    actions.innerHTML=`<span class="badge blue" data-consults-count>${label}</span><button id="consultsExcelBtn" class="btn btn-success" type="button">Descargar Excel (.xlsx)</button>`;
     head.appendChild(actions);
     actions.querySelector?.('#consultsExcelBtn')?.addEventListener('click',exportConsultsXlsx);
     return true;
@@ -116,8 +117,10 @@
     if(!view)return false;
     enhanceConsultsView();
     if(typeof MutationObserver==='function'&&!consultsObserver){
+      // Solo observamos reemplazos directos de la vista. Observar todo el subárbol
+      // hacía que el contador del propio exportador reactivara el observer sin fin.
       consultsObserver=new MutationObserver(()=>enhanceConsultsView());
-      consultsObserver.observe(view,{childList:true,subtree:true});
+      consultsObserver.observe(view,{childList:true});
     }
     return true;
   }

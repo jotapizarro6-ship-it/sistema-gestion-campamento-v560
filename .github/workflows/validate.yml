@@ -45,6 +45,7 @@ jobs:
           node --check assets/governance.js
           node --check assets/integrity-executive.js
           node --check assets/admin-performance-guard.js
+          node --check assets/consults-export-xlsx.js
           node --check assets/echarts-loader.js
           node --check assets/echarts-dashboard.js
           node --check assets/control-center-echarts.js
@@ -61,6 +62,8 @@ jobs:
         run: node tests/integrity-executive-smoke.mjs
       - name: Prueba de estabilidad administrativa
         run: node tests/admin-performance-guard-smoke.mjs
+      - name: Prueba navegación Trabajadores a Consultas RUT
+        run: node tests/consults-navigation-freeze-smoke.mjs
       - name: Validar estructura web
         run: |
           test -f index.html
@@ -90,6 +93,7 @@ jobs:
           test -f assets/integrity-executive.js
           test -f assets/integrity-executive.css
           test -f assets/admin-performance-guard.js
+          test -f assets/consults-export-xlsx.js
           test -f assets/echarts-loader.js
           test -f assets/echarts-dashboard.js
           test -f assets/echarts-dashboard.css
@@ -100,6 +104,7 @@ jobs:
           test -f tests/operations-suite-smoke.mjs
           test -f tests/integrity-executive-smoke.mjs
           test -f tests/admin-performance-guard-smoke.mjs
+          test -f tests/consults-navigation-freeze-smoke.mjs
           grep -q "CONSULTA DE ASIGNACIÓN" index.html
           grep -q "VER MI ASIGNACIÓN" index.html
           grep -q "Consulta rápida de alojamiento" index.html

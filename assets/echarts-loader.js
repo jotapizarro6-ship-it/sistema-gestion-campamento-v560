@@ -3,7 +3,7 @@
   if(typeof document==='undefined'||window.__CAMP_ECHARTS_LAZY_LOADER__)return;
   window.__CAMP_ECHARTS_LAZY_LOADER__=true;
   const VERSION='6.1.0';
-  const BUST='20260829-hv1';
+  const BUST='20260829-deepnav1';
   const SRC=`https://cdn.jsdelivr.net/npm/echarts@${VERSION}/dist/echarts.min.js`;
   let started=false,enhanced=false,idleHandle=null;
   const idle=(fn,timeout=1600)=>typeof requestIdleCallback==='function'?requestIdleCallback(fn,{timeout}):setTimeout(fn,Math.min(timeout,450));

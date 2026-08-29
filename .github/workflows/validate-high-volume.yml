@@ -2,7 +2,7 @@ name: Validar Rendimiento Alto Volumen
 
 on:
   push:
-    branches: ["main", "dev-arquitectura-bi-alto-volumen-20260829"]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:

@@ -12,10 +12,13 @@ assert.ok(!/new\s+MutationObserver|MutationObserver\s*\(/.test(consultSrc),'Cons
 assert.ok(!/new\s+MutationObserver|MutationObserver\s*\(/.test(responsiveSrc),'La capa responsiva no debe observar globalmente el DOM.');
 assert.ok(!/new\s+MutationObserver|MutationObserver\s*\(/.test(chartsSrc),'El estabilizador ECharts no debe observar globalmente el DOM.');
 assert.match(consultSrc,/const PAGE_SIZE=100/,'Consultas RUT debe mantener el DOM acotado por paginación.');
-assert.match(consultSrc,/rows\.slice\(start,start\+PAGE_SIZE\)/,'Consultas RUT debe renderizar solo la página visible.');
+assert.match(consultSrc,/campamento-consults-api/,'Consultas RUT debe usar la API paginada dedicada.');
+assert.match(consultSrc,/requestConsultPage\(pageIndex=0,pageSize=PAGE_SIZE/,'Debe existir paginación real desde servidor.');
+assert.match(consultSrc,/rows\.slice\(0,PAGE_SIZE\)/,'La vista debe renderizar únicamente las filas recibidas para la página actual.');
+assert.match(consultSrc,/consultsTotal/,'El total histórico debe mantenerse separado de las filas visibles.');
 assert.match(progressiveSrc,/__campSingleNavigationOwner=true/,'Debe existir un único propietario explícito de la navegación.');
 assert.match(progressiveSrc,/requestAnimationFrame\(\(\)=>setTimeout\(fn,0\)\)/,'El render debe ceder un repintado al navegador antes del trabajo de la vista.');
-assert.match(loaderSrc,/20260829-deepnav1/,'Los recursos corregidos deben usar una versión nueva para invalidar caché.');
+assert.match(loaderSrc,/20260829-serverpage1/,'El módulo paginado debe usar una versión nueva para invalidar caché.');
 
 class FakeClassList{
   constructor(...values){this.values=new Set(values)}
@@ -111,4 +114,4 @@ assert.equal(location.hash,'#consults');
 assert.ok(views.consults.classList.contains('active'),'Consultas RUT debe quedar como única vista activa.');
 assert.ok(!views.workers.classList.contains('active'),'Trabajadores debe quedar oculto tras navegar a Consultas RUT.');
 
-console.log(`Consultas RUT navegación profunda: OK · 200 ciclos · ${taskCount} tareas finitas · render único · sin observers globales · paginación ${100}`);
+console.log(`Consultas RUT navegación profunda: OK · 200 ciclos · ${taskCount} tareas finitas · render único · sin observers globales · paginación servidor ${100}`);

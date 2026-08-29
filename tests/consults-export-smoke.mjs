@@ -16,7 +16,7 @@ const fetchMock=async input=>{
   requests++;
   const u=new URL(String(input));
   const page=Math.max(1,Number(u.searchParams.get('page')||1));
-  const size=Math.max(1,Math.min(500,Number(u.searchParams.get('page_size')||100));
+  const size=Math.max(1,Math.min(500,Number(u.searchParams.get('page_size')||100)));
   const start=(page-1)*size;
   const data=dataset.slice(start,start+size);
   return {ok:true,status:200,text:async()=>JSON.stringify({ok:true,data,total:dataset.length,page,page_size:size,pages:Math.ceil(dataset.length/size)})};

@@ -3,7 +3,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { performance } from 'node:perf_hooks';
 
-const source=['assets/app-1.js','assets/app-2a.js','assets/app-2b.js','assets/high-volume-runtime.js']
+const source=['assets/app-1.js','assets/app-2a.js','assets/app-2b.js','assets/semantic-model-runtime.js','assets/high-volume-runtime.js']
   .map(p=>fs.readFileSync(p,'utf8')).join('\n');
 
 const sandbox={console,Date,Intl,URL,setTimeout,clearTimeout,performance,location:{href:'https://example.test/admin.html',hash:'#overview'}};
@@ -49,11 +49,16 @@ const firstMs=performance.now()-t0;
 const t1=performance.now();
 const second=vm.runInContext('analytics(__data)',sandbox);
 const cachedMs=performance.now()-t1;
+const semantic=sandbox.CampSemanticModel.get(data);
 
 assert.equal(first.occupied,800,'debe procesar 800 trabajadores asignados');
 assert.equal(first.hm.items.length,1200,'debe procesar 1.200 camas físicas');
+assert.equal(first.hm.modules.length,10,'debe resumir correctamente los módulos');
+assert.equal(first.forecast.length,30,'debe mantener la proyección operacional de 30 días');
+assert.equal(semantic.occupiedKeys.size,800,'el modelo semántico debe indexar la ocupación una sola vez');
+assert.equal(semantic.capacityByDate.size,31,'el modelo semántico debe indexar capacidad por fecha');
 assert.strictEqual(first,second,'analytics debe reutilizar el resultado mientras A.data no cambie');
-assert.ok(firstMs<2500,`cálculo inicial demasiado lento: ${firstMs.toFixed(1)} ms`);
+assert.ok(firstMs<500,`cálculo inicial demasiado lento para 800/1200: ${firstMs.toFixed(1)} ms`);
 assert.ok(cachedMs<25,`lectura memoizada demasiado lenta: ${cachedMs.toFixed(1)} ms`);
 
 const idx=sandbox.CampHighVolume.buildWorkerIndex(workers);
@@ -64,4 +69,4 @@ assert.equal(page.pages,8);
 const found=sandbox.CampHighVolume.filterWorkerIndex(idx,'TRABAJADOR 0800');
 assert.equal(found.length,1,'la búsqueda indexada debe encontrar un trabajador en dotación alta');
 
-console.log(`High-volume smoke: OK · analytics inicial ${firstMs.toFixed(1)} ms · cache ${cachedMs.toFixed(2)} ms · 800 trabajadores · 1200 camas`);
+console.log(`High-volume semantic smoke: OK · analytics inicial ${firstMs.toFixed(1)} ms · semantic build ${semantic.built_ms.toFixed(1)} ms · cache ${cachedMs.toFixed(2)} ms · 800 trabajadores · 1200 camas`);

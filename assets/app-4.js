@@ -27,5 +27,6 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/whatif-clarity.js"></script>');
   document.write('<script src="assets/governance.js"></script>');
   document.write('<script src="assets/integrity-executive.js?v=20260828-integrity1"></script>');
+  document.write('<script src="assets/progressive-admin-render.js?v=20260829-progressive1"></script>');
   document.write('<script src="assets/echarts-loader.js?v=20260828-chartfix1"></script>');
 }

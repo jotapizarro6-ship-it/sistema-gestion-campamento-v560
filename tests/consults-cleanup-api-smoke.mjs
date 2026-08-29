@@ -9,9 +9,15 @@ assert.ok(src.indexOf('if(!await isAdmin(req))')>=0,'Debe rechazarse una sesión
 assert.ok(src.indexOf('if(!await isAdmin(req))')<src.indexOf('if(req.method==="DELETE")'),'La autenticación debe ejecutarse antes de cualquier borrado.');
 assert.match(src,/action==="delete_preview"/,'Debe existir una vista previa antes del borrado.');
 assert.match(src,/validDateKey\(u\.searchParams\.get\("date"\)\)/,'Toda limpieza debe exigir una fecha válida.');
-assert.match(src,/storedDatePrefix\(date\)/,'El borrado debe convertir la fecha operacional al formato histórico almacenado.');
-assert.match(src,/\.from\("consultation_log"\)\.delete\(\)\.like\("consultado_at",`\$\{prefix\},%`\)\.select\("id"\)/,'El DELETE debe quedar limitado exclusivamente a la fecha seleccionada.');
+assert.match(src,/function storedDatePatterns\(dateKey:string\)/,'Debe existir normalización explícita de formatos históricos.');
+assert.match(src,/`\$\{d\}-\$\{m\}-\$\{y\} %`/,'Debe reconocer el formato histórico real DD-MM-AAAA HH:mm:ss.');
+assert.match(src,/`\$\{d\}-\$\{m\}-\$\{y\},%`/,'Debe tolerar formato DD-MM-AAAA con coma.');
+assert.match(src,/`\$\{d\}-\$\{m\}-\$\{yy\} %`/,'Debe tolerar año de dos dígitos con espacio.');
+assert.match(src,/`\$\{d\}-\$\{m\}-\$\{yy\},%`/,'Debe tolerar año de dos dígitos con coma.');
+assert.match(src,/for\(const pattern of storedDatePatterns\(dateKey\)\)/,'Vista previa y borrado deben recorrer solo patrones de la fecha seleccionada.');
+assert.match(src,/\.from\("consultation_log"\)\.delete\(\)\.like\("consultado_at",pattern\)\.select\("id"\)/,'Cada DELETE debe quedar limitado por un patrón de fecha validado.');
 assert.ok(!/\.from\("consultation_log"\)\.delete\(\)(?!\.like)/.test(src),'No debe existir un borrado global de consultation_log.');
+assert.match(src,/const deleted=await deleteForDate\(date\)/,'El DELETE debe usar exclusivamente la función acotada por fecha.');
 assert.match(src,/DELETE_CONSULTATION_LOG_DATE/,'La limpieza debe quedar registrada como evento de auditoría.');
 assert.match(src,/\.from\("audit_log"\)\.insert\(/,'La API debe registrar auditoría después de la limpieza.');
 assert.match(src,/timezone:TZ/,'La operación debe declarar la zona horaria operacional.');
@@ -19,4 +25,4 @@ assert.match(src,/America\/Santiago/,'La fecha debe interpretarse según Chile.'
 assert.ok(!/sb_secret_[A-Za-z0-9_-]+/.test(src),'No debe existir una secret key literal en el código versionado.');
 assert.ok(!/SUPABASE_SERVICE_ROLE_KEY\s*=/.test(src),'No debe existir un service_role asignado como literal.');
 
-console.log('Consultas RUT cleanup API: OK · auth antes de DELETE · fecha obligatoria · sin borrado global · auditoría activa');
+console.log('Consultas RUT cleanup API: OK · auth antes de DELETE · soporta DD-MM-AAAA y DD-MM-AA · sin borrado global · auditoría activa');

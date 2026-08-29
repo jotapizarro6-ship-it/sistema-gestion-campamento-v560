@@ -15,7 +15,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Fijar Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Validar JavaScript crítico
+        run: |
+          node --check assets/app-4.js
+          node --check assets/semantic-model-runtime.js
+          node --check assets/high-volume-runtime.js
+          node --check assets/admin-performance-guard.js
+      - name: Pruebas funcionales críticas
+        run: |
+          node tests/functional-smoke.mjs
+          node tests/operations-suite-smoke.mjs
+          node tests/integrity-executive-smoke.mjs
+          node tests/admin-performance-guard-smoke.mjs
+      - name: Certificación de escala 2000x2000
+        run: node tests/high-volume-performance-smoke.mjs
+
   deploy:
+    needs: verify
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

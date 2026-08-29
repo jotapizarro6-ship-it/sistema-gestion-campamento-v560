@@ -1,0 +1,31 @@
+name: Validar Paginacion Consultas RUT
+
+on:
+  push:
+    branches: ["main", "dev-*"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-consults-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  consults-pagination:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Fijar Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Validar JavaScript de Consultas RUT
+        run: node --check assets/consults-export-xlsx.js
+      - name: Probar 2050 consultas con paginación de servidor
+        run: node tests/consults-export-smoke.mjs

@@ -16,9 +16,11 @@ assert.match(consultSrc,/campamento-consults-api/,'Consultas RUT debe usar la AP
 assert.match(consultSrc,/requestConsultPage\(pageIndex=0,pageSize=PAGE_SIZE/,'Debe existir paginación real desde servidor.');
 assert.match(consultSrc,/rows\.slice\(0,PAGE_SIZE\)/,'La vista debe renderizar únicamente las filas recibidas para la página actual.');
 assert.match(consultSrc,/consultsTotal/,'El total histórico debe mantenerse separado de las filas visibles.');
+assert.match(consultSrc,/Limpiar registros/,'Consultas RUT debe exponer la limpieza segura por fecha.');
+assert.match(consultSrc,/requestCleanupPreview/,'La limpieza debe mostrar una vista previa antes de borrar.');
 assert.match(progressiveSrc,/__campSingleNavigationOwner=true/,'Debe existir un único propietario explícito de la navegación.');
 assert.match(progressiveSrc,/requestAnimationFrame\(\(\)=>setTimeout\(fn,0\)\)/,'El render debe ceder un repintado al navegador antes del trabajo de la vista.');
-assert.match(loaderSrc,/20260829-serverpage1/,'El módulo paginado debe usar una versión nueva para invalidar caché.');
+assert.match(loaderSrc,/20260829-cleanup1/,'El módulo de Consultas RUT debe usar una versión nueva para invalidar caché.');
 
 class FakeClassList{
   constructor(...values){this.values=new Set(values)}
@@ -94,14 +96,12 @@ function flush(max=10000){
   assert.ok(n<max,'La navegación generó una cola de tareas sin fin.');
 }
 
-// Cambio rápido antes del siguiente paint: el render obsoleto debe cancelarse.
 context.switchView('workers');
 context.switchView('consults');
 flush();
 assert.equal(workerRenders,0,'Una vista reemplazada antes del paint no debe renderizarse.');
 assert.equal(consultRenders,1,'La vista final debe renderizarse exactamente una vez.');
 
-// 200 ciclos completos reproducen repetidamente el caso reportado Trabajadores -> Consultas RUT.
 for(let i=0;i<200;i++){
   context.switchView('workers');flush();
   context.switchView('consults');flush();

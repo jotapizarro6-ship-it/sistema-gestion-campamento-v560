@@ -17,10 +17,13 @@ jobs:
       - name: Sintaxis JavaScript
         run: |
           node --check assets/high-volume-runtime.js
+          node --check assets/high-volume-post-inline.js
           node --check assets/echarts-loader.js
           node --check assets/app-4.js
           grep -q "high-volume-runtime.js" assets/app-4.js
+          grep -q "high-volume-post-inline.js" assets/app-4.js
           grep -q "CampEChartsLazy" assets/echarts-loader.js
+          grep -q "forceFunctionRegion" assets/high-volume-runtime.js
       - name: Pruebas existentes
         run: |
           node tests/functional-smoke.mjs

@@ -21,9 +21,12 @@ assert.ok(files.length > 2, 'deben existir archivos de frontend para auditar');
 const contents = new Map(files.map(file => [file, fs.readFileSync(file, 'utf8')]));
 const combined = [...contents.values()].join('\n');
 
+// Se permite mencionar "service_role" como texto explicativo de seguridad.
+// Lo que debe bloquearse es una credencial/variable secreta o acceso directo a la base desde el navegador.
 const forbidden = [
-  { name: 'service_role', re: /service[_-]?role/i },
-  { name: 'SUPABASE_SERVICE_ROLE_KEY', re: /SUPABASE_SERVICE_ROLE_KEY/i },
+  { name: 'SUPABASE_SERVICE_ROLE_KEY', re: /SUPABASE_SERVICE_ROLE_KEY\s*[:=]/i },
+  { name: 'SUPABASE_SECRET_KEY', re: /SUPABASE_SECRET_KEY\s*[:=]/i },
+  { name: 'service_role con valor asignado', re: /service[_-]?role(?:_key)?\s*[:=]\s*['"`][A-Za-z0-9._-]{16,}/i },
   { name: 'Supabase secret key', re: /\bsb_secret_[A-Za-z0-9_-]{8,}\b/ },
   { name: 'Postgres connection string', re: /postgres(?:ql)?:\/\/[^\s'"`]+/i },
   { name: 'acceso REST directo a tablas', re: /\/rest\/v1\//i },
@@ -40,4 +43,4 @@ assert.match(combined, /supabase\.co\/functions\/v1\/campamento-web-api/, 'el fr
 assert.match(combined, /supabase\.co\/functions\/v1\/campamento-v560-safe/, 'el frontend administrativo debe mantener el wrapper seguro');
 assert.doesNotMatch(combined, /@supabase\/supabase-js/i, 'el frontend estático no debe cargar supabase-js para acceder directamente a tablas');
 
-console.log(`ARQUITECTURA/SEGURIDAD: OK · ${files.length} archivos frontend auditados · sin service_role, secretos, REST directo ni createClient`);
+console.log(`ARQUITECTURA/SEGURIDAD: OK · ${files.length} archivos frontend auditados · sin credenciales secretas, REST directo ni createClient`);

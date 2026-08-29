@@ -2,18 +2,29 @@ name: Validar Sistema Campamento
 
 on:
   push:
+    branches: ["main", "dev-*"]
+  pull_request:
     branches: ["main"]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: system-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Fijar Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
       - name: Validar JavaScript combinado
         run: |
           cat assets/app-1.js assets/app-2a.js assets/app-2b.js assets/app-3a.js assets/app-3b.js assets/app-4.js assets/final-audit-fixes.js > /tmp/campamento-app.js
@@ -41,6 +52,8 @@ jobs:
           node --check assets/operations-suite-echarts.js
           node --check assets/public-date.js
           node --check assets/public-worker-v2.js
+      - name: Guardas de arquitectura y secretos
+        run: node tests/architecture-security-smoke.mjs
       - name: Pruebas funcionales v5.6.0
         run: node tests/functional-smoke.mjs
       - name: Pruebas Centro de Control y What-if
@@ -84,6 +97,7 @@ jobs:
           test -f assets/operations-suite-echarts.js
           test -f tests/operations-suite-smoke.mjs
           test -f tests/integrity-executive-smoke.mjs
+          test -f tests/architecture-security-smoke.mjs
           grep -q "CONSULTA DE ASIGNACIÓN" index.html
           grep -q "VER MI ASIGNACIÓN" index.html
           grep -q "Consulta rápida de alojamiento" index.html

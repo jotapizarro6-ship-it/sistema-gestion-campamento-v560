@@ -46,6 +46,7 @@ jobs:
           node --check assets/integrity-executive.js
           node --check assets/admin-performance-guard.js
           node --check assets/consults-export-xlsx.js
+          node --check assets/workforce-mod-moi.js
           node --check assets/echarts-loader.js
           node --check assets/echarts-dashboard.js
           node --check assets/control-center-echarts.js
@@ -64,6 +65,8 @@ jobs:
         run: node tests/admin-performance-guard-smoke.mjs
       - name: Prueba navegación Trabajadores a Consultas RUT
         run: node tests/consults-navigation-freeze-smoke.mjs
+      - name: Prueba dotación MOD MOI 2000 trabajadores
+        run: node tests/workforce-mod-moi-smoke.mjs
       - name: Validar estructura web
         run: |
           test -f index.html
@@ -94,6 +97,8 @@ jobs:
           test -f assets/integrity-executive.css
           test -f assets/admin-performance-guard.js
           test -f assets/consults-export-xlsx.js
+          test -f assets/workforce-mod-moi.js
+          test -f assets/workforce-mod-moi.css
           test -f assets/echarts-loader.js
           test -f assets/echarts-dashboard.js
           test -f assets/echarts-dashboard.css
@@ -105,6 +110,7 @@ jobs:
           test -f tests/integrity-executive-smoke.mjs
           test -f tests/admin-performance-guard-smoke.mjs
           test -f tests/consults-navigation-freeze-smoke.mjs
+          test -f tests/workforce-mod-moi-smoke.mjs
           grep -q "CONSULTA DE ASIGNACIÓN" index.html
           grep -q "VER MI ASIGNACIÓN" index.html
           grep -q "Consulta rápida de alojamiento" index.html
@@ -158,3 +164,6 @@ jobs:
           grep -q "control-center-echarts.js" assets/echarts-loader.js
           grep -q "advanced-sections-echarts.js" assets/echarts-loader.js
           grep -q "advanced-gauge-fix.js" assets/echarts-loader.js
+          grep -q "Mano de Obra Directa / Indirecta" assets/workforce-mod-moi.js
+          grep -q "workforce-mod-moi.js" assets/app-4.js
+          grep -q "workforce-mod-moi.css" assets/app-4.js

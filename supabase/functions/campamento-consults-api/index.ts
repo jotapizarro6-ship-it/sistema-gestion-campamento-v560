@@ -56,15 +56,33 @@ function validDateKey(value:string|null){
   if(Number.isNaN(d.getTime()))return "";
   return d.toISOString().slice(0,10)===v?v:"";
 }
-function storedDatePrefix(dateKey:string){
+function storedDatePatterns(dateKey:string){
   const [y,m,d]=dateKey.split("-");
-  return `${d}-${m}-${y.slice(-2)}`;
+  const yy=y.slice(-2);
+  return [
+    `${d}-${m}-${y} %`,
+    `${d}-${m}-${y},%`,
+    `${d}-${m}-${yy} %`,
+    `${d}-${m}-${yy},%`
+  ];
 }
 async function countForDate(dateKey:string){
-  const prefix=storedDatePrefix(dateKey);
-  const {count,error}=await db.from("consultation_log").select("id",{count:"exact",head:true}).like("consultado_at",`${prefix},%`);
-  if(error)throw error;
-  return Number(count??0);
+  let total=0;
+  for(const pattern of storedDatePatterns(dateKey)){
+    const {count,error}=await db.from("consultation_log").select("id",{count:"exact",head:true}).like("consultado_at",pattern);
+    if(error)throw error;
+    total+=Number(count??0);
+  }
+  return total;
+}
+async function deleteForDate(dateKey:string){
+  const ids=new Set<string>();
+  for(const pattern of storedDatePatterns(dateKey)){
+    const {data,error}=await db.from("consultation_log").delete().like("consultado_at",pattern).select("id");
+    if(error)throw error;
+    for(const row of data??[])ids.add(String((row as any).id));
+  }
+  return ids.size;
 }
 async function auditDelete(dateKey:string,deleted:number){
   const {error}=await db.from("audit_log").insert({
@@ -99,10 +117,7 @@ Deno.serve(async(req:Request)=>{
     if(req.method==="DELETE"){
       const date=validDateKey(u.searchParams.get("date"));
       if(!date)return json({ok:false,error:"Fecha no válida"},400);
-      const prefix=storedDatePrefix(date);
-      const {data,error}=await db.from("consultation_log").delete().like("consultado_at",`${prefix},%`).select("id");
-      if(error)throw error;
-      const deleted=Array.isArray(data)?data.length:0;
+      const deleted=await deleteForDate(date);
       await auditDelete(date,deleted);
       return json({ok:true,date,deleted,timezone:TZ});
     }

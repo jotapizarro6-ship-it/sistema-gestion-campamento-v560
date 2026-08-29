@@ -31,12 +31,14 @@ jobs:
           node --check assets/semantic-model-runtime.js
           node --check assets/high-volume-runtime.js
           node --check assets/admin-performance-guard.js
+          node --check assets/consults-export-xlsx.js
       - name: Pruebas funcionales críticas
         run: |
           node tests/functional-smoke.mjs
           node tests/operations-suite-smoke.mjs
           node tests/integrity-executive-smoke.mjs
           node tests/admin-performance-guard-smoke.mjs
+          node tests/consults-navigation-freeze-smoke.mjs
       - name: Certificación de escala 2000x2000
         run: node tests/high-volume-performance-smoke.mjs
 

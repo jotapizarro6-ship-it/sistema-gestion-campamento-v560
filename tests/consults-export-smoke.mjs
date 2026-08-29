@@ -11,10 +11,22 @@ const dataset=Array.from({length:2050},(_,i)=>({
   modulo:'OP01',habitacion:String((i%100)+1),cama:'A',ip:'192.0.2.10'
 }));
 let requests=0;
+const maintenanceCalls=[];
 const adminState={token:'token-prueba',consults:[],consultsTotal:null,consultsPage:0};
-const fetchMock=async input=>{
+const fetchMock=async (input,init={})=>{
   requests++;
   const u=new URL(String(input));
+  const action=u.searchParams.get('action')||'';
+  const date=u.searchParams.get('date')||'';
+  const method=String(init.method||'GET').toUpperCase();
+  if(action==='delete_preview'){
+    maintenanceCalls.push({method,action,date});
+    return {ok:true,status:200,text:async()=>JSON.stringify({ok:true,date,count:37,timezone:'America/Santiago'})};
+  }
+  if(method==='DELETE'){
+    maintenanceCalls.push({method,action,date});
+    return {ok:true,status:200,text:async()=>JSON.stringify({ok:true,date,deleted:37,timezone:'America/Santiago'})};
+  }
   const page=Math.max(1,Number(u.searchParams.get('page')||1));
   const size=Math.max(1,Math.min(500,Number(u.searchParams.get('page_size')||100)));
   const start=(page-1)*size;
@@ -29,7 +41,7 @@ const context={
   fetch:fetchMock,
   URL,URLSearchParams,AbortController,
   CustomEvent:class{constructor(type,init){this.type=type;this.detail=init?.detail}},
-  console,Date,String,Number,Array,Object,Promise,Error,setTimeout,clearTimeout,
+  console,Date,String,Number,Array,Object,Promise,Error,Intl,setTimeout,clearTimeout,
   alert(){},esc:v=>String(v??''),table:()=>''
 };
 vm.createContext(context);
@@ -70,5 +82,23 @@ assert.equal(all.at(-1).nombre,'TRABAJADOR 2050');
 assert.ok(requests>=7,'La prueba debe recorrer varias páginas de servidor');
 assert.equal(api.PAGE_SIZE,100);
 assert.equal(api.EXPORT_PAGE_SIZE,500);
+assert.equal(api.CAMP_TIMEZONE,'America/Santiago');
+assert.match(api.todayChileKey(),/^\d{4}-\d{2}-\d{2}$/);
+assert.equal(api.addDaysKey('2026-08-29',-1),'2026-08-28');
+assert.equal(api.addDaysKey('2026-03-01',-1),'2026-02-28');
 
-console.log('Consultas RUT server pagination smoke: OK · 2050 registros · páginas 20/21 · exportación completa');
+const preview=await api.requestCleanupPreview('2026-08-28');
+assert.equal(preview.count,37);
+assert.equal(preview.date,'2026-08-28');
+assert.equal(preview.timezone,'America/Santiago');
+const deleted=await api.deleteConsultDate('2026-08-28');
+assert.equal(deleted.deleted,37);
+assert.equal(deleted.date,'2026-08-28');
+assert.deepEqual(maintenanceCalls,[
+  {method:'GET',action:'delete_preview',date:'2026-08-28'},
+  {method:'DELETE',action:'',date:'2026-08-28'}
+]);
+await assert.rejects(()=>api.requestCleanupPreview('28-08-2026'),/fecha válida/i);
+await assert.rejects(()=>api.deleteConsultDate(''),/fecha válida/i);
+
+console.log('Consultas RUT smoke: OK · 2050 registros · paginación/exportación · vista previa · borrado por fecha');

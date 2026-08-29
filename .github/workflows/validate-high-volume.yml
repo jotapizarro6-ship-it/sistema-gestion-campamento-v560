@@ -1,0 +1,31 @@
+name: Validar Rendimiento Alto Volumen
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  high-volume:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Validar capas de rendimiento
+        run: |
+          node --check assets/high-volume-runtime.js
+          node --check assets/high-volume-post-inline.js
+          node --check assets/echarts-loader.js
+          node --check assets/app-4.js
+          test -f assets/high-volume-runtime.js
+          test -f assets/high-volume-post-inline.js
+          test -f tests/high-volume-performance-smoke.mjs
+          grep -q "high-volume-runtime.js" assets/app-4.js
+          grep -q "high-volume-post-inline.js" assets/app-4.js
+          grep -q "CampEChartsLazy" assets/echarts-loader.js
+          grep -q "forceFunctionRegion" assets/high-volume-runtime.js
+      - name: Prueba sintética 800 trabajadores y 1200 camas
+        run: node tests/high-volume-performance-smoke.mjs

@@ -1,0 +1,30 @@
+name: Validar optimización alto volumen
+
+on:
+  push:
+    branches: ["dev-optimizacion-800-1000-20260829"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Sintaxis JavaScript
+        run: |
+          node --check assets/high-volume-runtime.js
+          node --check assets/echarts-loader.js
+          node --check assets/app-4.js
+          grep -q "high-volume-runtime.js" assets/app-4.js
+          grep -q "CampEChartsLazy" assets/echarts-loader.js
+      - name: Pruebas existentes
+        run: |
+          node tests/functional-smoke.mjs
+          node tests/operations-suite-smoke.mjs
+          node tests/integrity-executive-smoke.mjs
+      - name: Prueba sintética 800 trabajadores / 1200 camas
+        run: node tests/high-volume-performance-smoke.mjs

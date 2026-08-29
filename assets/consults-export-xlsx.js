@@ -124,6 +124,7 @@
 
   const boot=()=>{
     if(installConsultsObserver())return;
+    if(typeof setInterval!=='function')return;
     let tries=0;
     const timer=setInterval(()=>{
       tries++;
@@ -131,7 +132,7 @@
     },250);
   };
 
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
+  if(document.readyState==='loading'&&typeof document.addEventListener==='function')document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
   window.addEventListener?.('hashchange',()=>setTimeout(enhanceConsultsView,0));
   window.addEventListener?.('focus',()=>setTimeout(enhanceConsultsView,0));

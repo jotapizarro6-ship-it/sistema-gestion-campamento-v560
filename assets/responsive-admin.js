@@ -3,7 +3,7 @@
   const CSS_ID='camp-responsive-admin-css';
   const MOBILE_MAX=720;
   const TABLET_MAX=1100;
-  let scheduled=false;
+  let scheduled=false,pendingRoot=null;
 
   function ensureStyles(){
     if(document.getElementById(CSS_ID))return;
@@ -38,7 +38,10 @@
   }
 
   function enhanceTables(root=document){
-    root.querySelectorAll?.('.table-wrap').forEach(wrap=>{
+    const nodes=[];
+    if(root?.matches?.('.table-wrap'))nodes.push(root);
+    root?.querySelectorAll?.('.table-wrap').forEach(x=>nodes.push(x));
+    nodes.forEach(wrap=>{
       const table=wrap.querySelector('.data-table');
       if(!table)return;
       const labels=[...table.querySelectorAll('thead th')].map(th=>(th.textContent||'').trim());
@@ -52,7 +55,7 @@
   }
 
   function clarifyOperationalCapacity(root=document){
-    root.querySelectorAll?.('.kpi .label').forEach(el=>{
+    root?.querySelectorAll?.('.kpi .label').forEach(el=>{
       if((el.textContent||'').trim()==='Capacidad total'){
         el.textContent='Capacidad operativa';
         el.title='Capacidad habilitada para la fecha. El inventario físico del Excel se muestra por separado.';
@@ -60,17 +63,19 @@
     });
   }
 
-  function enhance(){
+  function enhance(root=document.querySelector('.view.active')||document){
     scheduled=false;
-    enhanceTables(document);
-    clarifyOperationalCapacity(document);
+    pendingRoot=null;
+    enhanceTables(root);
+    clarifyOperationalCapacity(root);
     syncLayout();
   }
 
-  function scheduleEnhance(){
+  function scheduleEnhance(root=document.querySelector('.view.active')||document){
+    pendingRoot=root||pendingRoot;
     if(scheduled)return;
     scheduled=true;
-    requestAnimationFrame(enhance);
+    requestAnimationFrame(()=>enhance(pendingRoot||document.querySelector('.view.active')||document));
   }
 
   function closeNav(){
@@ -83,12 +88,12 @@
   function start(){
     ensureStyles();
     syncLayout();
-    enhance();
+    enhance(document.querySelector('.view.active')||document);
 
-    const content=document.querySelector('.content');
-    if(content){
-      new MutationObserver(scheduleEnhance).observe(content,{childList:true,subtree:true});
-    }
+    // En lugar de observar todo el DOM, respondemos a eventos explícitos del único controlador
+    // de navegación/renderizado. Así una tabla oculta nunca provoca recorridos globales.
+    window.addEventListener('camp:view-rendered',event=>scheduleEnhance(event.detail?.root||document.querySelector('.view.active')));
+    window.addEventListener('camp:view-changed',()=>syncLayout());
 
     document.addEventListener('click',e=>{
       const target=e.target;
@@ -101,8 +106,8 @@
     },true);
 
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&layoutName()!=='desktop')closeNav()});
-    window.addEventListener('resize',()=>{syncLayout();scheduleEnhance()},{passive:true});
-    window.addEventListener('orientationchange',()=>setTimeout(()=>{syncLayout();scheduleEnhance()},120),{passive:true});
+    window.addEventListener('resize',()=>{syncLayout();scheduleEnhance(document.querySelector('.view.active'))},{passive:true});
+    window.addEventListener('orientationchange',()=>setTimeout(()=>{syncLayout();scheduleEnhance(document.querySelector('.view.active'))},120),{passive:true});
   }
 
   ensureStyles();

@@ -1,0 +1,26 @@
+name: Validar carga progresiva administrador
+
+on:
+  push:
+    branches: ["dev-fix-admin-carga-progresiva-20260829"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Validar JavaScript
+        run: |
+          node --check assets/progressive-admin-render.js
+          node --check assets/app-4.js
+          grep -q "progressive-admin-render.js" assets/app-4.js
+      - name: Pruebas funcionales existentes
+        run: |
+          node tests/functional-smoke.mjs
+          node tests/operations-suite-smoke.mjs
+          node tests/integrity-executive-smoke.mjs

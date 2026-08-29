@@ -39,6 +39,7 @@ jobs:
           node tests/integrity-executive-smoke.mjs
           node tests/admin-performance-guard-smoke.mjs
           node tests/consults-navigation-freeze-smoke.mjs
+          node tests/consults-export-smoke.mjs
       - name: Certificación de escala 2000x2000
         run: node tests/high-volume-performance-smoke.mjs
 

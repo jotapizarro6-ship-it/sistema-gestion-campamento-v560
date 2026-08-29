@@ -2,18 +2,29 @@ name: Validar Sistema Campamento
 
 on:
   push:
+    branches: ["main", "dev-*"]
+  pull_request:
     branches: ["main"]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Fijar Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
       - name: Validar JavaScript combinado
         run: |
           cat assets/app-1.js assets/app-2a.js assets/app-2b.js assets/app-3a.js assets/app-3b.js assets/app-4.js assets/final-audit-fixes.js > /tmp/campamento-app.js
@@ -33,6 +44,7 @@ jobs:
           node --check assets/whatif-clarity.js
           node --check assets/governance.js
           node --check assets/integrity-executive.js
+          node --check assets/admin-performance-guard.js
           node --check assets/echarts-loader.js
           node --check assets/echarts-dashboard.js
           node --check assets/control-center-echarts.js
@@ -47,6 +59,8 @@ jobs:
         run: node tests/operations-suite-smoke.mjs
       - name: Pruebas Integridad y Semáforo
         run: node tests/integrity-executive-smoke.mjs
+      - name: Prueba de estabilidad administrativa
+        run: node tests/admin-performance-guard-smoke.mjs
       - name: Validar estructura web
         run: |
           test -f index.html
@@ -75,6 +89,7 @@ jobs:
           test -f assets/operations-suite.css
           test -f assets/integrity-executive.js
           test -f assets/integrity-executive.css
+          test -f assets/admin-performance-guard.js
           test -f assets/echarts-loader.js
           test -f assets/echarts-dashboard.js
           test -f assets/echarts-dashboard.css
@@ -84,6 +99,7 @@ jobs:
           test -f assets/operations-suite-echarts.js
           test -f tests/operations-suite-smoke.mjs
           test -f tests/integrity-executive-smoke.mjs
+          test -f tests/admin-performance-guard-smoke.mjs
           grep -q "CONSULTA DE ASIGNACIÓN" index.html
           grep -q "VER MI ASIGNACIÓN" index.html
           grep -q "Consulta rápida de alojamiento" index.html
@@ -115,6 +131,8 @@ jobs:
           grep -q "campamento-recovery-api" assets/integrity-executive.js
           grep -q "integrity-executive.js" assets/app-4.js
           grep -q "integrity-executive.css" assets/app-4.js
+          grep -q "admin-performance-guard.js" assets/app-4.js
+          grep -q "CampAdminPerformance" assets/admin-performance-guard.js
           grep -q "campamento-control-api" assets/operations-core.js
           grep -q "operations-suite-echarts.js" assets/echarts-loader.js
           grep -q "Calidad de Base" assets/bi-dashboard.js

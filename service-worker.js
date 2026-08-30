@@ -4,7 +4,8 @@ const SHELL=[
   './','./index.html','./admin.html','./manifest.webmanifest',
   './assets/styles.css','./assets/app-1.js','./assets/app-2a.js','./assets/app-2b.js','./assets/app-3a.js','./assets/app-3b.js','./assets/app-4.js',
   './assets/public-assignment.css','./assets/public-assignment-emphasis.css','./assets/public-worker-v2.css','./assets/public-worker-no-duplicate.css','./assets/public-worker-v2.js',
-  './assets/ts/public/date.js','./assets/ts/pwa/runtime.js','./assets/ts/analytics/powerbi-engine.js','./assets/ts/charts/performance.js','./assets/icons/campamento.svg'
+  './assets/ts/public/date.js','./assets/ts/pwa/runtime.js','./assets/ts/analytics/powerbi-engine.js','./assets/ts/charts/performance.js',
+  './assets/icons/campamento.svg','./assets/icons/campamento-192.png','./assets/icons/campamento-512.png'
 ];
 const scoped=p=>new URL(p,self.registration.scope).toString();
 async function precache(){
@@ -46,5 +47,5 @@ self.addEventListener('fetch',event=>{
   if(url.origin!==self.location.origin)return;
   if(url.pathname.endsWith('/version.json'))return;
   if(request.mode==='navigate'){event.respondWith(networkFirstNavigation(request));return}
-  if(/\.(?:css|js|svg|webmanifest)$/i.test(url.pathname))event.respondWith(cacheFirst(request));
+  if(/\.(?:css|js|svg|png|webmanifest)$/i.test(url.pathname))event.respondWith(cacheFirst(request));
 });

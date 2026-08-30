@@ -10,6 +10,7 @@ test('consulta pública mantiene el flujo y registra por la misma API central',a
   });
   await page.goto('/');
   await expect(page.getByRole('heading',{name:'CONSULTA DE ASIGNACIÓN'})).toBeVisible();
+  await expect(page.locator('#publicDate')).toHaveText(/^\d{2}-\d{2}-\d{4}$/);
   await page.locator('#workerRut').fill('12.345.678-5');
   await page.getByRole('button',{name:/VER MI ASIGNACIÓN/i}).click();
   await expect(page.locator('#workerLookupResult')).toContainText('TRABAJADOR PRUEBA');
@@ -39,10 +40,16 @@ test('PWA conserva el shell para apertura sin conexión sin almacenar APIs de Su
   await context.setOffline(false);
 });
 
-test('manifest ofrece acceso a consulta y administración dentro de la misma aplicación',async({request})=>{
+test('manifest cumple instalación y ofrece consulta y administración en la misma aplicación',async({request})=>{
   const response=await request.get('/manifest.webmanifest');expect(response.ok()).toBeTruthy();
   const manifest=await response.json();
+  expect(manifest.id).toBe('./');
   expect(manifest.start_url).toBe('./');
   expect(manifest.scope).toBe('./');
+  expect(manifest.prefer_related_applications).toBe(false);
+  expect(manifest.icons).toEqual(expect.arrayContaining([
+    expect.objectContaining({sizes:'192x192',type:'image/png'}),
+    expect.objectContaining({sizes:'512x512',type:'image/png'})
+  ]));
   expect(manifest.shortcuts.map(x=>x.url)).toEqual(expect.arrayContaining(['./','./admin.html']));
 });

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
 const api=fs.readFileSync('supabase/functions/campamento-recovery-api/index.ts','utf8');
-const migration=fs.readFileSync('supabase/migrations/20260830032000_fix_recovery_backup_permissions.sql','utf8');
+const migration=fs.readFileSync('supabase/migrations/20260830030807_fix_recovery_backup_permissions.sql','utf8');
 
 assert.match(api,/SUPABASE_SERVICE_ROLE_KEY/,'La API de recuperación debe usar la credencial solo desde variables de entorno del servidor.');
 assert.match(api,/async function isAdmin/,'La API debe validar sesión administrativa antes de operar.');

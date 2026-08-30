@@ -29,7 +29,7 @@
   #campPwaInstall::before{font-size:19px}
 }
 
-/* Smartphone: dos filas compactas. Nada se estira a ancho completo. */
+/* Smartphone: mantiene texto visible en las acciones y permite envolver sin overflow. */
 @container camp-admin-bar (max-width:700px){
   .admin-topbar .topbar-admin{display:grid;grid-template-columns:1fr;align-items:center;gap:8px;min-height:auto;padding:max(9px,env(safe-area-inset-top)) 12px 9px}
   .camp-topbar-context{width:100%;display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:10px}
@@ -37,14 +37,20 @@
   .camp-topbar-title .brand{font-size:17px;line-height:1.18}
   .camp-topbar-title .subtitle{display:none!important}
   .camp-topbar-mobile-role{display:block;margin-top:3px}
-  .top-actions.camp-topbar-actions{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px}
-  .camp-topbar-status{flex:0 1 auto;max-width:calc(100% - 96px);padding:0;border:0;background:transparent;backdrop-filter:none}
+  .top-actions.camp-topbar-actions{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px}
+  .camp-topbar-status{max-width:none;padding:0;border:0;background:transparent;backdrop-filter:none}
   .ops-profile-badge{display:none!important}
-  #syncBadge.status-pill{max-width:100%;min-height:34px;padding:7px 10px;font-size:11px;overflow:hidden;text-overflow:ellipsis}
-  .camp-topbar-buttons{display:flex;flex:0 0 auto;justify-content:flex-end;gap:7px}
-  #refreshAllBtn,#campPwaInstall{width:42px!important;min-width:42px!important;max-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;margin:0!important;border-radius:11px!important;font-size:0!important;line-height:1!important;flex:0 0 42px}
-  #refreshAllBtn::before{font-size:21px}
-  #campPwaInstall::before{font-size:19px}
+  #syncBadge.status-pill{max-width:100%;min-height:38px;padding:8px 11px;font-size:11px;overflow:hidden;text-overflow:ellipsis}
+  .camp-topbar-buttons{display:flex;min-width:0;max-width:100%;justify-content:flex-end;flex-wrap:wrap;gap:7px}
+  #refreshAllBtn,#campPwaInstall{width:auto!important;min-width:96px!important;max-width:none!important;height:42px!important;min-height:42px!important;padding:0 12px!important;margin:0!important;border-radius:11px!important;font-size:12px!important;font-weight:800;line-height:1!important;flex:0 0 auto}
+  #campPwaInstall{min-width:132px!important}
+  #refreshAllBtn::before{font-size:19px}
+  #campPwaInstall::before{font-size:18px}
+}
+@container camp-admin-bar (max-width:380px){
+  .top-actions.camp-topbar-actions{grid-template-columns:1fr}
+  .camp-topbar-status{justify-self:start}
+  .camp-topbar-buttons{width:100%;justify-content:flex-start}
 }
 
 /* Fallback para navegadores sin Container Queries. */
@@ -59,12 +65,20 @@
   .camp-topbar-context .icon-btn{width:44px;height:44px;min-width:44px;min-height:44px;border-radius:12px}
   .camp-topbar-title .brand{font-size:17px}
   .camp-topbar-mobile-role{display:block;margin-top:3px}
-  .top-actions.camp-topbar-actions{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px}
-  .camp-topbar-status{flex:0 1 auto;max-width:calc(100% - 96px);padding:0;border:0;background:transparent;backdrop-filter:none}
+  .top-actions.camp-topbar-actions{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px}
+  .camp-topbar-status{max-width:none;padding:0;border:0;background:transparent;backdrop-filter:none}
   .ops-profile-badge{display:none!important}
-  #syncBadge.status-pill{max-width:100%;min-height:34px;padding:7px 10px;font-size:11px;overflow:hidden;text-overflow:ellipsis}
-  .camp-topbar-buttons{display:flex;flex:0 0 auto;justify-content:flex-end;gap:7px}
-  #refreshAllBtn,#campPwaInstall{width:42px!important;min-width:42px!important;max-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;margin:0!important;border-radius:11px!important;font-size:0!important;flex:0 0 42px}
+  #syncBadge.status-pill{max-width:100%;min-height:38px;padding:8px 11px;font-size:11px;overflow:hidden;text-overflow:ellipsis}
+  .camp-topbar-buttons{display:flex;min-width:0;max-width:100%;justify-content:flex-end;flex-wrap:wrap;gap:7px}
+  #refreshAllBtn,#campPwaInstall{width:auto!important;min-width:96px!important;max-width:none!important;height:42px!important;min-height:42px!important;padding:0 12px!important;margin:0!important;border-radius:11px!important;font-size:12px!important;font-weight:800;line-height:1!important;flex:0 0 auto}
+  #campPwaInstall{min-width:132px!important}
+  #refreshAllBtn::before{font-size:19px}
+  #campPwaInstall::before{font-size:18px}
+}
+@media(max-width:380px){
+  .top-actions.camp-topbar-actions{grid-template-columns:1fr}
+  .camp-topbar-status{justify-self:start}
+  .camp-topbar-buttons{width:100%;justify-content:flex-start}
 }
 
 /* Informe ejecutivo sin pop-up: se imprime desde el mismo documento. */

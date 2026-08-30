@@ -27,7 +27,8 @@ test('administración sigue disponible por enlace y carga las nuevas capas sin a
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href',/manifest\.webmanifest/);
 });
 
-test('cabecera smartphone replica referencia compacta aprobada sin reducir contenido útil',async({page})=>{
+test('cabecera smartphone replica referencia final aprobada en múltiples anchos',async({page})=>{
+  const widths=[320,360,375,390,412,430];
   await page.setViewportSize({width:390,height:844});
   await page.goto('/admin.html');
   await expect.poll(()=>page.evaluate(()=>Boolean(window.CampUiExperience))).toBe(true);
@@ -40,62 +41,71 @@ test('cabecera smartphone replica referencia compacta aprobada sin reducir conte
     document.getElementById('campPwaInstall')?.remove();
     window.CampUiExperience.organizeTopbar();
   });
-  const mobile=await page.evaluate(()=>{
-    const data=id=>{const el=document.getElementById(id),r=el.getBoundingClientRect(),s=getComputedStyle(el);return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,fontSize:parseFloat(s.fontSize),text:el.textContent.trim(),display:s.display,bg:s.backgroundColor,color:s.color}};
-    const rect=el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
-    const topbar=document.querySelector('.admin-topbar');
-    const menu=document.getElementById('menuBtn');
-    const menuStyle=getComputedStyle(menu);
-    const menuBefore=getComputedStyle(menu,'::before');
-    const brand=document.querySelector('.camp-topbar-title .brand');
-    return {
-      refresh:data('refreshAllBtn'),profile:data('profileBadge'),sync:data('syncBadge'),menu:data('menuBtn'),brand:rect(brand),
-      roleDisplay:getComputedStyle(document.querySelector('.camp-topbar-mobile-role')).display,
-      menuStyle:{display:menuStyle.display,placeItems:menuStyle.placeItems,bg:menuBefore.backgroundImage,pseudoWidth:parseFloat(menuBefore.width),pseudoHeight:parseFloat(menuBefore.height)},
-      topbarHeight:topbar.getBoundingClientRect().height,
-      scrollWidth:topbar.scrollWidth,clientWidth:topbar.clientWidth
-    };
-  });
 
-  expect(mobile.profile.display).not.toBe('none');
-  expect(mobile.profile.text).toContain('Administrador');
-  expect(mobile.profile.height).toBeGreaterThanOrEqual(27);
-  expect(mobile.profile.height).toBeLessThanOrEqual(30);
-  expect(mobile.profile.width).toBeLessThan(mobile.refresh.width);
-  expect(mobile.profile.bg).toBe('rgb(255, 242, 207)');
-  expect(mobile.roleDisplay).toBe('none');
+  for(const width of widths){
+    await page.setViewportSize({width,height:844});
+    const mobile=await page.evaluate(()=>{
+      const data=id=>{const el=document.getElementById(id),r=el.getBoundingClientRect(),s=getComputedStyle(el);return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,fontSize:parseFloat(s.fontSize),text:el.textContent.trim(),display:s.display,bg:s.backgroundColor,color:s.color}};
+      const rect=el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
+      const topbar=document.querySelector('.admin-topbar');
+      const menu=document.getElementById('menuBtn');
+      const menuStyle=getComputedStyle(menu);
+      const menuBefore=getComputedStyle(menu,'::before');
+      const brand=document.querySelector('.camp-topbar-title .brand');
+      return {
+        refresh:data('refreshAllBtn'),profile:data('profileBadge'),sync:data('syncBadge'),menu:data('menuBtn'),brand:rect(brand),
+        roleDisplay:getComputedStyle(document.querySelector('.camp-topbar-mobile-role')).display,
+        menuStyle:{display:menuStyle.display,placeItems:menuStyle.placeItems,bg:menuBefore.backgroundImage,pseudoWidth:parseFloat(menuBefore.width),pseudoHeight:parseFloat(menuBefore.height)},
+        topbarHeight:topbar.getBoundingClientRect().height,
+        scrollWidth:topbar.scrollWidth,clientWidth:topbar.clientWidth
+      };
+    });
 
-  expect(mobile.sync.display).not.toBe('none');
-  expect(mobile.sync.text).toMatch(/Actualizado|No actualizado|Sincronizando/i);
-  expect(mobile.sync.height).toBeGreaterThanOrEqual(29);
-  expect(mobile.sync.height).toBeLessThanOrEqual(31);
-  expect(Math.abs(mobile.sync.left-mobile.menu.left)).toBeLessThanOrEqual(2);
+    expect(mobile.profile.display).not.toBe('none');
+    expect(mobile.profile.text).toContain('Administrador');
+    expect(mobile.profile.height).toBeGreaterThanOrEqual(24);
+    expect(mobile.profile.height).toBeLessThanOrEqual(27);
+    expect(mobile.profile.width).toBeLessThan(mobile.refresh.width);
+    expect(mobile.profile.bg).toBe('rgb(255, 242, 207)');
+    expect(mobile.roleDisplay).toBe('none');
 
-  expect(mobile.refresh.display).not.toBe('none');
-  expect(mobile.refresh.width).toBeGreaterThanOrEqual(118);
-  expect(mobile.refresh.width).toBeLessThanOrEqual(133);
-  expect(mobile.refresh.height).toBeGreaterThanOrEqual(33);
-  expect(mobile.refresh.height).toBeLessThanOrEqual(35);
-  expect(mobile.refresh.fontSize).toBeGreaterThan(0);
-  expect(mobile.refresh.text).toContain('Actualizar');
-  expect(Math.abs(mobile.refresh.right-mobile.profile.right)).toBeLessThanOrEqual(2);
+    expect(mobile.sync.display).not.toBe('none');
+    expect(mobile.sync.text).toMatch(/Actualizado|No actualizado|Sincronizando/i);
+    expect(mobile.sync.height).toBeGreaterThanOrEqual(25);
+    expect(mobile.sync.height).toBeLessThanOrEqual(28);
+    expect(Math.abs(mobile.sync.left-mobile.menu.left)).toBeLessThanOrEqual(2);
 
-  expect(mobile.profile.top).toBeLessThan(mobile.refresh.top);
-  expect(mobile.refresh.top).toBeGreaterThanOrEqual(mobile.profile.bottom+2);
-  expect(Math.abs(mobile.sync.top-mobile.refresh.top)).toBeLessThanOrEqual(3);
+    expect(mobile.refresh.display).not.toBe('none');
+    expect(mobile.refresh.width).toBeGreaterThanOrEqual(width<=340?98:width<=380?104:112);
+    expect(mobile.refresh.height).toBeGreaterThanOrEqual(width<=380?34:36);
+    expect(mobile.refresh.height).toBeLessThanOrEqual(37);
+    expect(mobile.refresh.fontSize).toBeGreaterThan(0);
+    expect(mobile.refresh.text).toContain('Actualizar');
+    expect(Math.abs(mobile.refresh.right-mobile.profile.right)).toBeLessThanOrEqual(2);
 
-  expect(mobile.menuStyle.display).toBe('grid');
-  expect(mobile.menuStyle.placeItems).toContain('center');
-  expect(mobile.menu.width).toBe(40);
-  expect(mobile.menu.height).toBe(40);
-  expect(mobile.menuStyle.bg).toContain('linear-gradient');
-  expect(mobile.menuStyle.pseudoWidth).toBeGreaterThanOrEqual(20);
-  expect(mobile.menuStyle.pseudoHeight).toBeGreaterThanOrEqual(13);
-  expect(Math.abs(mobile.brand.top-mobile.menu.top)).toBeLessThanOrEqual(12);
+    /* Primera fila superior: Actualizado y Administrador. Segunda fila: menú/título y Actualizar. */
+    expect(Math.abs(mobile.sync.top-mobile.profile.top)).toBeLessThanOrEqual(3);
+    expect(mobile.menu.top).toBeGreaterThan(mobile.sync.top);
+    expect(mobile.refresh.top).toBeGreaterThan(mobile.profile.top);
+    expect(Math.abs(mobile.menu.top-mobile.refresh.top)).toBeLessThanOrEqual(3);
+    expect(mobile.menu.top).toBeGreaterThanOrEqual(mobile.sync.bottom+2);
+    expect(mobile.refresh.top).toBeGreaterThanOrEqual(mobile.profile.bottom+2);
 
-  expect(mobile.topbarHeight).toBeLessThanOrEqual(94);
-  expect(mobile.scrollWidth).toBeLessThanOrEqual(mobile.clientWidth+1);
+    expect(mobile.menuStyle.display).toBe('grid');
+    expect(mobile.menuStyle.placeItems).toContain('center');
+    expect(mobile.menu.width).toBeGreaterThanOrEqual(width<=340?34:width<=380?36:38);
+    expect(mobile.menu.width).toBeLessThanOrEqual(38);
+    expect(mobile.menu.height).toBe(mobile.menu.width);
+    expect(mobile.menuStyle.bg).toContain('linear-gradient');
+    expect(mobile.menuStyle.pseudoWidth).toBeGreaterThanOrEqual(18);
+    expect(mobile.menuStyle.pseudoHeight).toBeGreaterThanOrEqual(11);
+    expect(Math.abs(mobile.brand.top-mobile.menu.top)).toBeLessThanOrEqual(12);
 
+    expect(mobile.topbarHeight).toBeLessThanOrEqual(86);
+    expect(mobile.scrollWidth).toBeLessThanOrEqual(mobile.clientWidth+1);
+  }
+
+  await page.setViewportSize({width:390,height:844});
   await page.evaluate(()=>{
     const actions=document.querySelector('.top-actions');
     if(actions&&!document.getElementById('campPwaInstall')){
@@ -108,11 +118,11 @@ test('cabecera smartphone replica referencia compacta aprobada sin reducir conte
     return {display:s.display,width:r.width,height:r.height,fontSize:parseFloat(s.fontSize),text:install.textContent.trim(),topbarHeight:topbar.getBoundingClientRect().height,scrollWidth:topbar.scrollWidth,clientWidth:topbar.clientWidth};
   });
   expect(installable.display).not.toBe('none');
-  expect(installable.width).toBeGreaterThanOrEqual(126);
-  expect(installable.height).toBeGreaterThanOrEqual(32);
+  expect(installable.width).toBeGreaterThanOrEqual(122);
+  expect(installable.height).toBeGreaterThanOrEqual(31);
   expect(installable.fontSize).toBeGreaterThan(0);
   expect(installable.text).toContain('Instalar aplicación');
-  expect(installable.topbarHeight).toBeLessThanOrEqual(132);
+  expect(installable.topbarHeight).toBeLessThanOrEqual(124);
   expect(installable.scrollWidth).toBeLessThanOrEqual(installable.clientWidth+1);
 
   await page.setViewportSize({width:1366,height:768});

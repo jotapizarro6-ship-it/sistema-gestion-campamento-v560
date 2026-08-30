@@ -24,6 +24,7 @@
       inner.insertBefore(context,actions);
     }
 
+    const title=context.querySelector('.camp-topbar-title');
     actions.classList.add('camp-topbar-actions');
     let status=actions.querySelector('.camp-topbar-status');
     let buttons=actions.querySelector('.camp-topbar-buttons');
@@ -38,6 +39,14 @@
     if(sync&&sync.parentElement!==status)status.appendChild(sync);
     if(refresh&&refresh.parentElement!==buttons)buttons.appendChild(refresh);
     if(install){install.style.marginTop='0';if(install.parentElement!==buttons)buttons.appendChild(install)}
+
+    if(title){
+      let mobileRole=title.querySelector('.camp-topbar-mobile-role');
+      if(!mobileRole){mobileRole=document.createElement('div');mobileRole.className='camp-topbar-mobile-role';title.appendChild(mobileRole)}
+      mobileRole.textContent=(profile?.textContent||'Administrador').trim()||'Administrador';
+    }
+    if(refresh){refresh.setAttribute('aria-label','Actualizar datos del sistema');refresh.setAttribute('title','Actualizar datos')}
+    if(install){install.setAttribute('aria-label','Instalar aplicación');install.setAttribute('title','Instalar aplicación')}
   }
 
   function executiveReportMarkup(r){

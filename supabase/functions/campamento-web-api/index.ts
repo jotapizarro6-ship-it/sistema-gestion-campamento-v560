@@ -12,22 +12,20 @@ const cors={
 function normalizeRut(v:any){let s=String(v??'').trim().toUpperCase().replace(/[^0-9K]/g,'');if(s.length>1)s=s.slice(0,-1)+'-'+s.slice(-1);return s}
 function validRut(v:any){const m=/^(\d{5,9})-([0-9K])$/.exec(normalizeRut(v));if(!m)return false;let sum=0,mult=2;for(let i=m[1].length-1;i>=0;i--){sum+=Number(m[1][i])*mult;mult=mult===7?2:mult+1}const n=11-(sum%11),expected=n===11?'0':n===10?'K':String(n);return m[2]===expected}
 function json(data:any,status=200,extra:Record<string,string>={}){return new Response(JSON.stringify(data),{status,headers:{...cors,'content-type':'application/json; charset=utf-8',...extra}})}
-async function checkState(req:Request,expected:string){
+async function reserveRevision(req:Request,expected:string){
   const auth=req.headers.get('authorization')||'';
-  const r=await fetch(`${STATE_UPSTREAM}?action=advanced_state`,{headers:{authorization:auth}});
+  const q=new URLSearchParams({action:'claim_revision'});if(expected)q.set('expected',expected);
+  const r=await fetch(`${STATE_UPSTREAM}?${q.toString()}`,{method:'POST',headers:{authorization:auth}});
   const text=await r.text();let data:any;try{data=JSON.parse(text)}catch{data={ok:false,error:text||`HTTP ${r.status}`}}
-  if(!r.ok)return {ok:false,response:json(data,r.status)};
-  const current=String(data?.state_version||'');
-  if(current&&current!==expected)return {ok:false,response:json({ok:false,code:'STATE_CONFLICT',error:'Los datos cambiaron en otra sesión. Actualiza la información antes de guardar para evitar sobrescribir cambios recientes.',current_state_version:current},409,{'x-camp-state-version':current})};
-  return {ok:true,current};
+  return {response:r,data};
 }
 Deno.serve(async(req:Request)=>{
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:cors});
   try{
     const u=new URL(req.url),action=u.searchParams.get('action')||'',base=action==='upload_excel'?UPLOAD_UPSTREAM:UPSTREAM,target=base+u.search;
-    const expected=u.searchParams.get('state_version')||'';
-    if(req.method==='POST'&&expected&&CONCURRENCY_ACTIONS.has(action)){
-      const check=await checkState(req,expected);if(!check.ok)return check.response!;
+    if(req.method==='POST'&&CONCURRENCY_ACTIONS.has(action)){
+      const c=await reserveRevision(req,u.searchParams.get('state_version')||'');
+      if(!c.response.ok)return json(c.data,c.response.status,{'x-camp-state-version':String(c.data?.current_state_version||c.data?.state_version||'')});
     }
     const h=new Headers();
     const auth=req.headers.get('authorization');if(auth)h.set('authorization',auth);

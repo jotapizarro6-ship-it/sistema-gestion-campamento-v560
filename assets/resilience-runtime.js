@@ -16,12 +16,13 @@
   const baseLoadAll=window.loadAll;
   if(typeof baseWebApi!=='function'||typeof baseAdvApi!=='function')return;
 
+  const appState=()=>typeof A!=='undefined'?A:null;
   const cid=()=>globalThis.crypto?.randomUUID?.()||`c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`;
   const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   const isOnline=()=>typeof navigator==='undefined'||navigator.onLine!==false;
   const stableBody=body=>{try{return JSON.stringify(body??{})}catch{return String(body??'')}};
   const requestKey=(api,action,method,body,file)=>`${api}|${action}|${method}|${file?.name||''}|${stableBody(body)}`;
-  const apiBase=api=>api==='web'?window.WEB_API||'https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-web-api':window.ADV_API||'https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-v560-safe';
+  const apiBase=api=>api==='web'?(typeof WEB_API!=='undefined'?WEB_API:'https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-web-api'):(typeof ADV_API!=='undefined'?ADV_API:'https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-v560-safe');
   const timeoutFor=(method,file)=>file?45000:(method==='GET'?12000:18000);
 
   function markMetric(patch){Object.assign(metrics,patch)}
@@ -30,7 +31,8 @@
     el.textContent=text;el.className=`status-pill ${kind}`;
   }
   function markStale(reason='Sin conexión'){
-    if(window.A?.data){
+    const state=appState();
+    if(state?.data){
       setBadge(`${reason} · NO ACTUALIZADO`,'bad');
       const meta=document.querySelector('#systemMeta');
       if(meta&&!meta.textContent.includes('NO ACTUALIZADO'))meta.textContent=`${meta.textContent} · NO ACTUALIZADO`;
@@ -95,10 +97,11 @@
   }
 
   async function ensureStateVersion(token){
-    if(window.A?.stateVersion)return window.A.stateVersion;
-    const state=await rawRequest('adv','advanced_state',{token});
-    if(window.A){window.A.stateVersion=state.state_version||null;if(state.data&&!window.A.data)window.A.data=state.data}
-    return state.state_version||null;
+    const state=appState();
+    if(state?.stateVersion)return state.stateVersion;
+    const fresh=await rawRequest('adv','advanced_state',{token});
+    if(state){state.stateVersion=fresh.state_version||null;if(fresh.data&&!state.data)state.data=fresh.data}
+    return fresh.state_version||null;
   }
 
   async function resilientWebApi(action,opts={}){
@@ -110,7 +113,7 @@
     const p=rawRequest('web',action,{...opts,method,stateVersion}).finally(()=>inflight.delete(key));
     inflight.set(key,p);
     const data=await p;
-    if(stateVersion&&window.A)window.A.stateVersion=null;
+    const state=appState();if(stateVersion&&state)state.stateVersion=null;
     return data;
   }
 
@@ -123,8 +126,9 @@
     const p=rawRequest('adv',action,{...opts,method,stateVersion}).finally(()=>inflight.delete(key));
     inflight.set(key,p);
     const data=await p;
-    if(action==='advanced_state'&&window.A)window.A.stateVersion=data.state_version||null;
-    else if(stateVersion&&window.A)window.A.stateVersion=null;
+    const state=appState();
+    if(action==='advanced_state'&&state)state.stateVersion=data.state_version||null;
+    else if(stateVersion&&state)state.stateVersion=null;
     return data;
   }
 
@@ -133,14 +137,17 @@
 
   if(typeof baseLoadAll==='function'){
     window.loadAll=async function resilientLoadAll(options={}){
+      const state=appState();
       if(!isOnline()){
         markStale('Sin conexión');
-        if(window.A?.data&&typeof window.showMessage==='function')window.showMessage('Sin conexión: se mantienen en pantalla los últimos datos cargados, marcados como NO ACTUALIZADOS. No se enviaron cambios.','error');
+        if(state?.data&&typeof window.showMessage==='function')window.showMessage('Sin conexión: se mantienen en pantalla los últimos datos cargados, marcados como NO ACTUALIZADOS. No se enviaron cambios.','error');
         return false;
       }
       const ok=await baseLoadAll(options);
-      if(ok){markFresh();if(window.A?.stateVersion==null){try{const s=await resilientAdvApi('advanced_state',{token:window.A?.token});window.A.stateVersion=s.state_version||null}catch{}}}
-      else if(window.A?.data)markStale('No fue posible sincronizar');
+      if(ok){
+        markFresh();
+        if(state?.stateVersion==null){try{const s=await resilientAdvApi('advanced_state',{token:state?.token});if(state)state.stateVersion=s.state_version||null}catch{}}
+      }else if(state?.data)markStale('No fue posible sincronizar');
       return ok;
     };
   }
@@ -153,7 +160,7 @@
     document.documentElement.dataset.campNetwork='recovering';
     setBadge('Conexión recuperada · verificando','warn');
     if(recovering)return;recovering=true;
-    setTimeout(async()=>{try{if(window.A?.token&&typeof window.loadAll==='function')await window.loadAll({snapshot:false})}finally{recovering=false}},500);
+    setTimeout(async()=>{try{const state=appState();if(state?.token&&typeof window.loadAll==='function')await window.loadAll({snapshot:false})}finally{recovering=false}},500);
   });
 
   async function health(){

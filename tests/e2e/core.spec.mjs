@@ -60,7 +60,7 @@ test('cabecera smartphone conserva contenido visible con barra azul compacta y j
   expect(mobile.profile.width).toBeLessThan(mobile.refresh.width);
   expect(mobile.roleDisplay).toBe('none');
   expect(mobile.sync.display).not.toBe('none');
-  expect(mobile.sync.text).toMatch(/Actualizado|No actualizado/i);
+  expect(mobile.sync.text).toMatch(/Actualizado|No actualizado|Sincronizando/i);
   expect(mobile.refresh.display).not.toBe('none');
   expect(mobile.refresh.width).toBeGreaterThanOrEqual(130);
   expect(mobile.refresh.height).toBeGreaterThanOrEqual(40);

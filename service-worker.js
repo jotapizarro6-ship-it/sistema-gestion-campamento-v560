@@ -3,8 +3,8 @@ const CACHE_VERSION='campamento-shell-5.6.1-modern.1';
 const SHELL=[
   './','./index.html','./admin.html','./manifest.webmanifest',
   './assets/styles.css','./assets/app-1.js','./assets/app-2a.js','./assets/app-2b.js','./assets/app-3a.js','./assets/app-3b.js','./assets/app-4.js',
-  './assets/public-assignment.css','./assets/public-assignment-emphasis.css','./assets/public-worker-v2.css','./assets/public-worker-no-duplicate.css','./assets/public-date.js','./assets/public-worker-v2.js',
-  './assets/ts/pwa/runtime.js','./assets/ts/analytics/powerbi-engine.js','./assets/ts/charts/performance.js','./assets/icons/campamento.svg'
+  './assets/public-assignment.css','./assets/public-assignment-emphasis.css','./assets/public-worker-v2.css','./assets/public-worker-no-duplicate.css','./assets/public-worker-v2.js',
+  './assets/ts/public/date.js','./assets/ts/pwa/runtime.js','./assets/ts/analytics/powerbi-engine.js','./assets/ts/charts/performance.js','./assets/icons/campamento.svg'
 ];
 const scoped=p=>new URL(p,self.registration.scope).toString();
 async function precache(){

@@ -14,6 +14,13 @@ async function upstream(req:Request,url:string,body?:ArrayBuffer){const h=new He
 function respond(body:ArrayBuffer,status:number,contentType:string|null,extra:Record<string,string>={}){const h=new Headers({...cors,...extra});h.set('content-type',contentType||'application/json; charset=utf-8');return new Response(body,{status,headers:h})}
 function json(data:any,status=200,extra:Record<string,string>={}){const b=enc.encode(JSON.stringify(data));return respond(b.buffer,status,'application/json; charset=utf-8',extra)}
 async function currentState(req:Request){const auth=req.headers.get('authorization')||'';const r=await fetch(`${UPSTREAM}?action=advanced_state`,{headers:{authorization:auth}});const text=await r.text();let data:any;try{data=JSON.parse(text)}catch{data={ok:false,error:text||`HTTP ${r.status}`}}return {response:r,data}}
+async function claimRevision(req:Request,expected:string){
+  const auth=req.headers.get('authorization')||'';
+  const q=new URLSearchParams({action:'claim_revision'});if(expected)q.set('expected',expected);
+  const r=await fetch(`${UPSTREAM}?${q.toString()}`,{method:'POST',headers:{authorization:auth}});
+  const text=await r.text();let data:any;try{data=JSON.parse(text)}catch{data={ok:false,error:text||`HTTP ${r.status}`}}
+  return {response:r,data};
+}
 Deno.serve(async(req:Request)=>{
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:cors});
   try{
@@ -30,14 +37,9 @@ Deno.serve(async(req:Request)=>{
       const snap=s.data?.data?.snapshots?.find((x:any)=>String(x?.snapshot_date||'')===d&&String(x?.closed_at||'').trim());
       if(snap)return json({ok:true,data:snap,message:`El día ${d} ya estaba cerrado. Se conserva el cierre histórico sin recalcular.`,state_version:s.data?.state_version||null});
     }
-    const expected=u.searchParams.get('state_version')||'';
-    if(req.method==='POST'&&expected&&!CONCURRENCY_EXEMPT.has(action)){
-      const s=await currentState(req);
-      if(!s.response.ok)return json(s.data,s.response.status);
-      const current=String(s.data?.state_version||'');
-      if(current&&current!==expected){
-        return json({ok:false,code:'STATE_CONFLICT',error:'Los datos cambiaron en otra sesión. Actualiza la información antes de guardar para evitar sobrescribir cambios recientes.',current_state_version:current},409,{'x-camp-state-version':current});
-      }
+    if(req.method==='POST'&&!CONCURRENCY_EXEMPT.has(action)){
+      const c=await claimRevision(req,u.searchParams.get('state_version')||'');
+      if(!c.response.ok)return json(c.data,c.response.status,{'x-camp-state-version':String(c.data?.current_state_version||c.data?.state_version||'')});
     }
     const r=await upstream(req,UPSTREAM+u.search,body);
     return respond(await r.arrayBuffer(),r.status,r.headers.get('content-type'));

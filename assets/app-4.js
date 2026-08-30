@@ -42,5 +42,6 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/ts/charts/performance.js?v=20260830-modern1"></script>');
   document.write('<script src="assets/ts/pwa/runtime.js?v=20260830-modern1"></script>');
   document.write('<script src="assets/ui-experience-fixes.js?v=20260829-ui1"></script>');
+  document.write('<script src="assets/decision-cockpit-bridge.js?v=20260830-decision1"></script>');
   document.write('<script src="assets/decision-cockpit.js?v=20260830-decision1"></script>');
 }

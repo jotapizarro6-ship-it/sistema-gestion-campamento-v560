@@ -41,7 +41,13 @@
     const box=document.createElement('div');box.id='campPwaUpdate';box.setAttribute('role','status');box.style.cssText='position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:10000;max-width:min(92vw,560px);background:#0f2d4a;color:#fff;padding:12px 14px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);display:flex;gap:12px;align-items:center;font:600 13px system-ui';
     const text=document.createElement('span');text.textContent='Nueva versión de Sistema Campamento disponible.';
     const button=document.createElement('button');button.type='button';button.textContent='Actualizar';button.style.cssText='border:0;border-radius:8px;padding:8px 12px;font-weight:800;cursor:pointer';
-    button.addEventListener('click',async()=>{button.disabled=true;if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});else{await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});else location.reload()}});
+    button.addEventListener('click',async()=>{
+      button.disabled=true;
+      const current=reg.waiting;if(current){current.postMessage({type:'SKIP_WAITING'});return}
+      await reg.update();
+      const next=(reg as any).waiting as ServiceWorker|null;
+      if(next)next.postMessage({type:'SKIP_WAITING'});else location.reload();
+    });
     box.append(text,button);document.body.appendChild(box);
   }
   function watchRegistration(reg:ServiceWorkerRegistration){

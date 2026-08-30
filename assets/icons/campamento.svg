@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Sistema Campamento">
+  <rect width="512" height="512" rx="104" fill="#0f2d4a"/>
+  <path d="M96 222 256 96l160 126v194H96Z" fill="#f5f8fa"/>
+  <path d="M151 251h210v165H151Z" fill="#dce9ef"/>
+  <path d="M195 286h122v130H195Z" fill="#176984"/>
+  <path d="M224 318h64v98h-64Z" fill="#f5f8fa"/>
+  <circle cx="276" cy="367" r="7" fill="#176984"/>
+  <path d="M81 226 256 78l175 148" fill="none" stroke="#79aa8d" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

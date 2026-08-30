@@ -17,7 +17,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -25,6 +25,12 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: '24'
+      - name: Instalar herramientas fijadas
+        run: npm install --no-audit --no-fund
+      - name: Validar TypeScript
+        run: npm run typecheck
+      - name: Compilar frontend TypeScript
+        run: npm run build
       - name: Validar JavaScript crítico
         run: |
           node --check assets/app-4.js
@@ -34,6 +40,10 @@ jobs:
           node --check assets/consults-export-xlsx.js
           node --check assets/workforce-mod-moi.js
           node --check assets/resilience-runtime.js
+          node --check assets/ts/pwa/runtime.js
+          node --check assets/ts/analytics/powerbi-engine.js
+          node --check assets/ts/charts/performance.js
+          node --check service-worker.js
       - name: Pruebas funcionales críticas
         run: |
           node tests/functional-smoke.mjs
@@ -45,6 +55,7 @@ jobs:
           node tests/consults-cleanup-api-smoke.mjs
           node tests/workforce-mod-moi-smoke.mjs
           node tests/resilience-runtime-smoke.mjs
+          node tests/modernization-smoke.mjs
       - name: Certificación de escala 2000x2000
         run: node tests/high-volume-performance-smoke.mjs
 
@@ -57,6 +68,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Fijar Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Construir frontend TypeScript
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
       - name: Configurar Pages
         uses: actions/configure-pages@v5
       - name: Subir sitio estático

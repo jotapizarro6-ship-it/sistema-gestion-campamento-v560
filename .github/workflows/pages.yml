@@ -56,6 +56,7 @@ jobs:
           node tests/workforce-mod-moi-smoke.mjs
           node tests/resilience-runtime-smoke.mjs
           node tests/modernization-smoke.mjs
+          node tests/analytics-engine-smoke.mjs
       - name: Certificación de escala 2000x2000
         run: node tests/high-volume-performance-smoke.mjs
 

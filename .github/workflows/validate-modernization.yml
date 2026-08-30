@@ -28,6 +28,8 @@ jobs:
         run: npm run build
       - name: Validar arquitectura modernizada
         run: node tests/modernization-smoke.mjs
+      - name: Validar motor analítico
+        run: node tests/analytics-engine-smoke.mjs
       - name: Instalar Chromium para Playwright
         run: npx playwright install --with-deps chromium
       - name: Pruebas E2E escritorio y móvil

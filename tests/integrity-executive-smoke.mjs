@@ -3,6 +3,21 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
 const code=fs.readFileSync(new URL('../assets/integrity-executive.js',import.meta.url),'utf8');
+const uiCode=fs.readFileSync(new URL('../assets/ui-experience-fixes.js',import.meta.url),'utf8');
+const uiCss=fs.readFileSync(new URL('../assets/ui-experience-fixes.css',import.meta.url),'utf8');
+const app4=fs.readFileSync(new URL('../assets/app-4.js',import.meta.url),'utf8');
+new vm.Script(uiCode,{filename:'ui-experience-fixes.js'});
+assert.match(app4,/ui-experience-fixes\.css/,'La capa visual responsive debe cargarse desde app-4.');
+assert.match(app4,/ui-experience-fixes\.js/,'La corrección de experiencia debe cargarse desde app-4.');
+assert.match(uiCode,/\[data-print-executive\]/,'Debe interceptar la acción de informe ejecutivo.');
+assert.match(uiCode,/window\.print\(\)/,'El PDF debe usar impresión del mismo documento.');
+assert.doesNotMatch(uiCode,/window\.open\(/,'La corrección no debe depender de ventanas emergentes.');
+assert.match(uiCode,/camp-topbar-status/,'Debe agrupar perfil y estado en una zona estable.');
+assert.match(uiCode,/camp-topbar-buttons/,'Debe agrupar Actualizar e Instalar como acciones.');
+assert.match(uiCss,/@media\(max-width:700px\)/,'Debe existir diseño específico para smartphone.');
+assert.match(uiCss,/@media print/,'Debe existir una presentación dedicada al PDF/impresión.');
+assert.match(uiCss,/#syncBadge\.status-pill\{display:inline-flex!important/,'El estado actualizado debe permanecer visible en móvil.');
+
 const ctx={console,Date,Map,Set,Number,String,Math,JSON,window:{},A:{ops:{actions:[],plan_events:[]}},CampOps:{registerRenderer(){}},todayISO:()=> '2026-08-28',fmtDate:v=>v,fmt1:v=>Number(v||0).toFixed(1),fmtInt:v=>String(Number(v||0)),esc:v=>String(v??''),analytics:d=>d.__analytics};
 ctx.window.CampOps=ctx.CampOps;
 vm.createContext(ctx);vm.runInContext(code,ctx);

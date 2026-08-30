@@ -1,0 +1,40 @@
+name: Validar Resiliencia y Concurrencia
+
+on:
+  push:
+    branches: ["main", "dev-*"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: resilience-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-resilience:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Fijar Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Validar runtime de resiliencia
+        run: node --check assets/resilience-runtime.js
+      - name: Pruebas de resiliencia y concurrencia
+        run: node tests/resilience-runtime-smoke.mjs
+      - name: Verificar fuentes Edge Functions
+        run: |
+          test -f supabase/functions/campamento-v560-fast/index.ts
+          test -f supabase/functions/campamento-v560-safe/index.ts
+          test -f supabase/functions/campamento-web-api/index.ts
+          grep -q "state_version" supabase/functions/campamento-v560-fast/index.ts
+          grep -q "STATE_CONFLICT" supabase/functions/campamento-v560-safe/index.ts
+          grep -q "STATE_CONFLICT" supabase/functions/campamento-web-api/index.ts
+          grep -q "action==='health'" supabase/functions/campamento-v560-fast/index.ts

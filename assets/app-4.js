@@ -36,4 +36,7 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/echarts-loader.js?v=20260829-deepnav1"></script>');
   document.write('<script src="assets/admin-performance-guard.js?v=20260829-deepnav1"></script>');
   document.write('<script src="assets/resilience-runtime.js?v=20260829-resilience1"></script>');
+  document.write('<script src="assets/ts/analytics/powerbi-engine.js?v=20260830-modern1"></script>');
+  document.write('<script src="assets/ts/charts/performance.js?v=20260830-modern1"></script>');
+  document.write('<script src="assets/ts/pwa/runtime.js?v=20260830-modern1"></script>');
 }

@@ -1,0 +1,16 @@
+{
+  "name": "sistema-gestion-campamento",
+  "version": "5.6.1",
+  "private": true,
+  "description": "Sistema de Gestión de Campamento · frontend estático, PWA y validación E2E",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:modern": "node tests/modernization-smoke.mjs",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "typescript": "7.0.2"
+  }
+}

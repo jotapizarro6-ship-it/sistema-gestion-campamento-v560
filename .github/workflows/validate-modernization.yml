@@ -1,0 +1,36 @@
+name: Validar Modernizacion PWA TypeScript
+
+on:
+  push:
+    branches: ["main", "dev-*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  modernization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Fijar Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Instalar dependencias fijadas
+        run: npm install --no-audit --no-fund
+      - name: TypeScript estricto
+        run: npm run typecheck
+      - name: Compilar frontend TypeScript
+        run: npm run build
+      - name: Validar arquitectura modernizada
+        run: node tests/modernization-smoke.mjs
+      - name: Validar motor analítico
+        run: node tests/analytics-engine-smoke.mjs
+      - name: Instalar Chromium para Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Pruebas E2E escritorio y móvil
+        run: npm run test:e2e -- --project=chromium --project=mobile-chrome

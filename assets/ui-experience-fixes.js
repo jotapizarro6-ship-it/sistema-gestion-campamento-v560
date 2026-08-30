@@ -14,23 +14,126 @@
     style.id='campMobileTopbarFinal';
     style.textContent=`
       @media(max-width:700px){
-        .admin-topbar .topbar-admin{gap:8px!important;padding:max(9px,env(safe-area-inset-top)) 12px 10px!important}
-        .camp-topbar-context{grid-template-columns:48px minmax(0,1fr)!important;gap:10px!important}
-        .camp-topbar-title .brand{font-size:17px!important;line-height:1.18!important}
-        .camp-topbar-mobile-role{display:none!important}
-        #menuBtn{display:grid!important;place-items:center!important;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;padding:0!important;font-size:0!important;line-height:1!important;border-radius:12px!important}
-        #menuBtn::before{content:"";display:block;width:25px;height:18px;background:linear-gradient(currentColor,currentColor) center top/25px 3px no-repeat,linear-gradient(currentColor,currentColor) center/25px 3px no-repeat,linear-gradient(currentColor,currentColor) center bottom/25px 3px no-repeat}
-        .top-actions.camp-topbar-actions{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;width:100%!important}
-        .camp-topbar-status{display:flex!important;align-items:center!important;justify-content:flex-start!important;flex-wrap:wrap!important;gap:7px!important;max-width:none!important;padding:0!important;border:0!important;background:transparent!important;backdrop-filter:none!important}
-        .ops-profile-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:38px!important;padding:8px 12px!important;border-radius:999px!important;font-size:11px!important;line-height:1!important;white-space:nowrap!important}
-        #syncBadge.status-pill{min-height:38px!important;padding:8px 11px!important;font-size:11px!important}
-        .camp-topbar-buttons{display:flex!important;width:100%!important;justify-content:flex-start!important;align-items:center!important;flex-wrap:wrap!important;gap:7px!important}
-        #refreshAllBtn,#campPwaInstall{width:auto!important;min-width:108px!important;max-width:100%!important;height:42px!important;min-height:42px!important;padding:0 13px!important;margin:0!important;border-radius:11px!important;font-size:12px!important;font-weight:800!important;line-height:1!important;flex:0 0 auto!important}
-        #campPwaInstall{min-width:142px!important}
+        .admin-topbar .topbar-admin{
+          display:grid!important;
+          grid-template-columns:minmax(0,1fr) auto!important;
+          grid-template-areas:"context profile" "sync refresh"!important;
+          align-items:center!important;
+          column-gap:10px!important;
+          row-gap:6px!important;
+          min-height:auto!important;
+          padding:max(7px,env(safe-area-inset-top)) 12px 8px!important;
+        }
+        .camp-topbar-context{
+          grid-area:context!important;
+          width:100%!important;
+          display:grid!important;
+          grid-template-columns:48px minmax(0,1fr)!important;
+          align-items:center!important;
+          gap:9px!important;
+          min-width:0!important;
+        }
+        .camp-topbar-title{min-width:0!important}
+        .camp-topbar-title .brand{font-size:17px!important;line-height:1.15!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+        .camp-topbar-title .subtitle,.camp-topbar-mobile-role{display:none!important}
+        #menuBtn{
+          display:grid!important;
+          place-items:center!important;
+          width:48px!important;
+          height:48px!important;
+          min-width:48px!important;
+          min-height:48px!important;
+          padding:0!important;
+          font-size:0!important;
+          line-height:1!important;
+          border-radius:12px!important;
+        }
+        #menuBtn::before{
+          content:"";
+          display:block;
+          width:25px;
+          height:18px;
+          background:linear-gradient(currentColor,currentColor) center top/25px 3px no-repeat,linear-gradient(currentColor,currentColor) center/25px 3px no-repeat,linear-gradient(currentColor,currentColor) center bottom/25px 3px no-repeat;
+        }
+        .top-actions.camp-topbar-actions,.camp-topbar-status,.camp-topbar-buttons{display:contents!important}
+        .ops-profile-badge{
+          grid-area:profile!important;
+          justify-self:end!important;
+          align-self:center!important;
+          display:inline-flex!important;
+          align-items:center!important;
+          justify-content:center!important;
+          width:auto!important;
+          min-width:0!important;
+          max-width:112px!important;
+          min-height:30px!important;
+          height:30px!important;
+          padding:0 9px!important;
+          border-radius:9px!important;
+          font-size:10.5px!important;
+          font-weight:850!important;
+          line-height:1!important;
+          white-space:nowrap!important;
+        }
+        #syncBadge.status-pill{
+          grid-area:sync!important;
+          justify-self:start!important;
+          align-self:center!important;
+          margin:0 0 0 57px!important;
+          min-height:34px!important;
+          height:34px!important;
+          max-width:155px!important;
+          padding:0 10px!important;
+          font-size:11px!important;
+          overflow:hidden!important;
+          text-overflow:ellipsis!important;
+          white-space:nowrap!important;
+        }
+        #refreshAllBtn{
+          grid-area:refresh!important;
+          justify-self:end!important;
+          align-self:center!important;
+          width:auto!important;
+          min-width:136px!important;
+          max-width:150px!important;
+          height:40px!important;
+          min-height:40px!important;
+          padding:0 14px!important;
+          margin:0!important;
+          border-radius:10px!important;
+          font-size:12.5px!important;
+          font-weight:850!important;
+          line-height:1!important;
+          white-space:nowrap!important;
+        }
+        #refreshAllBtn::before{font-size:19px!important}
+        #campPwaInstall{
+          grid-column:2!important;
+          grid-row:3!important;
+          justify-self:end!important;
+          width:auto!important;
+          min-width:136px!important;
+          max-width:160px!important;
+          height:38px!important;
+          min-height:38px!important;
+          padding:0 12px!important;
+          margin:0!important;
+          border-radius:10px!important;
+          font-size:11.5px!important;
+          font-weight:800!important;
+          line-height:1!important;
+          white-space:nowrap!important;
+        }
       }
       @media(max-width:380px){
-        .ops-profile-badge,#syncBadge.status-pill{font-size:10.5px!important}
-        #refreshAllBtn,#campPwaInstall{min-width:0!important}
+        .admin-topbar .topbar-admin{column-gap:8px!important;padding-left:10px!important;padding-right:10px!important}
+        .camp-topbar-context{grid-template-columns:46px minmax(0,1fr)!important;gap:8px!important}
+        #menuBtn{width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important}
+        .camp-topbar-title .brand{font-size:16px!important}
+        .ops-profile-badge{max-width:104px!important;padding:0 8px!important;font-size:10px!important}
+        #syncBadge.status-pill{margin-left:54px!important;max-width:142px!important;font-size:10.5px!important}
+        #refreshAllBtn{min-width:124px!important;max-width:136px!important;padding:0 11px!important;font-size:12px!important}
+        #campPwaInstall{min-width:124px!important;max-width:145px!important;font-size:11px!important}
       }
     `;
     document.head.appendChild(style);

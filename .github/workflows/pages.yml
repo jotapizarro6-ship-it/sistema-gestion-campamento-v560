@@ -33,6 +33,7 @@ jobs:
           node --check assets/admin-performance-guard.js
           node --check assets/consults-export-xlsx.js
           node --check assets/workforce-mod-moi.js
+          node --check assets/resilience-runtime.js
       - name: Pruebas funcionales críticas
         run: |
           node tests/functional-smoke.mjs
@@ -43,6 +44,7 @@ jobs:
           node tests/consults-export-smoke.mjs
           node tests/consults-cleanup-api-smoke.mjs
           node tests/workforce-mod-moi-smoke.mjs
+          node tests/resilience-runtime-smoke.mjs
       - name: Certificación de escala 2000x2000
         run: node tests/high-volume-performance-smoke.mjs
 

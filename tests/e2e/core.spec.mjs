@@ -27,7 +27,7 @@ test('administración sigue disponible por enlace y carga las nuevas capas sin a
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href',/manifest\.webmanifest/);
 });
 
-test('barra administrativa muestra acciones legibles en smartphone y texto completo en escritorio',async({page})=>{
+test('barra administrativa muestra Administrador, estado y acciones legibles con menú centrado en smartphone',async({page})=>{
   await page.setViewportSize({width:390,height:844});
   await page.goto('/admin.html');
   await expect.poll(()=>page.evaluate(()=>Boolean(window.CampUiExperience))).toBe(true);
@@ -45,31 +45,40 @@ test('barra administrativa muestra acciones legibles en smartphone y texto compl
   const mobile=await page.evaluate(()=>{
     const metrics=id=>{const el=document.getElementById(id),r=el.getBoundingClientRect(),s=getComputedStyle(el);return {width:r.width,height:r.height,fontSize:parseFloat(s.fontSize),text:el.textContent.trim(),display:s.display}};
     const topbar=document.querySelector('.admin-topbar');
+    const menu=document.getElementById('menuBtn');
+    const menuStyle=getComputedStyle(menu);
+    const menuBefore=getComputedStyle(menu,'::before');
     return {
-      refresh:metrics('refreshAllBtn'),install:metrics('campPwaInstall'),
-      profileDisplay:getComputedStyle(document.getElementById('profileBadge')).display,
+      refresh:metrics('refreshAllBtn'),install:metrics('campPwaInstall'),profile:metrics('profileBadge'),
       roleDisplay:getComputedStyle(document.querySelector('.camp-topbar-mobile-role')).display,
-      roleText:document.querySelector('.camp-topbar-mobile-role').textContent,
       syncDisplay:getComputedStyle(document.getElementById('syncBadge')).display,
+      menu:{display:menuStyle.display,placeItems:menuStyle.placeItems,width:menu.getBoundingClientRect().width,height:menu.getBoundingClientRect().height,bg:menuBefore.backgroundImage,pseudoWidth:parseFloat(menuBefore.width),pseudoHeight:parseFloat(menuBefore.height)},
       topbarHeight:topbar.getBoundingClientRect().height,
       scrollWidth:topbar.scrollWidth,clientWidth:topbar.clientWidth
     };
   });
+  expect(mobile.profile.display).not.toBe('none');
+  expect(mobile.profile.text).toContain('Administrador');
+  expect(mobile.profile.height).toBeGreaterThanOrEqual(36);
+  expect(mobile.roleDisplay).toBe('none');
+  expect(mobile.syncDisplay).not.toBe('none');
   expect(mobile.refresh.display).not.toBe('none');
-  expect(mobile.refresh.width).toBeGreaterThanOrEqual(90);
+  expect(mobile.refresh.width).toBeGreaterThanOrEqual(100);
   expect(mobile.refresh.height).toBeGreaterThanOrEqual(40);
   expect(mobile.refresh.fontSize).toBeGreaterThan(0);
   expect(mobile.refresh.text).toContain('Actualizar');
   expect(mobile.install.display).not.toBe('none');
-  expect(mobile.install.width).toBeGreaterThanOrEqual(120);
-  expect(mobile.install.height).toBeGreaterThanOrEqual(40);
+  expect(mobile.install.width).toBeGreaterThanOrEqual(130);
   expect(mobile.install.fontSize).toBeGreaterThan(0);
   expect(mobile.install.text).toContain('Instalar aplicación');
-  expect(mobile.profileDisplay).toBe('none');
-  expect(mobile.roleDisplay).not.toBe('none');
-  expect(mobile.roleText).toContain('Administrador');
-  expect(mobile.syncDisplay).not.toBe('none');
-  expect(mobile.topbarHeight).toBeLessThan(180);
+  expect(mobile.menu.display).toBe('grid');
+  expect(mobile.menu.placeItems).toContain('center');
+  expect(mobile.menu.width).toBe(48);
+  expect(mobile.menu.height).toBe(48);
+  expect(mobile.menu.bg).toContain('linear-gradient');
+  expect(mobile.menu.pseudoWidth).toBeGreaterThanOrEqual(24);
+  expect(mobile.menu.pseudoHeight).toBeGreaterThanOrEqual(17);
+  expect(mobile.topbarHeight).toBeLessThan(190);
   expect(mobile.scrollWidth).toBeLessThanOrEqual(mobile.clientWidth+1);
 
   await page.setViewportSize({width:1366,height:768});

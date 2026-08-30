@@ -8,6 +8,34 @@
   const fmt1Safe=v=>typeof fmt1==='function'?fmt1(v):Number(v||0).toFixed(1);
   const fmtDateSafe=v=>typeof fmtDate==='function'?fmtDate(v):String(v||'—');
 
+  function ensureMobileTopbarFinalStyles(){
+    if(document.getElementById('campMobileTopbarFinal'))return;
+    const style=document.createElement('style');
+    style.id='campMobileTopbarFinal';
+    style.textContent=`
+      @media(max-width:700px){
+        .admin-topbar .topbar-admin{gap:8px!important;padding:max(9px,env(safe-area-inset-top)) 12px 10px!important}
+        .camp-topbar-context{grid-template-columns:48px minmax(0,1fr)!important;gap:10px!important}
+        .camp-topbar-title .brand{font-size:17px!important;line-height:1.18!important}
+        .camp-topbar-mobile-role{display:none!important}
+        #menuBtn{display:grid!important;place-items:center!important;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;padding:0!important;font-size:0!important;line-height:1!important;border-radius:12px!important}
+        #menuBtn::before{content:"";display:block;width:25px;height:18px;background:linear-gradient(currentColor,currentColor) center top/25px 3px no-repeat,linear-gradient(currentColor,currentColor) center/25px 3px no-repeat,linear-gradient(currentColor,currentColor) center bottom/25px 3px no-repeat}
+        .top-actions.camp-topbar-actions{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;width:100%!important}
+        .camp-topbar-status{display:flex!important;align-items:center!important;justify-content:flex-start!important;flex-wrap:wrap!important;gap:7px!important;max-width:none!important;padding:0!important;border:0!important;background:transparent!important;backdrop-filter:none!important}
+        .ops-profile-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:38px!important;padding:8px 12px!important;border-radius:999px!important;font-size:11px!important;line-height:1!important;white-space:nowrap!important}
+        #syncBadge.status-pill{min-height:38px!important;padding:8px 11px!important;font-size:11px!important}
+        .camp-topbar-buttons{display:flex!important;width:100%!important;justify-content:flex-start!important;align-items:center!important;flex-wrap:wrap!important;gap:7px!important}
+        #refreshAllBtn,#campPwaInstall{width:auto!important;min-width:108px!important;max-width:100%!important;height:42px!important;min-height:42px!important;padding:0 13px!important;margin:0!important;border-radius:11px!important;font-size:12px!important;font-weight:800!important;line-height:1!important;flex:0 0 auto!important}
+        #campPwaInstall{min-width:142px!important}
+      }
+      @media(max-width:380px){
+        .ops-profile-badge,#syncBadge.status-pill{font-size:10.5px!important}
+        #refreshAllBtn,#campPwaInstall{min-width:0!important}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function organizeTopbar(){
     const inner=document.querySelector('.topbar-inner.topbar-admin');
     const actions=inner?.querySelector('.top-actions');
@@ -113,8 +141,9 @@
     requestAnimationFrame(()=>{observerQueued=false;organizeTopbar()});
   };
   const observer=new MutationObserver(scheduleTopbar);
-  document.addEventListener('DOMContentLoaded',()=>{organizeTopbar();observer.observe(document.body,{childList:true,subtree:true})},{once:true});
-  if(document.readyState!=='loading'){organizeTopbar();observer.observe(document.body,{childList:true,subtree:true})}
+  ensureMobileTopbarFinalStyles();
+  document.addEventListener('DOMContentLoaded',()=>{ensureMobileTopbarFinalStyles();organizeTopbar();observer.observe(document.body,{childList:true,subtree:true})},{once:true});
+  if(document.readyState!=='loading'){ensureMobileTopbarFinalStyles();organizeTopbar();observer.observe(document.body,{childList:true,subtree:true})}
 
   window.CampUiExperience={organizeTopbar,printExecutive};
 })();

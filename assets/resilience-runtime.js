@@ -59,20 +59,19 @@
     }else setBadge(reason,'bad');
     document.documentElement.dataset.campNetwork='offline';
   }
-  function markFresh(){
-    lastFreshAt=Date.now();document.documentElement.dataset.campNetwork='online';
-    const meta=document.querySelector('#systemMeta');if(meta)meta.textContent=meta.textContent.replace(/ · NO ACTUALIZADO/g,'');
+  function markConflict(){
+    const state=appState();
+    setBadge('Cambios externos · ACTUALIZAR','bad');
+    document.documentElement.dataset.campNetwork='conflict';
+    if(state?.data){const meta=document.querySelector('#systemMeta');if(meta&&!meta.textContent.includes('NO ACTUALIZADO'))meta.textContent=`${meta.textContent} · NO ACTUALIZADO`}
   }
+  function markFresh(){lastFreshAt=Date.now();document.documentElement.dataset.campNetwork='online';const meta=document.querySelector('#systemMeta');if(meta)meta.textContent=meta.textContent.replace(/ · NO ACTUALIZADO/g,'')}
   function expireSession(){metrics.session_expired++;sessionStorage.removeItem('camp_admin_token');document.dispatchEvent(new CustomEvent('camp:session-expired'))}
   function offlineError(){const e=new TypeError('Sin conexión. No se enviaron cambios.');e.code='OFFLINE';e.status=0;return e}
   function cloneInit(init={}){return {...init,headers:new Headers(init.headers||{})}}
   function makeController(externalSignal,timeout){
-    const controller=new AbortController();
-    let onAbort=null;
-    if(externalSignal){
-      onAbort=()=>controller.abort(externalSignal.reason);
-      if(externalSignal.aborted)onAbort();else externalSignal.addEventListener('abort',onAbort,{once:true});
-    }
+    const controller=new AbortController();let onAbort=null;
+    if(externalSignal){onAbort=()=>controller.abort(externalSignal.reason);if(externalSignal.aborted)onAbort();else externalSignal.addEventListener('abort',onAbort,{once:true})}
     const timer=setTimeout(()=>controller.abort(new DOMException('Tiempo de espera agotado','AbortError')),timeout);
     return {signal:controller.signal,clear:()=>{clearTimeout(timer);if(externalSignal&&onAbort)externalSignal.removeEventListener('abort',onAbort)}};
   }
@@ -80,38 +79,33 @@
     if((u.searchParams.get('action')||'')!=='advanced_state'||!res.ok)return;
     try{const data=await res.clone().json();const state=appState();if(state&&data?.state_version)state.stateVersion=String(data.state_version)}catch{}
   }
-  function invalidateAfterMutation(u,method,res){
+  function advanceAfterMutation(u,method,res){
     if(!res.ok||!shouldAttachVersion(u,method))return;
-    const state=appState();if(state)state.stateVersion=null;
+    const state=appState();if(!state)return;
+    const current=Number.parseInt(String(state.stateVersion||''),10);
+    state.stateVersion=Number.isFinite(current)?String(current+1):null;
   }
 
   async function performCampFetch(u,init,method){
-    const body=init.body;
-    const maxAttempts=retryable(u,method)?3:1;
-    const timeout=timeoutFor(method,body);
-    let lastError;
+    const body=init.body,maxAttempts=retryable(u,method)?3:1,timeout=timeoutFor(method,body);let lastError;
     for(let attempt=1;attempt<=maxAttempts;attempt++){
       if(!isOnline()){metrics.offline_errors++;metrics.last_error_code='OFFLINE';markStale('Sin conexión');throw offlineError()}
-      const attemptInit=cloneInit(init);
-      const ctl=makeController(init.signal,timeout);attemptInit.signal=ctl.signal;
+      const attemptInit=cloneInit(init),ctl=makeController(init.signal,timeout);attemptInit.signal=ctl.signal;
       const started=performance.now();metrics.requests++;
       try{
         const res=await originalFetch(u.toString(),attemptInit);ctl.clear();metrics.last_latency_ms=Math.round(performance.now()-started);
         if(RETRYABLE_STATUS.has(res.status)&&attempt<maxAttempts){metrics.retries++;await wait(attempt===1?350:900);continue}
         const action=u.searchParams.get('action')||'';
         if(res.status===401&&!SESSION_EXEMPT_ACTIONS.has(action))expireSession();
-        if(res.status===409){metrics.conflicts++;metrics.last_error_code='STATE_CONFLICT'}
+        if(res.status===409){metrics.conflicts++;metrics.last_error_code='STATE_CONFLICT';markConflict()}
         else if(res.ok)markMetric({last_error_code:null,last_success_at:new Date().toISOString()});
-        await captureStateVersion(u,res);
-        invalidateAfterMutation(u,method,res);
-        return res;
+        await captureStateVersion(u,res);advanceAfterMutation(u,method,res);return res;
       }catch(err){
         ctl.clear();lastError=err;
         if(err?.name==='AbortError'){metrics.timeouts++;metrics.last_error_code='TIMEOUT'}else metrics.last_error_code=err?.code||'NETWORK_ERROR';
         const networkish=err?.name==='AbortError'||err instanceof TypeError||err?.code==='OFFLINE';
         if(networkish&&attempt<maxAttempts&&isOnline()&&!init.signal?.aborted){metrics.retries++;await wait(attempt===1?350:900);continue}
-        if(networkish)markStale(isOnline()?'Conexión inestable':'Sin conexión');
-        throw err;
+        if(networkish)markStale(isOnline()?'Conexión inestable':'Sin conexión');throw err;
       }
     }
     throw lastError||new TypeError('Error de red');
@@ -119,28 +113,17 @@
 
   window.fetch=function campResilientFetch(input,init={}){
     const u=apiUrl(input);if(!u)return originalFetch(input,init);
-    const method=String(init.method||'GET').toUpperCase();
-    if(!u.searchParams.has('cid'))u.searchParams.set('cid',cid());
-    const state=appState();
-    if(shouldAttachVersion(u,method)&&state?.stateVersion&&!u.searchParams.has('state_version'))u.searchParams.set('state_version',state.stateVersion);
-    const key=requestKey(u,method,init.body);
-    if(inflight.has(key))return inflight.get(key).then(res=>res.clone());
-    const p=performCampFetch(u,init,method).finally(()=>inflight.delete(key));
-    inflight.set(key,p);
-    return p.then(res=>res.clone());
+    const method=String(init.method||'GET').toUpperCase();if(!u.searchParams.has('cid'))u.searchParams.set('cid',cid());
+    const state=appState();if(shouldAttachVersion(u,method)&&state?.stateVersion&&!u.searchParams.has('state_version'))u.searchParams.set('state_version',state.stateVersion);
+    const key=requestKey(u,method,init.body);if(inflight.has(key))return inflight.get(key).then(res=>res.clone());
+    const p=performCampFetch(u,init,method).finally(()=>inflight.delete(key));inflight.set(key,p);return p.then(res=>res.clone());
   };
 
   if(baseLoadAll){
     window.loadAll=async function resilientLoadAll(options={}){
       const state=appState();
-      if(!isOnline()){
-        markStale('Sin conexión');
-        if(state?.data&&typeof window.showMessage==='function')window.showMessage('Sin conexión: se mantienen en pantalla los últimos datos cargados, marcados como NO ACTUALIZADOS. No se enviaron cambios.','error');
-        return false;
-      }
-      const ok=await baseLoadAll(options);
-      if(ok)markFresh();else if(state?.data)markStale('No fue posible sincronizar');
-      return ok;
+      if(!isOnline()){markStale('Sin conexión');if(state?.data&&typeof window.showMessage==='function')window.showMessage('Sin conexión: se mantienen en pantalla los últimos datos cargados, marcados como NO ACTUALIZADOS. No se enviaron cambios.','error');return false}
+      const ok=await baseLoadAll(options);if(ok)markFresh();else if(state?.data)markStale('No fue posible sincronizar');return ok;
     };
   }
 
@@ -154,16 +137,9 @@
 
   async function health(){
     const started=performance.now();
-    try{
-      const res=await window.fetch(`${SUPABASE_ORIGIN}/functions/v1/campamento-v560-safe?action=health`,{cache:'no-store'});
-      const data=await res.json().catch(()=>({}));
-      return {...data,ok:res.ok&&data?.ok!==false,client_latency_ms:Math.round(performance.now()-started),browser_online:isOnline(),last_fresh_at:lastFreshAt?new Date(lastFreshAt).toISOString():null};
-    }catch(err){return {ok:false,status:'unreachable',browser_online:isOnline(),error_code:err?.code||'NETWORK_ERROR'}}
+    try{const res=await window.fetch(`${SUPABASE_ORIGIN}/functions/v1/campamento-v560-safe?action=health`,{cache:'no-store'}),data=await res.json().catch(()=>({}));return {...data,ok:res.ok&&data?.ok!==false,client_latency_ms:Math.round(performance.now()-started),browser_online:isOnline(),last_fresh_at:lastFreshAt?new Date(lastFreshAt).toISOString():null}}
+    catch(err){return {ok:false,status:'unreachable',browser_online:isOnline(),error_code:err?.code||'NETWORK_ERROR'}}
   }
 
-  window.CampResilience={
-    version:'2026.08.29-2',health,isOnline,
-    getMetrics:()=>({...metrics,inflight:inflight.size,last_fresh_at:lastFreshAt?new Date(lastFreshAt).toISOString():null}),
-    forceRefresh:()=>window.loadAll?.({snapshot:false})
-  };
+  window.CampResilience={version:'2026.08.29-3',health,isOnline,getMetrics:()=>({...metrics,inflight:inflight.size,last_fresh_at:lastFreshAt?new Date(lastFreshAt).toISOString():null}),forceRefresh:()=>window.loadAll?.({snapshot:false})};
 })();

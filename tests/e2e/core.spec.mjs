@@ -27,7 +27,7 @@ test('administración sigue disponible por enlace y carga las nuevas capas sin a
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href',/manifest\.webmanifest/);
 });
 
-test('barra administrativa muestra Administrador, estado y acciones legibles con menú centrado en smartphone',async({page})=>{
+test('cabecera smartphone conserva contenido visible con barra azul compacta y jerarquía aprobada',async({page})=>{
   await page.setViewportSize({width:390,height:844});
   await page.goto('/admin.html');
   await expect.poll(()=>page.evaluate(()=>Boolean(window.CampUiExperience))).toBe(true);
@@ -37,49 +37,66 @@ test('barra administrativa muestra Administrador, estado y acciones legibles con
     if(actions&&!document.getElementById('profileBadge')){
       const profile=document.createElement('button');profile.id='profileBadge';profile.className='ops-profile-badge';profile.textContent='Administrador';actions.appendChild(profile);
     }
-    if(actions&&!document.getElementById('campPwaInstall')){
-      const install=document.createElement('button');install.id='campPwaInstall';install.className='btn btn-secondary';install.textContent='Instalar aplicación';actions.appendChild(install);
-    }
+    document.getElementById('campPwaInstall')?.remove();
     window.CampUiExperience.organizeTopbar();
   });
   const mobile=await page.evaluate(()=>{
-    const metrics=id=>{const el=document.getElementById(id),r=el.getBoundingClientRect(),s=getComputedStyle(el);return {width:r.width,height:r.height,fontSize:parseFloat(s.fontSize),text:el.textContent.trim(),display:s.display}};
+    const data=id=>{const el=document.getElementById(id),r=el.getBoundingClientRect(),s=getComputedStyle(el);return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,fontSize:parseFloat(s.fontSize),text:el.textContent.trim(),display:s.display}};
     const topbar=document.querySelector('.admin-topbar');
     const menu=document.getElementById('menuBtn');
     const menuStyle=getComputedStyle(menu);
     const menuBefore=getComputedStyle(menu,'::before');
     return {
-      refresh:metrics('refreshAllBtn'),install:metrics('campPwaInstall'),profile:metrics('profileBadge'),
+      refresh:data('refreshAllBtn'),profile:data('profileBadge'),sync:data('syncBadge'),menu:data('menuBtn'),
       roleDisplay:getComputedStyle(document.querySelector('.camp-topbar-mobile-role')).display,
-      syncDisplay:getComputedStyle(document.getElementById('syncBadge')).display,
-      menu:{display:menuStyle.display,placeItems:menuStyle.placeItems,width:menu.getBoundingClientRect().width,height:menu.getBoundingClientRect().height,bg:menuBefore.backgroundImage,pseudoWidth:parseFloat(menuBefore.width),pseudoHeight:parseFloat(menuBefore.height)},
+      menuStyle:{display:menuStyle.display,placeItems:menuStyle.placeItems,bg:menuBefore.backgroundImage,pseudoWidth:parseFloat(menuBefore.width),pseudoHeight:parseFloat(menuBefore.height)},
       topbarHeight:topbar.getBoundingClientRect().height,
       scrollWidth:topbar.scrollWidth,clientWidth:topbar.clientWidth
     };
   });
   expect(mobile.profile.display).not.toBe('none');
   expect(mobile.profile.text).toContain('Administrador');
-  expect(mobile.profile.height).toBeGreaterThanOrEqual(36);
+  expect(mobile.profile.height).toBeLessThanOrEqual(34);
+  expect(mobile.profile.width).toBeLessThan(mobile.refresh.width);
   expect(mobile.roleDisplay).toBe('none');
-  expect(mobile.syncDisplay).not.toBe('none');
+  expect(mobile.sync.display).not.toBe('none');
+  expect(mobile.sync.text).toMatch(/Actualizado|No actualizado/i);
   expect(mobile.refresh.display).not.toBe('none');
-  expect(mobile.refresh.width).toBeGreaterThanOrEqual(100);
+  expect(mobile.refresh.width).toBeGreaterThanOrEqual(130);
   expect(mobile.refresh.height).toBeGreaterThanOrEqual(40);
   expect(mobile.refresh.fontSize).toBeGreaterThan(0);
   expect(mobile.refresh.text).toContain('Actualizar');
-  expect(mobile.install.display).not.toBe('none');
-  expect(mobile.install.width).toBeGreaterThanOrEqual(130);
-  expect(mobile.install.fontSize).toBeGreaterThan(0);
-  expect(mobile.install.text).toContain('Instalar aplicación');
-  expect(mobile.menu.display).toBe('grid');
-  expect(mobile.menu.placeItems).toContain('center');
+  expect(mobile.profile.top).toBeLessThan(mobile.refresh.top);
+  expect(Math.abs(mobile.sync.top-mobile.refresh.top)).toBeLessThanOrEqual(8);
+  expect(mobile.sync.left).toBeGreaterThanOrEqual(mobile.menu.right+4);
+  expect(mobile.menuStyle.display).toBe('grid');
+  expect(mobile.menuStyle.placeItems).toContain('center');
   expect(mobile.menu.width).toBe(48);
   expect(mobile.menu.height).toBe(48);
-  expect(mobile.menu.bg).toContain('linear-gradient');
-  expect(mobile.menu.pseudoWidth).toBeGreaterThanOrEqual(24);
-  expect(mobile.menu.pseudoHeight).toBeGreaterThanOrEqual(17);
-  expect(mobile.topbarHeight).toBeLessThan(190);
+  expect(mobile.menuStyle.bg).toContain('linear-gradient');
+  expect(mobile.menuStyle.pseudoWidth).toBeGreaterThanOrEqual(24);
+  expect(mobile.menuStyle.pseudoHeight).toBeGreaterThanOrEqual(17);
+  expect(mobile.topbarHeight).toBeLessThanOrEqual(125);
   expect(mobile.scrollWidth).toBeLessThanOrEqual(mobile.clientWidth+1);
+
+  await page.evaluate(()=>{
+    const actions=document.querySelector('.top-actions');
+    if(actions&&!document.getElementById('campPwaInstall')){
+      const install=document.createElement('button');install.id='campPwaInstall';install.className='btn btn-secondary';install.textContent='Instalar aplicación';actions.appendChild(install);
+    }
+    window.CampUiExperience.organizeTopbar();
+  });
+  const installable=await page.evaluate(()=>{
+    const install=document.getElementById('campPwaInstall'),r=install.getBoundingClientRect(),s=getComputedStyle(install),topbar=document.querySelector('.admin-topbar');
+    return {display:s.display,width:r.width,height:r.height,fontSize:parseFloat(s.fontSize),text:install.textContent.trim(),topbarHeight:topbar.getBoundingClientRect().height,scrollWidth:topbar.scrollWidth,clientWidth:topbar.clientWidth};
+  });
+  expect(installable.display).not.toBe('none');
+  expect(installable.width).toBeGreaterThanOrEqual(124);
+  expect(installable.height).toBeGreaterThanOrEqual(38);
+  expect(installable.fontSize).toBeGreaterThan(0);
+  expect(installable.text).toContain('Instalar aplicación');
+  expect(installable.topbarHeight).toBeLessThanOrEqual(170);
+  expect(installable.scrollWidth).toBeLessThanOrEqual(installable.clientWidth+1);
 
   await page.setViewportSize({width:1366,height:768});
   const desktop=await page.evaluate(()=>({

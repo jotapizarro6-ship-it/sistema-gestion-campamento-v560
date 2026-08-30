@@ -12,6 +12,7 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   addStyle('assets/whatif-clarity.css');
   addStyle('assets/integrity-executive.css?v=20260828-integrity1');
   addStyle('assets/workforce-mod-moi.css?v=20260829-modmoi1');
+  addStyle('assets/ui-experience-fixes.css?v=20260829-ui1');
   document.write('<script src="assets/app-4-core.js"></script>');
   document.write('<script src="assets/consults-export-xlsx.js?v=20260829-cleanup1"></script>');
   document.write('<script src="assets/audit-fixes.js"></script>');
@@ -39,4 +40,5 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/ts/analytics/powerbi-engine.js?v=20260830-modern1"></script>');
   document.write('<script src="assets/ts/charts/performance.js?v=20260830-modern1"></script>');
   document.write('<script src="assets/ts/pwa/runtime.js?v=20260830-modern1"></script>');
+  document.write('<script src="assets/ui-experience-fixes.js?v=20260829-ui1"></script>');
 }

@@ -3,7 +3,7 @@
   const W=window as any;
   if(W.__CAMP_PWA_RUNTIME__)return;
   W.__CAMP_PWA_RUNTIME__=true;
-  const VERSION='5.6.1-modern.2';
+  const VERSION='5.6.1-modern.3';
   type InstallPromptEvent=Event&{prompt:()=>Promise<void>;userChoice:Promise<{outcome:string}>};
   let deferredPrompt:InstallPromptEvent|null=null;
   let registration:ServiceWorkerRegistration|null=null;

@@ -38,15 +38,25 @@
     if(profile&&profile.parentElement!==status)status.appendChild(profile);
     if(sync&&sync.parentElement!==status)status.appendChild(sync);
     if(refresh&&refresh.parentElement!==buttons)buttons.appendChild(refresh);
-    if(install){install.style.marginTop='0';if(install.parentElement!==buttons)buttons.appendChild(install)}
+    if(install){
+      if(install.style.marginTop!=='0px')install.style.marginTop='0';
+      if(install.parentElement!==buttons)buttons.appendChild(install);
+    }
 
     if(title){
       let mobileRole=title.querySelector('.camp-topbar-mobile-role');
       if(!mobileRole){mobileRole=document.createElement('div');mobileRole.className='camp-topbar-mobile-role';title.appendChild(mobileRole)}
-      mobileRole.textContent=(profile?.textContent||'Administrador').trim()||'Administrador';
+      const roleText=(profile?.textContent||'Administrador').trim()||'Administrador';
+      if(mobileRole.textContent!==roleText)mobileRole.textContent=roleText;
     }
-    if(refresh){refresh.setAttribute('aria-label','Actualizar datos del sistema');refresh.setAttribute('title','Actualizar datos')}
-    if(install){install.setAttribute('aria-label','Instalar aplicación');install.setAttribute('title','Instalar aplicación')}
+    if(refresh){
+      if(refresh.getAttribute('aria-label')!=='Actualizar datos del sistema')refresh.setAttribute('aria-label','Actualizar datos del sistema');
+      if(refresh.getAttribute('title')!=='Actualizar datos')refresh.setAttribute('title','Actualizar datos');
+    }
+    if(install){
+      if(install.getAttribute('aria-label')!=='Instalar aplicación')install.setAttribute('aria-label','Instalar aplicación');
+      if(install.getAttribute('title')!=='Instalar aplicación')install.setAttribute('title','Instalar aplicación');
+    }
   }
 
   function executiveReportMarkup(r){
@@ -96,7 +106,13 @@
     printExecutive();
   },true);
 
-  const observer=new MutationObserver(()=>organizeTopbar());
+  let observerQueued=false;
+  const scheduleTopbar=()=>{
+    if(observerQueued)return;
+    observerQueued=true;
+    requestAnimationFrame(()=>{observerQueued=false;organizeTopbar()});
+  };
+  const observer=new MutationObserver(scheduleTopbar);
   document.addEventListener('DOMContentLoaded',()=>{organizeTopbar();observer.observe(document.body,{childList:true,subtree:true})},{once:true});
   if(document.readyState!=='loading'){organizeTopbar();observer.observe(document.body,{childList:true,subtree:true})}
 

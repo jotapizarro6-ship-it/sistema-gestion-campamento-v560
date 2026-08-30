@@ -1,5 +1,5 @@
 'use strict';
-const CACHE_VERSION='campamento-shell-5.6.1-modern.3';
+const CACHE_VERSION='campamento-shell-5.6.1-modern.4';
 const SHELL=[
   './','./index.html','./admin.html','./manifest.webmanifest',
   './assets/styles.css','./assets/app-1.js','./assets/app-2a.js','./assets/app-2b.js','./assets/app-3a.js','./assets/app-3b.js','./assets/app-4.js',

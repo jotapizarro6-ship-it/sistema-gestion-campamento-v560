@@ -17,6 +17,13 @@ function ub64(s:string){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4
 async function isAdmin(req:Request){const h=req.headers.get('authorization')||'';if(!h.startsWith('Bearer '))return false;const [p,s]=h.slice(7).split('.');if(!p||!s)return false;try{if(Date.now()>JSON.parse(ub64(p)).exp)return false}catch{return false}const secret=await cfg();return !!secret&&(await sign(secret,p))===s}
 function out(x:any,status=200,extra:Record<string,string>={}){return new Response(JSON.stringify(x),{status,headers:{...cors,'content-type':'application/json; charset=utf-8',...extra}})}
 async function revision(){const {data,error}=await db.from('settings').select('value').eq('key','operational_revision').maybeSingle();if(error)throw error;const n=Number.parseInt(String(data?.value||'1'),10);return Number.isFinite(n)&&n>0?n:1}
+async function claim(expectedRaw:string){
+  const expected=/^\d+$/.test(expectedRaw)?Number(expectedRaw):null;
+  const {data,error}=await db.rpc('claim_operational_revision',{p_expected:expected});
+  if(error)throw error;
+  const x=data&&typeof data==='object'?data:{};
+  return {ok:x.ok===true,current:Number(x.current_revision||x.revision||1),revision:Number(x.revision||x.current_revision||1),expected};
+}
 async function proxy(req:Request,u:URL){
   const h=new Headers();const auth=req.headers.get('authorization');if(auth)h.set('authorization',auth);const ct=req.headers.get('content-type');if(ct)h.set('content-type',ct);
   const init:any={method:req.method,headers:h};if(req.method!=='GET'&&req.method!=='HEAD')init.body=await req.arrayBuffer();
@@ -43,6 +50,12 @@ Deno.serve(async(req:Request)=>{
     if(req.method==='GET'&&action==='revision'){
       if(!await isAdmin(req))return out({ok:false,error:'No autorizado'},401);
       const v=String(await revision());return out({ok:true,state_version:v,server_time:new Date().toISOString()},200,{'x-camp-state-version':v});
+    }
+    if(req.method==='POST'&&action==='claim_revision'){
+      if(!await isAdmin(req))return out({ok:false,error:'No autorizado'},401);
+      const c=await claim(u.searchParams.get('expected')||'');
+      if(!c.ok)return out({ok:false,code:'STATE_CONFLICT',error:'Los datos cambiaron en otra sesión. Actualiza la información antes de guardar para evitar sobrescribir cambios recientes.',current_state_version:String(c.current),expected_state_version:c.expected==null?null:String(c.expected)},409,{'x-camp-state-version':String(c.current)});
+      return out({ok:true,state_version:String(c.revision),previous_state_version:c.expected==null?null:String(c.expected)},200,{'x-camp-state-version':String(c.revision)});
     }
     if(req.method==='GET'&&action==='advanced_state'){
       if(!await isAdmin(req))return out({ok:false,error:'No autorizado'},401);

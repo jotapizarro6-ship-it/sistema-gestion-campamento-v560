@@ -1,0 +1,241 @@
+{
+  "contract": "R1_OPERATIONAL_UNIVERSE_V1",
+  "version": 1,
+  "operationalStates": [
+    "EN TURNO",
+    "LIBRE"
+  ],
+  "excludedStates": [
+    "DESCANSO"
+  ],
+  "rules": {
+    "enTurnoCreatesBed": true,
+    "enTurnoMayCreateWorker": true,
+    "libreCreatesBed": true,
+    "libreCreatesWorker": false,
+    "descansoCreatesBed": false,
+    "descansoCreatesWorker": false,
+    "descansoParticipatesInOperationalDuplicates": false,
+    "duplicateOperationalBed": "CONFLICT",
+    "unknownState": "EXCLUDED"
+  },
+  "tests": [
+    {
+      "id": "U01",
+      "scenario": "EN TURNO con cama completa y trabajador válido",
+      "rows": [
+        {
+          "estadoTurno": "EN TURNO",
+          "module": "P1",
+          "room": "101",
+          "bed": "A",
+          "identity": "VALID_RUT_A",
+          "name": "WORKER_A"
+        }
+      ],
+      "expect": {
+        "result": "ACCEPT",
+        "bedCount": 1,
+        "workerCount": 1
+      }
+    },
+    {
+      "id": "U02",
+      "scenario": "EN TURNO y LIBRE en camas distintas",
+      "rows": [
+        {
+          "estadoTurno": "EN TURNO",
+          "module": "P1",
+          "room": "101",
+          "bed": "A",
+          "identity": "VALID_RUT_A",
+          "name": "WORKER_A"
+        },
+        {
+          "estadoTurno": "LIBRE",
+          "module": "P1",
+          "room": "101",
+          "bed": "B",
+          "identity": null,
+          "name": null
+        }
+      ],
+      "expect": {
+        "result": "ACCEPT",
+        "bedCount": 2,
+        "workerCount": 1
+      }
+    },
+    {
+      "id": "U03",
+      "scenario": "DESCANSO corresponde a contraturno/relevo y queda excluido",
+      "rows": [
+        {
+          "estadoTurno": "DESCANSO",
+          "module": "P1",
+          "room": "101",
+          "bed": "A",
+          "identity": "VALID_RUT_B",
+          "name": "RELIEF_B"
+        }
+      ],
+      "expect": {
+        "result": "ACCEPT",
+        "bedCount": 0,
+        "workerCount": 0
+      }
+    },
+    {
+      "id": "U04",
+      "scenario": "misma cama repetida EN TURNO",
+      "rows": [
+        {
+          "estadoTurno": "EN TURNO",
+          "module": "P1",
+          "room": "101",
+          "bed": "A",
+          "identity": "VALID_RUT_A",
+          "name": "WORKER_A"
+        },
+        {
+          "estadoTurno": "EN TURNO",
+          "module": "P1",
+          "room": "101",
+          "bed": "A",
+          "identity": "VALID_RUT_B",
+          "name": "WORKER_B"
+        }
+      ],
+      "expect": {
+        "result": "CONFLICT",
+        "reason": "DUPLICATE_OPERATIONAL_BED"
+      }
+    },
+    {
+      "id": "U05",
+      "scenario": "misma cama repetida LIBRE",
+      "rows": [
+        {
+          "estadoTurno": "LIBRE",
+          "module": "P1",
+          "room": "101",
+          "bed": "A",
+          "identity": null,
+          "name": null
+        },
+        {
+          "estadoTurno": "LIBRE",
+          "module": "P1",
+          "room": "101",
+          "bed": "A",
+          "identity": null,
+          "name": null
+        }
+      ],
+      "expect": {
+        "result": "CONFLICT",
+        "reason": "DUPLICATE_OPERATIONAL_BED"
+      }
+    },
+    {
+      "id": "U06",
+      "scenario": "misma cama EN TURNO y LIBRE",
+      "rows": [
+        {
+          "estadoTurno": "EN TURNO",
+          "module": "P1",
+          "room": "101",
+          "bed": "A",
+          "identity": "VALID_RUT_A",
+          "name": "WORKER_A"
+        },
+        {
+          "estadoTurno": "LIBRE",
+          "module": "P1",
+          "room": "101",
+          "bed": "A",
+          "identity": null,
+          "name": null
+        }
+      ],
+      "expect": {
+        "result": "CONFLICT",
+        "reason": "DUPLICATE_OPERATIONAL_BED"
+      }
+    },
+    {
+      "id": "U07",
+      "scenario": "RUT inválido en trabajador EN TURNO",
+      "rows": [
+        {
+          "estadoTurno": "EN TURNO",
+          "module": "P1",
+          "room": "101",
+          "bed": "A",
+          "identity": "INVALID_RUT",
+          "name": "WORKER_A"
+        }
+      ],
+      "expect": {
+        "result": "REJECT",
+        "reason": "INVALID_RUT"
+      }
+    },
+    {
+      "id": "U08",
+      "scenario": "trabajador EN TURNO con ubicación incompleta",
+      "rows": [
+        {
+          "estadoTurno": "EN TURNO",
+          "module": "P1",
+          "room": "",
+          "bed": "A",
+          "identity": "VALID_RUT_A",
+          "name": "WORKER_A"
+        }
+      ],
+      "expect": {
+        "result": "REJECT",
+        "reason": "MISSING_OPERATIONAL_LOCATION"
+      }
+    },
+    {
+      "id": "U09",
+      "scenario": "LIBRE sin RUT sigue siendo cama operacional válida",
+      "rows": [
+        {
+          "estadoTurno": "LIBRE",
+          "module": "P1",
+          "room": "101",
+          "bed": "A",
+          "identity": null,
+          "name": null
+        }
+      ],
+      "expect": {
+        "result": "ACCEPT",
+        "bedCount": 1,
+        "workerCount": 0
+      }
+    },
+    {
+      "id": "U10",
+      "scenario": "estado no reconocido queda excluido",
+      "rows": [
+        {
+          "estadoTurno": "OTRO ESTADO",
+          "module": "P1",
+          "room": "101",
+          "bed": "A",
+          "identity": "VALID_RUT_A",
+          "name": "WORKER_A"
+        }
+      ],
+      "expect": {
+        "result": "ACCEPT",
+        "bedCount": 0,
+        "workerCount": 0
+      }
+    }
+  ]
+}

@@ -34,14 +34,14 @@ async function parseExcel(file:File){
   if(I.rut<0||I.module<0||I.room<0||I.bed<0||I.estadoTurno<0)throw new ValidationError("Faltan columnas esenciales: RUT, módulo/pabellón, HABITACION TAB/HABITACON TAB, CAMAS o ESTADO TURNO.");
   const val=(row:any[],i:number)=>i>=0?clean(row[i]):"",W=new Map<string,any>(),B=new Map<string,any>(),normCache=new Map<string,string>(),stamp=now();
   const norm=(v:any)=>{const s=clean(v);let x=normCache.get(s);if(x===undefined){x=normH(s);normCache.set(s,x)}return x};
-  let lastModule="",lastRoom="",lastCamp="",lastRoomType="",enTurnoRows=0,enTurnoRowsWithLocation=0;
+  let lastModule="",lastRoom="",lastCamp="",lastRoomType="",enTurnoRows=0,libreRows=0,operationalRows=0,operationalRowsWithLocation=0;
   for(let n=hr+1;n<rows.length;n++){
-    const row=rows[n]??[],estadoTurno=norm(val(row,I.estadoTurno)),inTurn=estadoTurno==="EN TURNO";
+    const row=rows[n]??[],estadoTurno=norm(val(row,I.estadoTurno)),inTurn=estadoTurno==="EN TURNO",isLibre=estadoTurno==="LIBRE",isOperational=inTurn||isLibre;
     const rawModule=val(row,I.module),rawRoom=val(row,I.room),bed=val(row,I.bed),rawCamp=val(row,I.camp),rawRoomType=val(row,I.roomType);
     if(rawModule){if(lastModule&&norm(rawModule)!==norm(lastModule))lastRoom="";lastModule=rawModule}
     const module=rawModule||(bed?lastModule:"");if(rawRoom)lastRoom=rawRoom;const room=rawRoom||(bed?lastRoom:"");
     if(rawCamp)lastCamp=rawCamp;const camp=rawCamp||(bed?lastCamp:"");if(rawRoomType)lastRoomType=rawRoomType;const roomType=rawRoomType||(bed?lastRoomType:"");
-    if(inTurn){enTurnoRows++;if(module&&room&&bed){enTurnoRowsWithLocation++;const key=[norm(module),norm(room),norm(bed)].join("|");if(!B.has(key))B.set(key,{module,room,bed,room_type:roomType,camp,updated_at:stamp})}}
+    if(inTurn)enTurnoRows++;if(isLibre)libreRows++;if(isOperational){operationalRows++;if(module&&room&&bed){operationalRowsWithLocation++;const key=[norm(module),norm(room),norm(bed)].join("|");if(!B.has(key))B.set(key,{module,room,bed,room_type:roomType,camp,updated_at:stamp})}}
     if(!inTurn)continue;
     const r=rut(val(row,I.rut),val(row,I.dv));if(!r)continue;
     let name=val(row,I.name);if(!name)name=[val(row,I.names),val(row,I.ap1),val(row,I.ap2)].filter(Boolean).join(" ");
@@ -54,10 +54,10 @@ async function parseExcel(file:File){
     const cand={rut:r,nombre:name,turno:val(row,I.turno),modulo:module||"",habitacion:room||"",cama:bed||"",empresa:val(row,I.empresa),especialidad:val(row,I.especialidad),categoria:val(row,I.categoria),sexo:val(row,I.sexo),residencia,updated_at:stamp},old=W.get(r),candAssigned=!!(module&&room&&bed),oldAssigned=!!(old&&old.modulo&&old.habitacion&&old.cama);if(!old||(!oldAssigned&&candAssigned))W.set(r,cand)
   }
   if(enTurnoRows===0)throw new ValidationError("La columna ESTADO TURNO no contiene filas con valor EN TURNO.");
-  if(B.size===0)throw new ValidationError("El Excel no contiene inventario de camas válido para ESTADO TURNO = EN TURNO.");
-  if(enTurnoRowsWithLocation!==enTurnoRows)throw new ValidationError(`Carga detenida por seguridad: ${enTurnoRows-enTurnoRowsWithLocation} fila(s) EN TURNO no tienen módulo, habitación o cama completos. La base vigente no fue reemplazada.`);
-  const duplicateBedRows=enTurnoRowsWithLocation-B.size;
-  if(duplicateBedRows>0)throw new ValidationError(`Carga detenida por seguridad: se detectaron ${duplicateBedRows} fila(s) EN TURNO que repiten una cama ya identificada. Se encontraron ${B.size} camas únicas entre ${enTurnoRowsWithLocation} filas con ubicación completa. Corrige las camas duplicadas y vuelve a cargar la planilla. La base vigente no fue reemplazada.`);
+  if(B.size===0)throw new ValidationError("El Excel no contiene inventario de camas válido para ESTADO TURNO = EN TURNO o LIBRE.");
+  if(operationalRowsWithLocation!==operationalRows)throw new ValidationError(`Carga detenida por seguridad: ${operationalRows-operationalRowsWithLocation} fila(s) operacionales EN TURNO/LIBRE no tienen módulo, habitación o cama completos. La base vigente no fue reemplazada.`);
+  const duplicateBedRows=operationalRowsWithLocation-B.size;
+  if(duplicateBedRows>0)throw new ValidationError(`Carga detenida por seguridad: se detectaron ${duplicateBedRows} fila(s) operacionales EN TURNO/LIBRE que repiten una cama ya identificada. Se encontraron ${B.size} camas únicas entre ${operationalRowsWithLocation} filas operacionales con ubicación completa. Corrige las camas duplicadas y vuelve a cargar la planilla. La base vigente no fue reemplazada.`);
   if(W.size===0)throw new ValidationError("El Excel no contiene trabajadores EN TURNO válidos para cargar.");
   return {workers:[...W.values()],beds:[...B.values()],sheet:wb.SheetNames[0],en_turno_rows:enTurnoRows,inventory_beds:B.size,parse_ms:performance.now()-started};
 }

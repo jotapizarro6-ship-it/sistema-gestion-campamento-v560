@@ -21,7 +21,7 @@ const SOURCE = path.join(
 );
 
 const EXPECTED_CONTRACT_SHA256 =
-  "05D6E61EB7C506667DFB6EFB6A2C9C4EB40871B0516B34C5075934AFF3BB1C98";
+  "0868753273F0F81C85EE3A05758FA19BED13DAB8D266AB31A4773D4B08F0E9C7";
 
 const EXPECTED_SOURCE_SHA256 =
   "0DFB38E150FCCEB0425D4843D82A6EF22A5BA9F99D2FEEBB1183632E130670E4";
@@ -204,6 +204,20 @@ function runBaseline(rows) {
     }
   }
 
+  if (enTurnoRows === 0) {
+    return {
+      result: "REJECT",
+      reason: "NO_EN_TURNO"
+    };
+  }
+
+  if (beds.size === 0) {
+    return {
+      result: "REJECT",
+      reason: "NO_OPERATIONAL_INVENTORY"
+    };
+  }
+
   if (invalidRutDetected) {
     return {
       result: "REJECT",
@@ -229,6 +243,13 @@ function runBaseline(rows) {
     return {
       result: "CONFLICT",
       reason: "DUPLICATE_OPERATIONAL_BED"
+    };
+  }
+
+  if (workers.size === 0) {
+    return {
+      result: "REJECT",
+      reason: "NO_CANONICAL_WORKER"
     };
   }
 

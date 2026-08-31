@@ -22,7 +22,7 @@
     "tests":  [
                   {
                       "id":  "U01",
-                      "scenario":  "EN TURNO con cama completa y trabajador vÃ¡lido",
+                      "scenario":  "EN TURNO con cama completa y trabajador vÃƒÂ¡lido",
                       "rows":  [
                                    {
                                        "estadoTurno":  "EN TURNO",
@@ -121,7 +121,7 @@
                   },
                   {
                       "id":  "U05",
-                      "scenario":  "duplicado LIBRE dentro de importación válida",
+                      "scenario":  "duplicado LIBRE dentro de importaciÃ³n vÃ¡lida",
                       "rows":  [
                                    {
                                        "estadoTurno":  "EN TURNO",
@@ -181,7 +181,7 @@
                   },
                   {
                       "id":  "U07",
-                      "scenario":  "RUT invÃ¡lido en trabajador EN TURNO",
+                      "scenario":  "RUT invÃƒÂ¡lido en trabajador EN TURNO",
                       "rows":  [
                                    {
                                        "estadoTurno":  "EN TURNO",
@@ -199,7 +199,7 @@
                   },
                   {
                       "id":  "U08",
-                      "scenario":  "trabajador EN TURNO con ubicaciÃ³n incompleta",
+                      "scenario":  "EN TURNO con ubicación incompleta es rechazado preservando el guard de inventario operacional",
                       "rows":  [
                                    {
                                        "estadoTurno":  "EN TURNO",
@@ -212,7 +212,7 @@
                                ],
                       "expect":  {
                                      "result":  "REJECT",
-                                     "reason":  "MISSING_OPERATIONAL_LOCATION"
+                                     "reason":  "NO_OPERATIONAL_INVENTORY"
                                  }
                   },
                   {
@@ -244,7 +244,7 @@
                   },
                   {
                       "id":  "U10",
-                      "scenario":  "estado desconocido se excluye dentro de importación válida",
+                      "scenario":  "estado desconocido se excluye dentro de importaciÃ³n vÃ¡lida",
                       "rows":  [
                                    {
                                        "estadoTurno":  "EN TURNO",
@@ -270,10 +270,10 @@
                                  }
                   }
               ],
-    "revision":  2,
     "safetyInvariants":  {
                              "requireOperationalInventory":  true,
                              "requireCanonicalEnTurnoWorker":  true,
                              "excludedStatesDoNotSatisfyOperationalMinimum":  true
-                         }
+                         },
+    "revision":  3
 }

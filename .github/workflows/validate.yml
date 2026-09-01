@@ -57,6 +57,11 @@ jobs:
           node --check assets/operations-suite-echarts.js
           node --check assets/public-date.js
           node --check assets/public-worker-v2.js
+          node --check assets/semantic-model-runtime.js
+          node --check tests/r4-capacity-v1-core-smoke.cjs
+          node --check tests/r4-capacity-v1-analytics-smoke.cjs
+          node --check tests/r4-capacity-v1-close-smoke.cjs
+          node --check tests/r4-capacity-v1.green-runner.cjs
       - name: Pruebas funcionales v5.6.0
         run: node tests/functional-smoke.mjs
       - name: Pruebas Centro de Control y What-if
@@ -73,6 +78,13 @@ jobs:
         run: |
           node tests/r3-schema-foundations.baseline-runner.cjs
           node tests/r3-schema-foundations.green-runner.cjs
+      - name: Validar R4 Capacity V1
+        run: |
+          node tests/r4-capacity-v1.baseline-runner.cjs
+          node tests/r4-capacity-v1-core-smoke.cjs
+          node tests/r4-capacity-v1-analytics-smoke.cjs
+          node tests/r4-capacity-v1-close-smoke.cjs
+          node tests/r4-capacity-v1.green-runner.cjs
       - name: Validar estructura web
         run: |
           test -f index.html
@@ -82,6 +94,12 @@ jobs:
           test -f assets/public-assignment-emphasis.css
           test -f assets/public-worker-v2.css
           test -f assets/public-worker-v2.js
+          test -f tests/r4-capacity-v1-core-smoke.cjs
+          test -f tests/r4-capacity-v1-analytics-smoke.cjs
+          test -f tests/r4-capacity-v1-close-smoke.cjs
+          test -f tests/r4-capacity-v1.green-runner.cjs
+          test -f supabase/migrations/20260901193000_r4_capacity_v1_close.sql
+          test -f version.json
           test -f assets/public-date.js
           test -f assets/final-audit-fixes.js
           test -f assets/bi-dashboard.js

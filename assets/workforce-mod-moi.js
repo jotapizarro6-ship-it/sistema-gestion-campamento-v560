@@ -1,17 +1,25 @@
 (()=>{
   'use strict';
-  const VERSION='20260829-modmoi1';
+  const VERSION='20260901-modmoi2';
   const API='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-workforce-api';
   const state={rules:{},loaded:false,loading:null,turno:'TODOS',empresa:'TODAS',expanded:new Set(),saving:false,error:''};
   const fold=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim().replace(/\s+/g,' ');
   const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const assigned=w=>Boolean(String(w?.modulo??'').trim()&&String(w?.habitacion??'').trim()&&String(w?.cama??'').trim());
+  const canonicalWorkers=(workers,data)=>{
+    const source=Array.isArray(workers)?workers:[];
+    const modelData=data||(typeof window!=='undefined'?window.A?.data:null);
+    if(!modelData||typeof occupiedWorkers!=='function')return [];
+    const allowed=new Set(occupiedWorkers(modelData));
+    return source.filter(w=>allowed.has(w));
+  };
+  const assigned=(w,data)=>canonicalWorkers([w],data).length===1;
   const classification=(w,rules)=>rules[fold(w?.categoria)]||'POR_DEFINIR';
   const uniq=xs=>[...new Set(xs.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'es',{sensitivity:'base'}));
 
-  function compute(workers,rules,filters={}){
+  function compute(workers,rules,filters={},data){
     const turno=filters.turno||'TODOS',empresa=filters.empresa||'TODAS';
-    const rows=(Array.isArray(workers)?workers:[]).filter(assigned).filter(w=>(turno==='TODOS'||String(w.turno||'')===turno)&&(empresa==='TODAS'||String(w.empresa||'')===empresa));
+    const base=canonicalWorkers(workers,data);
+    const rows=base.filter(w=>(turno==='TODOS'||String(w.turno||'')===turno)&&(empresa==='TODAS'||String(w.empresa||'')===empresa));
     const totals={total:rows.length,DIRECTA:0,INDIRECTA:0,POR_DEFINIR:0};
     const companies=new Map();
     for(const w of rows){
@@ -24,7 +32,7 @@
       const g=c.cargos.get(cargo);g.total++;g[cls]++;g.classification=cls;
     }
     const companyRows=[...companies.values()].map(c=>({...c,cargos:[...c.cargos.values()].sort((a,b)=>b.total-a.total||a.label.localeCompare(b.label,'es'))})).sort((a,b)=>b.total-a.total||a.label.localeCompare(b.label,'es'));
-    return {rows,totals,companies:companyRows,turnos:uniq((workers||[]).filter(assigned).map(w=>String(w.turno||'').trim())),empresas:uniq((workers||[]).filter(assigned).map(w=>String(w.empresa||'').trim()))};
+    return {rows,totals,companies:companyRows,turnos:uniq(base.map(w=>String(w.turno||'').trim())),empresas:uniq(base.map(w=>String(w.empresa||'').trim()))};
   }
 
   async function api(method='GET',body){

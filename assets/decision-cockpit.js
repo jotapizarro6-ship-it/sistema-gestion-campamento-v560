@@ -2,7 +2,7 @@
   'use strict';
   if(typeof window==='undefined'||window.__CAMP_DECISION_COCKPIT__)return;
   window.__CAMP_DECISION_COCKPIT__=true;
-  const VERSION='20260830-decision2';
+  const VERSION='20260901-decision3';
   const state={company:'',shift:'',module:'',dimension:'module',managementDimension:'company',filtersOpen:false,observers:new Map(),loadingRules:false};
   const e=v=>typeof esc==='function'?esc(String(v??'')):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const cleanV=v=>String(v??'').trim();
@@ -14,19 +14,20 @@
   const today=()=>typeof todayISO==='function'?todayISO():new Date().toISOString().slice(0,10);
   const date=v=>typeof fmtDate==='function'?fmtDate(v):v;
   const uniq=a=>[...new Set((a||[]).map(cleanV).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
-  const occupied=w=>cleanV(w?.modulo)&&cleanV(w?.habitacion)&&cleanV(w?.cama);
+  const canonicalWorkers=data=>typeof occupiedWorkers==='function'?occupiedWorkers(data):[];
   const severityKey=x=>{const s=norm(x);return s.includes('CRIT')?'critical':s.includes('ATEN')||s.includes('MED')||s.includes('HIGH')?'attention':'normal'};
   const statusText=s=>s==='critical'?'CRÍTICO':s==='attention'?'ATENCIÓN':'OPERACIÓN NORMAL';
   const currentAnalytics=()=>typeof analytics==='function'&&window.A?.data?analytics(A.data):null;
   const previousClosed=data=>(data?.snapshots||[]).filter(s=>cleanV(s.closed_at)&&cleanV(s.snapshot_date)<today()).sort((a,b)=>String(a.snapshot_date).localeCompare(String(b.snapshot_date))).at(-1)||null;
-  const filteredWorkers=data=>(data?.workers||[]).filter(w=>(!state.company||norm(w.empresa)===norm(state.company))&&(!state.shift||norm(w.turno)===norm(state.shift))&&(!state.module||norm(w.modulo)===norm(state.module)));
+  const filteredWorkers=data=>canonicalWorkers(data).filter(w=>(!state.company||norm(w.empresa)===norm(state.company))&&(!state.shift||norm(w.turno)===norm(state.shift))&&(!state.module||norm(w.modulo)===norm(state.module)));
   const group=(rows,key,label='SIN DATO')=>{const m=new Map();for(const r of rows){const k=cleanV(r?.[key])||label;m.set(k,(m.get(k)||0)+1)}return [...m].map(([label,n])=>({label,n})).sort((a,b)=>b.n-a.n||a.label.localeCompare(b.label,'es'))};
-  const workerAssigned=data=>(data?.workers||[]).filter(occupied);
+  const workerAssigned=data=>canonicalWorkers(data);
   const safeSemaphore=data=>{try{return window.CampIntegrityExecutive?.semaphore?.(data)||null}catch(_){return null}};
   const stateFrom=(an,sem)=>sem?severityKey(sem.level):Number(an?.committedPct)>=100?'critical':Number(an?.committedPct)>=80?'attention':'normal';
 
   function filterOptions(data){
-    return {companies:uniq(data.workers?.map(w=>w.empresa)),shifts:uniq(data.workers?.map(w=>w.turno)),modules:uniq(data.inventory?.map(b=>b.module))};
+    const workers=canonicalWorkers(data);
+    return {companies:uniq(workers.map(w=>w.empresa)),shifts:uniq(workers.map(w=>w.turno)),modules:uniq(data.inventory?.map(b=>b.module))};
   }
   function opt(items,current,all){return `<option value="">${e(all)}</option>${items.map(x=>`<option value="${e(x)}" ${x===current?'selected':''}>${e(x)}</option>`).join('')}`}
   function filterSummary(){const x=[];if(state.company)x.push(`Empresa: ${state.company}`);if(state.shift)x.push(`Turno: ${state.shift}`);if(state.module)x.push(`Módulo: ${state.module}`);return x}

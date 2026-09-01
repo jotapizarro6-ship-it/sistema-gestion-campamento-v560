@@ -3,7 +3,7 @@
   if(typeof window==='undefined'||window.__CAMP_SEMANTIC_MODEL_RUNTIME__)return;
   window.__CAMP_SEMANTIC_MODEL_RUNTIME__=true;
 
-  const VERSION='20260829-semantic1';
+  const VERSION='20260901-semantic2';
   const cache=new WeakMap();
   const nowMs=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
 
@@ -19,11 +19,17 @@
   function build(data){
     const started=nowMs();
     const workers=Array.isArray(data?.workers)?data.workers:[],inventory=Array.isArray(data?.inventory)?data.inventory:[],blocks=Array.isArray(data?.blocks)?data.blocks:[],reservations=Array.isArray(data?.reservations)?data.reservations:[],movements=Array.isArray(data?.movements)?data.movements:[],capacities=Array.isArray(data?.capacities)?data.capacities:[];
+    const inventoryKeys=new Set();
+    for(const b of inventory){
+      const k=lkey(b.module,b.room,b.bed);
+      if(k.split('|').every(Boolean))inventoryKeys.add(k);
+    }
     const assignedWorkers=[],occupiedKeys=new Set(),workerByBed=new Map(),workerNames=new Set();
     for(const w of workers){
-      if(!clean(w.rut))continue;
+      if(typeof rutValid!=='function'||!rutValid(w.rut))continue;
+      const k=lkey(w.modulo,w.habitacion,w.cama);
+      if(!k.split('|').every(Boolean)||!inventoryKeys.has(k))continue;
       const name=plain(w.nombre);if(name)workerNames.add(name);
-      const k=lkey(w.modulo,w.habitacion,w.cama);if(!k.split('|').every(Boolean))continue;
       assignedWorkers.push(w);occupiedKeys.add(k);if(!workerByBed.has(k))workerByBed.set(k,w);
     }
     const capacityByDate=new Map();for(const r of capacities){const d=clean(r.capacity_date);if(d&&!capacityByDate.has(d))capacityByDate.set(d,Number(r.capacity)||0)}
@@ -33,7 +39,7 @@
     const activeBlocks=blocks.filter(b=>plain(b.status)==='ACTIVO');
     const model={
       refs:refsOf(data),lengths:lengthsOf(refsOf(data)),workers,inventory,blocks,reservations,movements,capacities,
-      assignedWorkers,occupiedKeys,workerByBed,workerNames,capacityByDate,movementsByDate,activeReservations,activeBlocks,
+      inventoryKeys,assignedWorkers,occupiedKeys,workerByBed,workerNames,capacityByDate,movementsByDate,activeReservations,activeBlocks,
       blocksByDate:new Map(),reservedByDate:new Map(),projectedByDate:new Map(),heatmapByDate:new Map(),forecastByDay:new Map(),
       built_ms:0
     };

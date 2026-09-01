@@ -2,7 +2,6 @@
   'use strict';
   if(typeof renderOverview!=='function'||typeof analytics!=='function')return;
 
-  const EXPECTED_BEDS=504;
   const BI={company:'',shift:'',module:'',date:todayISO(),resizeTimer:null};
   const baseRenderOverview=renderOverview;
 
@@ -34,20 +33,21 @@
     const missingInv=occ.filter(w=>!inventoryKeys.has(lkey(w.modulo,w.habitacion,w.cama))).length;
     const duplicate=[...seen.values()].filter(n=>n>1).length;
     const badBeds=data.inventory.filter(b=>!['A','B','C'].includes(loc(b.bed,'bed'))).length;
-    const inventoryGap=Math.abs(data.inventory.length-EXPECTED_BEDS);
-    const issues=invalidRut+incomplete+missingInv+duplicate+badBeds+(inventoryGap?1:0);
-    return {issues,invalidRut,incomplete,missingInv,duplicate,badBeds,inventoryGap,status:issues?'REVISAR':'VALIDADA'};
+    const issues=invalidRut+incomplete+missingInv+duplicate+badBeds;
+    return {issues,invalidRut,incomplete,missingInv,duplicate,badBeds,status:issues?'REVISAR':'VALIDADA'};
   }
   function filterWorkers(data){
-    return data.workers.filter(w=>(!BI.company||normKey(w.empresa)===normKey(BI.company))&&(!BI.shift||normKey(w.turno)===normKey(BI.shift))&&(!BI.module||normKey(w.modulo)===normKey(BI.module)));
+    const workers=typeof occupiedWorkers==='function'?occupiedWorkers(data):[];
+    return workers.filter(w=>(!BI.company||normKey(w.empresa)===normKey(BI.company))&&(!BI.shift||normKey(w.turno)===normKey(BI.shift))&&(!BI.module||normKey(w.modulo)===normKey(BI.module)));
   }
   function filterBar(data){
-    const companies=uniq(data.workers.map(w=>clean(w.empresa))),shifts=uniq(data.workers.map(w=>clean(w.turno))),modules=uniq(data.inventory.map(b=>clean(b.module)));
+    const workers=typeof occupiedWorkers==='function'?occupiedWorkers(data):[];
+    const companies=uniq(workers.map(w=>clean(w.empresa))),shifts=uniq(workers.map(w=>clean(w.turno))),modules=uniq(data.inventory.map(b=>clean(b.module)));
     const opts=(arr,val,label)=>`<option value="">${label}</option>${arr.map(x=>`<option value="${esc(x)}" ${x===val?'selected':''}>${esc(x)}</option>`).join('')}`;
     return `<section class="bi-filterbar" aria-label="Filtros de análisis"><div class="bi-filter-title"><strong>Filtros interactivos</strong><span>Aplican solo donde el dato puede segmentarse sin distorsionar la capacidad global.</span></div><div class="bi-filters"><label><span>Empresa</span><select id="biCompany">${opts(companies,BI.company,'Todas')}</select></label><label><span>Turno</span><select id="biShift">${opts(shifts,BI.shift,'Todos')}</select></label><label><span>Módulo</span><select id="biModule">${opts(modules,BI.module,'Todos')}</select></label><label><span>Fecha de análisis</span><input id="biDate" type="date" min="${todayISO()}" max="${addDays(todayISO(),29)}" value="${esc(BI.date)}"></label><button id="biClear" class="btn btn-secondary" type="button">Limpiar</button></div></section>`;
   }
   function qualityDetail(q,data){
-    return `<div class="bi-quality-grid"><div><span>Inventario</span><strong>${fmtInt(data.inventory.length)} / ${EXPECTED_BEDS}</strong></div><div><span>RUT inválidos</span><strong>${q.invalidRut}</strong></div><div><span>Sin cama completa</span><strong>${q.incomplete}</strong></div><div><span>Cama duplicada</span><strong>${q.duplicate}</strong></div><div><span>Fuera inventario</span><strong>${q.missingInv}</strong></div><div><span>Etiquetas cama inválidas</span><strong>${q.badBeds}</strong></div></div>`;
+    return `<div class="bi-quality-grid"><div><span>Inventario</span><strong>${fmtInt(data.inventory.length)}</strong></div><div><span>RUT inválidos</span><strong>${q.invalidRut}</strong></div><div><span>Sin cama completa</span><strong>${q.incomplete}</strong></div><div><span>Cama duplicada</span><strong>${q.duplicate}</strong></div><div><span>Fuera inventario</span><strong>${q.missingInv}</strong></div><div><span>Etiquetas cama inválidas</span><strong>${q.badBeds}</strong></div></div>`;
   }
   function moduleStack(data,an){
     let mods=an.hm.modules;
@@ -89,7 +89,7 @@
       ${kpiCard({label:'Comprometidas',value:fmtInt(an.committed),detail:`${fmt1(an.committedPct)}% de capacidad efectiva`,delta:prev?an.committed-prevCommitted:null,series:histCommitted,tone:an.committedPct>=90?'amber':'teal'})}
       ${kpiCard({label:'Libres reales',value:fmtInt(an.free),detail:'disponibilidad efectiva',delta:prev?an.free-Number(prev.free||0):null,series:histFree,tone:'green'})}
       ${kpiCard({label:'% comprometido',value:`${fmt1(an.committedPct)}%`,detail:prev?'variación vs. último cierre':'Sin cierre previo',delta:prev?an.committedPct-Number(prev.committed_occupancy||0):null,deltaSuffix:' pp',series:histPct,tone:an.committedPct>=100?'red':an.committedPct>=90?'amber':'blue'})}
-      <button id="biQualityBtn" type="button" class="bi-kpi quality ${q.issues?'warn':'ok'}"><div class="bi-kpi-top"><span>Calidad de Base</span><small>CONTROL</small></div><div class="bi-kpi-value">${q.status}</div><div class="bi-quality-line"><strong>${q.issues}</strong><span>observación${q.issues===1?'':'es'} · Inventario ${d.inventory.length}/${EXPECTED_BEDS}</span></div></button>
+      <button id="biQualityBtn" type="button" class="bi-kpi quality ${q.issues?'warn':'ok'}"><div class="bi-kpi-top"><span>Calidad de Base</span><small>CONTROL</small></div><div class="bi-kpi-value">${q.status}</div><div class="bi-quality-line"><strong>${q.issues}</strong><span>observación${q.issues===1?'':'es'} · Inventario ${d.inventory.length}</span></div></button>
       ${kpiCard({label:'Dotación filtrada',value:fmtInt(filterWorkers(d).length),detail:'responde a Empresa / Turno / Módulo',tone:'slate',meta:'FILTRABLE'})}
     </div>
     <div class="bi-grid bi-grid-main">

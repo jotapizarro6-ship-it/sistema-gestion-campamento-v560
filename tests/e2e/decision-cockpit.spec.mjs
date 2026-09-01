@@ -3,7 +3,7 @@ import {test,expect} from '@playwright/test';
 test('cockpit de decisión carga como capa progresiva sin sustituir el acceso administrativo',async({page,request})=>{
   await page.goto('/admin.html');
   await expect(page.getByRole('heading',{name:'Acceso administración'})).toBeVisible();
-  await expect.poll(()=>page.evaluate(()=>window.CampDecisionCockpit?.VERSION||'')).toBe('20260830-decision2');
+  await expect.poll(()=>page.evaluate(()=>window.CampDecisionCockpit?.VERSION||'')).toBe('20260901-decision3');
   await expect(page.locator('link[href*="decision-cockpit.css"]')).toHaveCount(1);
   const grouped=await page.evaluate(()=>window.CampDecisionCockpit.group([{empresa:'A'},{empresa:'B'},{empresa:'A'}],'empresa'));
   expect(grouped).toEqual([{label:'A',n:2},{label:'B',n:1}]);

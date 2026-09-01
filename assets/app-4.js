@@ -19,8 +19,8 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/audit-fixes.js"></script>');
   document.write('<script src="assets/final-audit-fixes.js"></script>');
   document.write('<script src="assets/responsive-admin.js?v=20260829-deepnav1"></script>');
-  document.write('<script src="assets/semantic-model-runtime.js?v=20260829-semantic1"></script>');
-  document.write('<script src="assets/bi-dashboard.js"></script>');
+  document.write('<script src="assets/semantic-model-runtime.js?v=20260901-r2"></script>');
+  document.write('<script src="assets/bi-dashboard.js?v=20260901-r2"></script>');
   document.write('<script src="assets/control-center.js"></script>');
   document.write('<script src="assets/advanced-sections.js"></script>');
   document.write('<script src="assets/persistent-errors.js"></script>');
@@ -31,7 +31,7 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/whatif-clarity.js"></script>');
   document.write('<script src="assets/governance.js"></script>');
   document.write('<script src="assets/integrity-executive.js?v=20260828-integrity1"></script>');
-  document.write('<script src="assets/workforce-mod-moi.js?v=20260829-modmoi1"></script>');
+  document.write('<script src="assets/workforce-mod-moi.js?v=20260901-r2"></script>');
   document.write('<script src="assets/progressive-admin-render.js?v=20260829-deepnav1"></script>');
   document.write('<script src="assets/high-volume-runtime.js?v=20260829-hv2"></script>');
   document.write('<script src="assets/high-volume-post-inline.js?v=20260829-hv1"></script>');
@@ -43,5 +43,5 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/ts/pwa/runtime.js?v=20260830-modern1"></script>');
   document.write('<script src="assets/ui-experience-fixes.js?v=20260829-ui1"></script>');
   document.write('<script src="assets/decision-cockpit-bridge.js?v=20260830-decision1"></script>');
-  document.write('<script src="assets/decision-cockpit.js?v=20260830-decision1"></script>');
+  document.write('<script src="assets/decision-cockpit.js?v=20260901-r2"></script>');
 }

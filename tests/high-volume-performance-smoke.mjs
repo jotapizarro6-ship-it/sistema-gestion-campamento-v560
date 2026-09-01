@@ -30,9 +30,21 @@ for(let i=0;i<BEDS;i++){
 }
 
 const workers=[];
+function makeValidSyntheticRut(body){
+  const digits=String(body);
+  let sum=0;
+  let multiplier=2;
+  for(let p=digits.length-1;p>=0;p--){
+    sum+=Number(digits[p])*multiplier;
+    multiplier=multiplier===7?2:multiplier+1;
+  }
+  const result=11-(sum%11);
+  const dv=result===11?'0':result===10?'K':String(result);
+  return digits+'-'+dv;
+}
 for(let i=0;i<WORKERS;i++){
   const b=inventory[i];
-  workers.push({id:i+1,rut:`${10000000+i}-0`,nombre:`TRABAJADOR ${String(i+1).padStart(4,'0')}`,turno:['A','B','C','D'][i%4],modulo:b.module,habitacion:b.room,cama:b.bed,empresa:`EMPRESA ${i%20+1}`,especialidad:`AREA ${i%30+1}`,categoria:`CATEGORIA ${i%10+1}`,sexo:i%5===0?'FEMENINO':'MASCULINO',residencia:`CIUDAD ${i%16+1}`});
+  workers.push({id:i+1,rut:makeValidSyntheticRut(10000000+i),nombre:`TRABAJADOR ${String(i+1).padStart(4,'0')}`,turno:['A','B','C','D'][i%4],modulo:b.module,habitacion:b.room,cama:b.bed,empresa:`EMPRESA ${i%20+1}`,especialidad:`AREA ${i%30+1}`,categoria:`CATEGORIA ${i%10+1}`,sexo:i%5===0?'FEMENINO':'MASCULINO',residencia:`CIUDAD ${i%16+1}`});
 }
 
 const movements=[];

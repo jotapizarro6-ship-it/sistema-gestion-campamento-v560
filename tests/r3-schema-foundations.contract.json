@@ -1,0 +1,165 @@
+{
+  "contract": "GARPI_R3_SCHEMA_FOUNDATIONS",
+  "revision": 1,
+  "semantic_version": "R3-FOUNDATIONS-V1",
+  "frozen_at_utc": "2026-09-01",
+  "base_sha": "83058c88c4d80318d542cadfda42c2dc8fa8744f",
+  "release_type": "EXPAND",
+  "objective": "Add backward-compatible persistence foundations for reservation identity/members, movement lifecycle, snapshot provenance and capacity constraint staging without cutting over R4-R7 runtime semantics.",
+  "invariants": [
+    "R3 is additive and backward compatible.",
+    "R3 does not infer historical reservation identity from person_name.",
+    "R3 does not classify historical movements as PROGRAMADO.",
+    "R3 does not remove the historical 132 capacity fallback; that belongs to R4.",
+    "R3 does not change current capacity calculations.",
+    "R3 does not enforce closure immutability; that belongs to R7.",
+    "R3 does not delete or rewrite historical rows.",
+    "reservation_members identity must survive replacement of the current workers table.",
+    "No reservation_members foreign key to workers is allowed.",
+    "Existing legacy data must remain explicitly unresolved where canonical information is unavailable."
+  ],
+  "target_schema": {
+    "reservation_members": {
+      "required": true,
+      "columns": [
+        "id",
+        "reservation_id",
+        "rut",
+        "person_name",
+        "created_at"
+      ],
+      "identity": "normalized canonical Chilean RUT",
+      "uniqueness": "unique(reservation_id, rut)",
+      "reservation_fk": "reservation_id -> reservations(id)",
+      "workers_fk": "FORBIDDEN because workers is replaceable operational state",
+      "security": "RLS enabled; anon/authenticated receive no direct table access"
+    },
+    "movements": {
+      "additive_columns": [
+        "lifecycle_status",
+        "executed_at",
+        "cancelled_at"
+      ],
+      "allowed_lifecycle": [
+        "PROGRAMADO",
+        "EJECUTADO",
+        "CANCELADO",
+        "LEGACY_UNRESOLVED"
+      ],
+      "historical_rule": "Existing movements must not be inferred as PROGRAMADO"
+    },
+    "daily_snapshots": {
+      "additive_columns": [
+        "provenance_status",
+        "capacity_source",
+        "operational_universe_count",
+        "operational_universe_fingerprint",
+        "source_import_id",
+        "source_operational_revision",
+        "semantic_version",
+        "provenance_version"
+      ],
+      "legacy_rule": "Existing snapshots remain LEGACY_UNRESOLVED or nullable; no provenance may be fabricated",
+      "future_rule": "R4 new closures must write provenance V1 before Capacity V1 is accepted"
+    },
+    "daily_capacity": {
+      "staged_constraint": "capacity >= 0",
+      "deployment_form": "CHECK constraint staged NOT VALID before explicit validation"
+    }
+  },
+  "forbidden_in_r3": [
+    "DROP TABLE",
+    "DROP COLUMN",
+    "TRUNCATE",
+    "DELETE FROM legacy business tables",
+    "historical identity inference by person_name",
+    "historical movement inference to PROGRAMADO",
+    "runtime capacity cutover",
+    "removal of 132 fallback",
+    "closure immutability enforcement",
+    "foreign key reservation_members.rut -> workers.rut"
+  ],
+  "rules": [
+    {
+      "id": "R3-U01",
+      "title": "reservation_members foundation exists",
+      "requirement": "Create an additive public.reservation_members table."
+    },
+    {
+      "id": "R3-U02",
+      "title": "reservation member identity is canonical and durable",
+      "requirement": "reservation_members must contain reservation_id + canonical rut, unique(reservation_id,rut), reference reservations(id), and must not FK to workers."
+    },
+    {
+      "id": "R3-U03",
+      "title": "reservation_members is security-safe",
+      "requirement": "RLS must be enabled and anon/authenticated direct access revoked or otherwise denied."
+    },
+    {
+      "id": "R3-U04",
+      "title": "movement lifecycle foundation exists",
+      "requirement": "movements gains lifecycle_status supporting PROGRAMADO, EJECUTADO, CANCELADO and LEGACY_UNRESOLVED."
+    },
+    {
+      "id": "R3-U05",
+      "title": "movement lifecycle is legacy-safe",
+      "requirement": "executed_at/cancelled_at foundations exist and historical rows are never inferred to PROGRAMADO."
+    },
+    {
+      "id": "R3-U06",
+      "title": "snapshot provenance V1 foundation exists",
+      "requirement": "daily_snapshots gains capacity source, operational universe count/fingerprint, source import, operational revision and semantic/provenance version fields."
+    },
+    {
+      "id": "R3-U07",
+      "title": "snapshot provenance is legacy-safe",
+      "requirement": "Existing snapshots remain unresolved/nullable and migration performs no guessed provenance backfill."
+    },
+    {
+      "id": "R3-U08",
+      "title": "daily capacity nonnegative constraint is staged",
+      "requirement": "daily_capacity receives CHECK(capacity >= 0) using staged NOT VALID rollout."
+    },
+    {
+      "id": "R3-U09",
+      "title": "R3 schema release is expand-only",
+      "requirement": "R3 must not DROP/TRUNCATE/DELETE/RENAME business structures or perform destructive legacy transformations."
+    },
+    {
+      "id": "R3-U10",
+      "title": "Capacity V1 remains outside R3",
+      "requirement": "The existing daily_capacity_default/132 runtime fallback remains untouched until R4."
+    },
+    {
+      "id": "R3-U11",
+      "title": "R2 quality and HTTP semantics remain intact",
+      "requirement": "The removed EXPECTED_BEDS=504 business assumption stays absent and HTTP 504 retry semantics stay present."
+    },
+    {
+      "id": "R3-U12",
+      "title": "R3 migration is auditable and rollback-classified",
+      "requirement": "The R3 migration must explicitly declare EXPAND scope and rollback classification and contain no runtime cutover."
+    }
+  ],
+  "expected_baseline": {
+    "pass": [
+      "R3-U10",
+      "R3-U11"
+    ],
+    "fail": [
+      "R3-U01",
+      "R3-U02",
+      "R3-U03",
+      "R3-U04",
+      "R3-U05",
+      "R3-U06",
+      "R3-U07",
+      "R3-U08",
+      "R3-U09",
+      "R3-U12"
+    ],
+    "expected_total": 12,
+    "expected_pass": 2,
+    "expected_fail": 10
+  }
+}

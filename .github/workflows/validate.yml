@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - name: Fijar Node.js 24
         uses: actions/setup-node@v7
         with:
@@ -67,6 +69,10 @@ jobs:
         run: node tests/consults-navigation-freeze-smoke.mjs
       - name: Prueba dotación MOD MOI 2000 trabajadores
         run: node tests/workforce-mod-moi-smoke.mjs
+      - name: Validar R3 Schema Foundations
+        run: |
+          node tests/r3-schema-foundations.baseline-runner.cjs
+          node tests/r3-schema-foundations.green-runner.cjs
       - name: Validar estructura web
         run: |
           test -f index.html

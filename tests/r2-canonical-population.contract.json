@@ -1,0 +1,150 @@
+{
+  "contract": "GARPI_R2_CANONICAL_POPULATION",
+  "revision": 1,
+  "phase": "Phase5-R2",
+  "baseline_main": "c47c6b19da5fe8b370b0ce43bb9989ebb95b45af",
+  "branch": "phase5/r2-canonical-population-quality",
+
+  "objective": {
+    "name": "Canonical Population / Data Quality / Remove 504",
+    "canonical_population_definition": [
+      "worker RUT is present and valid",
+      "module is present",
+      "room/habitacion is present",
+      "bed/cama is present",
+      "normalized bed key exists in the current operational bed inventory"
+    ],
+    "single_population_rule": "Occupancy, workforce/dotacion and MOD/MOI must consume the same canonical valid lodged-worker population."
+  },
+
+  "operational_universe_dependency": {
+    "source": "bed_inventory produced by the approved R1 operational-universe semantics",
+    "included_statuses": [
+      "EN TURNO",
+      "LIBRE"
+    ],
+    "excluded_statuses": [
+      "DESCANSO"
+    ],
+    "duplicate_policy": "Any duplicate operational bed key is CONFLICT.",
+    "worker_creation_policy": "Only EN TURNO rows create workers during import."
+  },
+
+  "quality_semantics": {
+    "invalid_rut": "Worker is excluded from canonical population and remains reportable as a quality issue.",
+    "incomplete_location": "Worker is excluded from canonical population and remains reportable as a quality issue.",
+    "missing_inventory_bed": "Worker is excluded from canonical population and remains reportable as a quality issue.",
+    "inventory_reference": "No fixed business bed-count constant may be used as an expected inventory denominator. The current operational inventory count may be displayed directly. A gap against an expected inventory may only exist if an explicit authoritative reference is provided; it must never fall back to 504.",
+    "population_consistency": "Quality diagnostics may explain exclusions, but operational KPIs must use only canonical valid lodged workers."
+  },
+
+  "tests": [
+    {
+      "id": "R2-U01",
+      "name": "canonical-valid-worker",
+      "requirement": "A worker is canonical only when RUT is valid, location is complete and the normalized bed key exists in operational inventory."
+    },
+    {
+      "id": "R2-U02",
+      "name": "invalid-rut-excluded",
+      "requirement": "Invalid RUT workers are excluded from canonical occupancy/workforce/MOD-MOI while remaining visible to quality diagnostics."
+    },
+    {
+      "id": "R2-U03",
+      "name": "incomplete-location-excluded",
+      "requirement": "Workers missing module, room or bed are excluded from canonical population."
+    },
+    {
+      "id": "R2-U04",
+      "name": "missing-inventory-bed-excluded",
+      "requirement": "Workers whose complete bed key does not exist in operational inventory are excluded from canonical population."
+    },
+    {
+      "id": "R2-U05",
+      "name": "occupancy-uses-canonical-population",
+      "requirement": "occupiedWorkers, fastOccupiedWorkers and physical occupancy worker counts derive from canonical valid lodged workers."
+    },
+    {
+      "id": "R2-U06",
+      "name": "workforce-mod-moi-uses-canonical-population",
+      "requirement": "Workforce/dotacion and CampWorkforceMODMOI totals use the same canonical population and cannot count a worker rejected by R2-U02, R2-U03 or R2-U04."
+    },
+    {
+      "id": "R2-U07",
+      "name": "remove-business-504",
+      "requirement": "No active business logic may use 504 as expected bed inventory. EXPECTED_BEDS=504 and equivalent fixed inventory assumptions are forbidden."
+    },
+    {
+      "id": "R2-U08",
+      "name": "preserve-http-504",
+      "requirement": "HTTP status 504 Gateway Timeout remains retryable in resilience networking logic."
+    },
+    {
+      "id": "R2-U09",
+      "name": "quality-no-false-fixed-gap",
+      "requirement": "Base quality cannot become REVISAR solely because operational inventory differs from 504. Inventory presentation/quality must use current operational inventory or an explicit authoritative reference."
+    },
+    {
+      "id": "R2-U10",
+      "name": "scope-guard",
+      "requirement": "R2 must not intentionally change Capacity V1 fallback semantics, reservations, movements, snapshot provenance or closure semantics."
+    }
+  ],
+
+  "protected_out_of_scope": {
+    "capacity_v1": {
+      "phase": "R4",
+      "note": "Existing 132/daily_capacity_default fallback behavior is observed technical debt but is not modified by R2."
+    },
+    "reservations": {
+      "phase": "R5"
+    },
+    "movements": {
+      "phase": "R6"
+    },
+    "closure_snapshot_hardening": {
+      "phase": "R7"
+    }
+  },
+
+  "explicit_exceptions": {
+    "http_504": {
+      "classification": "NETWORK_PROTOCOL_STATUS",
+      "file": "assets/resilience-runtime.js",
+      "required": true,
+      "instruction": "Do not remove HTTP 504 from RETRYABLE_STATUS."
+    }
+  },
+
+  "baseline_findings": {
+    "fixed_504": {
+      "file": "assets/bi-dashboard.js",
+      "symbol": "EXPECTED_BEDS",
+      "value": 504,
+      "active_effects": [
+        "inventoryGap",
+        "quality issue count/status",
+        "inventory quality presentation"
+      ]
+    },
+    "mod_moi_divergence": {
+      "file": "assets/workforce-mod-moi.js",
+      "finding": "assigned() currently requires only non-empty module, room and bed; it does not itself prove valid RUT or existence in operational inventory."
+    },
+    "fast_occupancy_path": {
+      "file": "assets/semantic-model-runtime.js",
+      "finding": "fastOccupiedWorkers returns getModel(data).assignedWorkers."
+    }
+  },
+
+  "baseline_evidence_sha256": {
+    "R2_BASELINE_INVENTORY": "DE20DC841D21C7CA281DF7889309B0F41B00F2B02FA5E6C14D04E89F3751630C",
+    "R2_504_EXACT_MATCHES": "08352F2728F0FA0F5FCA7AA9A3BB7187244056BE5D661AE26F76C6142EFAFB82",
+    "R2_504_CLASSIFICATION_CONTEXT": "1A4D22451BB2BA7447A01CAF36B95B52DB9FE3C90111B69106CDB737429C9D2AB",
+    "R2_EXPECTED_BEDS_USAGE": "A0DE8FA28EE11C5BB05C3014E0B323A715C2FD07D66BE9BA2524DC8AFE60DD9E",
+    "R2_CANONICAL_POPULATION_PATHS": "5340C65423E03DDABF1893CD2B8E9247B3FE339CD1930B08295AB2FD9902FF57",
+    "R2_POPULATION_FUNCTION_DEFINITIONS": "352D300F1E367769AC61102A17B0700904BBCCE53848D65601D58961B77C1904",
+    "R2_POPULATION_PREDICATES_EXACT": "811805C7F37F2CA0036C792E8DB2BF3E3C4364F97316F95490347CFC4ED4F39D",
+    "R2_OCCUPANCY_POPULATION_GENEALOGY": "5493FFEA064E14EDFE4C0283C92D7BA932FDF215394B5C0F1C3E98B706ABB0FD"
+  }
+}

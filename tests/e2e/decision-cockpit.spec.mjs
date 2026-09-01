@@ -40,10 +40,10 @@ test('componentes pulidos permanecen responsivos entre 320 y 430 px',async({page
   }
 });
 
-test('PWA modern.10 precachea el cockpit final y mantiene actualización controlada',async({request})=>{
-  const version=await request.get('/version.json');expect(version.ok()).toBeTruthy();expect((await version.json()).version).toBe('5.6.1-modern.10');
+test('PWA modern.11 R4 precachea el cockpit final y mantiene actualización controlada',async({request})=>{
+  const version=await request.get('/version.json');expect(version.ok()).toBeTruthy();expect((await version.json()).version).toBe('5.6.1-modern.11-r4-capacity-v1');
   const sw=await request.get('/service-worker.js');expect(sw.ok()).toBeTruthy();const text=await sw.text();
-  expect(text).toContain("campamento-shell-5.6.1-modern.10");
+  expect(text).toContain("campamento-shell-5.6.1-modern.11-r4-capacity-v1");
   expect(text).toContain("./assets/decision-cockpit.css");
   expect(text).toContain("./assets/decision-cockpit.js");
   expect(text).not.toContain('supabase.co');

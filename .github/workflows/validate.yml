@@ -74,10 +74,34 @@ jobs:
         run: node tests/consults-navigation-freeze-smoke.mjs
       - name: Prueba dotación MOD MOI 2000 trabajadores
         run: node tests/workforce-mod-moi-smoke.mjs
-      - name: Validar R3 Schema Foundations
+      - name: Validar R3 Schema Foundations historico
         run: |
-          node tests/r3-schema-foundations.baseline-runner.cjs
-          node tests/r3-schema-foundations.green-runner.cjs
+          set -euo pipefail
+
+          R3_RED_DIR="${RUNNER_TEMP}/garpi-r3-red-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          R3_GREEN_DIR="${RUNNER_TEMP}/garpi-r3-green-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+          cleanup_r3() {
+            git worktree remove --force "$R3_RED_DIR" >/dev/null 2>&1 || true
+            git worktree remove --force "$R3_GREEN_DIR" >/dev/null 2>&1 || true
+            git worktree prune
+          }
+
+          trap cleanup_r3 EXIT
+
+          rm -rf "$R3_RED_DIR" "$R3_GREEN_DIR"
+
+          git worktree add --detach "$R3_RED_DIR" 44024fb9968cc76d442a95f032f6a4d33ae0be25
+          (
+            cd "$R3_RED_DIR"
+            node tests/r3-schema-foundations.baseline-runner.cjs
+          )
+
+          git worktree add --detach "$R3_GREEN_DIR" 4214101bac2c7b4c2abb01268f0b870218127f1d
+          (
+            cd "$R3_GREEN_DIR"
+            node tests/r3-schema-foundations.green-runner.cjs
+          )
       - name: Validar R4 Capacity V1
         run: |
           node tests/r4-capacity-v1.baseline-runner.cjs

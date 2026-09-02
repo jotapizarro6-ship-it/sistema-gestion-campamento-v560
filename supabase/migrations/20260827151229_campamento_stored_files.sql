@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS public.stored_files(key TEXT PRIMARY KEY, filename TEXT NOT NULL, content BYTEA NOT NULL, updated_at TEXT NOT NULL); GRANT SELECT, INSERT, UPDATE, DELETE ON public.stored_files TO camp_app;;

@@ -1,6 +1,3 @@
--- Control atómico de concurrencia para escrituras administrativas.
--- Es aditivo: no modifica ni elimina datos operacionales existentes.
-
 insert into public.settings(key,value)
 values ('operational_revision','1')
 on conflict (key) do nothing;
@@ -49,4 +46,4 @@ $$;
 revoke all on function public.claim_operational_revision(bigint) from public;
 revoke all on function public.claim_operational_revision(bigint) from anon;
 revoke all on function public.claim_operational_revision(bigint) from authenticated;
-grant execute on function public.claim_operational_revision(bigint) to service_role;
+grant execute on function public.claim_operational_revision(bigint) to service_role;;

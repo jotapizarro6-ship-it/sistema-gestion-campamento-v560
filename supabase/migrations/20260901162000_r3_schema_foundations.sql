@@ -258,3 +258,4 @@ $r3_capacity$;
 
 -- End R3_SCHEMA_FOUNDATIONS.
 -- Existing daily_capacity_default / 132 behavior is untouched.
+;

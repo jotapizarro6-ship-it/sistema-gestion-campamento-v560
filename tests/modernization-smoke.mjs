@@ -14,4 +14,12 @@ const chartTs=read('src/charts/performance.ts');assert.doesNotMatch(chartTs,/Mut
 const index=read('index.html');assert.match(index,/rel="manifest" href="manifest\.webmanifest"/);assert.match(index,/assets\/ts\/public\/date\.js/);assert.doesNotMatch(index,/assets\/public-date\.js/);
 const workflow=read('.github/workflows/validate-modernization.yml');assert.match(workflow,/playwright install --with-deps chromium/);assert.match(workflow,/npm run typecheck/);assert.match(workflow,/analytics-engine-smoke\.mjs/);
 const pages=read('.github/workflows/pages.yml');assert.match(pages,/npm run build/);assert.match(pages,/modernization-smoke\.mjs/);assert.match(pages,/analytics-engine-smoke\.mjs/);
+const admin=read('admin.html');
+assert.match(index,/<div class="public-date" role="group" aria-label="Fecha de consulta">/);
+assert.match(index,/<div class="public-steps" role="group" aria-label="Pasos de la consulta">/);
+assert.match(index,/<div id="workerLookupResult" class="result-zone public-result" role="status" aria-live="polite" aria-atomic="false" aria-label="Resultado de la consulta"><\/div>/);
+assert.doesNotMatch(index,/<div class="public-date" aria-label=/);
+assert.doesNotMatch(index,/<div class="public-steps" aria-label=/);
+assert.match(admin,/<div id="adminLoginScreen" class="login-screen" role="main">/);
+console.log('R6C accessibility contracts: OK');
 console.log('Modernización smoke: OK');

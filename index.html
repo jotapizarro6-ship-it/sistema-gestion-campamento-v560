@@ -28,7 +28,7 @@
             <div class="eyebrow public-eyebrow">Asignación vigente</div>
             <h1 id="publicTitle">CONSULTA DE ASIGNACIÓN</h1>
           </div>
-          <div class="public-date" aria-label="Fecha de consulta">
+          <div class="public-date" role="group" aria-label="Fecha de consulta">
             <span aria-hidden="true">🗓️</span>
             <strong id="publicDate">--</strong>
           </div>
@@ -36,7 +36,7 @@
         <p class="public-intro">Ingrese su Rut para conocer claramente su Módulo / Piso, Habitación y Cama.</p>
       </div>
 
-      <div class="public-steps" aria-label="Pasos de la consulta">
+      <div class="public-steps" role="group" aria-label="Pasos de la consulta">
         <div class="public-step"><span>1</span><b>Ingresa tu RUT</b></div>
         <div class="public-step"><span>2</span><b>Consulta tu asignación</b></div>
         <div class="public-step"><span>3</span><b>Identifica módulo, habitación y cama</b></div>
@@ -54,7 +54,7 @@
         <div class="public-query-caption"><span aria-hidden="true">ℹ️</span> El resultado aparecerá inmediatamente debajo de la consulta.</div>
       </div>
 
-      <div id="workerLookupResult" class="result-zone public-result" aria-live="polite" aria-atomic="false" aria-label="Resultado de la consulta"></div>
+      <div id="workerLookupResult" class="result-zone public-result" role="status" aria-live="polite" aria-atomic="false" aria-label="Resultado de la consulta"></div>
       <p class="footnote public-footnote">La información corresponde a la última asignación cargada por Administración de Campamento.</p>
     </section>
   </main>

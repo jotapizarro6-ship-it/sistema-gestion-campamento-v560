@@ -89,6 +89,40 @@ check(
   "snapshot writes source revision",
   /source_operational_revision\s*:\s*sourceRevisionAfter/.test(raw)
 );
+check(
+  "canonical Chilean RUT validation",
+  /function\s+validChileanRut\s*\(/.test(raw) &&
+  /remainder===10[\s\S]{0,80}"K"/.test(raw)
+);
+
+check(
+  "canonical worker requires operational bed",
+  /function\s+canonicalPopulation\s*\(/.test(raw) &&
+  /universeKeys\.has\(bedKey\)/.test(raw)
+);
+
+check(
+  "canonical worker requires valid RUT",
+  /validChileanRut\(w\.rut\)/.test(raw)
+);
+
+check(
+  "occupied uses canonical population",
+  /const\s+canonicalWorkers\s*=\s*canonicalPopulation\(/.test(raw) &&
+  /const\s+occupied\s*=\s*canonicalWorkers\.length/.test(raw)
+);
+
+check(
+  "snapshot workforce metrics use canonical population",
+  /total_workers\s*:\s*canonicalWorkers\.length/.test(raw) &&
+  /female\s*:\s*canonicalWorkers\.filter/.test(raw) &&
+  /male\s*:\s*canonicalWorkers\.filter/.test(raw)
+);
+
+check(
+  "reservation fulfillment sees canonical workers",
+  /reserved\(ds,s\.reservations,canonicalWorkers,ds\)/.test(raw)
+);
 
 check(
   "source mutation trigger exists",

@@ -18,7 +18,98 @@ async function body(req:Request){return await req.json().catch(()=>({}))}
 async function rows(table:string,select="*",apply?:(q:any)=>any){let all:any[]=[];for(let i=0;i<20000;i+=1000){let q=db.from(table).select(select).range(i,i+999);if(apply)q=apply(q);const {data,error}=await q;if(error)throw error;all.push(...(data||[]));if((data||[]).length<1000)break}return all}
 const active=(r:any)=>["PENDIENTE","CONFIRMADA"].includes(plain(r.status));
 async function state(){const [workers,inventory,blocks,reservations,movements,capacities,snapshots,settingsRows,imports]=await Promise.all([rows("workers"),rows("bed_inventory"),rows("bed_blocks"),rows("reservations"),rows("movements"),rows("daily_capacity"),rows("daily_snapshots","*",q=>q.order("snapshot_date",{ascending:true})),rows("settings","key,value"),rows("import_history","*",q=>q.order("id",{ascending:false}))]);const settings=Object.fromEntries(settingsRows.filter((x:any)=>!["admin_password_hash","admin_password_salt","session_secret"].includes(x.key)).map((x:any)=>[x.key,x.value]));return {workers,inventory,blocks,reservations,movements,capacities,snapshots,settings,imports}}
-function physical(workers:any[]){const s=new Set<string>();for(const w of workers){const k=key(w.modulo,w.habitacion,w.cama);if(clean(w.rut)&&k.split("|").every(Boolean))s.add(k)}return s.size}
+function canonicalRut(v:any){
+  const s=plain(v)
+    .replace(/\./g,"")
+    .replace(/-/g,"")
+    .replace(/\s+/g,"");
+
+  if(!/^\d{7,8}[0-9K]$/.test(s)){
+    return "";
+  }
+
+  return `${s.slice(0,-1)}-${s.slice(-1)}`;
+}
+
+function validChileanRut(v:any){
+  const rut=canonicalRut(v);
+
+  if(!rut){
+    return false;
+  }
+
+  const parts=rut.split("-");
+  const body=parts[0];
+  const supplied=parts[1];
+
+  let sum=0;
+  let multiplier=2;
+
+  for(let i=body.length-1;i>=0;i--){
+    sum+=Number(body[i])*multiplier;
+
+    multiplier=
+      multiplier===7
+        ? 2
+        : multiplier+1;
+  }
+
+  const remainder=11-(sum%11);
+
+  const expected=
+    remainder===11
+      ? "0"
+      : remainder===10
+        ? "K"
+        : String(remainder);
+
+  return expected===supplied;
+}
+
+function canonicalPopulation(
+  workers:any[],
+  universeKeys:Set<string>
+){
+  const byBed=new Map<string,any>();
+
+  for(const w of workers){
+    const bedKey=key(
+      w.modulo,
+      w.habitacion,
+      w.cama
+    );
+
+    if(
+      !bedKey.split("|").every(Boolean) ||
+      !universeKeys.has(bedKey) ||
+      !validChileanRut(w.rut)
+    ){
+      continue;
+    }
+
+    if(!byBed.has(bedKey)){
+      byBed.set(
+        bedKey,
+        {
+          ...w,
+          rut:canonicalRut(w.rut)
+        }
+      );
+    }
+  }
+
+  return [...byBed.values()];
+}
+
+function physical(
+  workers:any[],
+  universeKeys:Set<string>
+){
+  return canonicalPopulation(
+    workers,
+    universeKeys
+  ).length;
+}
 function operationalUniverse(inventory:any[]){
   const keys=new Set<string>();
   for(const b of inventory){
@@ -139,30 +230,21 @@ async function snapshot(closeDay=false,force=false){
   const base=capacityInfo.base;
   const capacity=Math.max(base-blocked,0);
 
-  const occupied=physical(s.workers);
-
-  const reservedN=reserved(
-    ds,
-    s.reservations,
+    const canonicalWorkers=canonicalPopulation(
     s.workers,
-    ds
+    capacityInfo.universe.keys
   );
+
+  const occupied=canonicalWorkers.length;
+
+  const reservedN=reserved(ds,s.reservations,canonicalWorkers,ds);
 
   const free=Math.max(
     capacity-occupied-reservedN,
     0
   );
 
-  const assigned=s.workers.filter(
-    (w:any)=>
-      key(
-        w.modulo,
-        w.habitacion,
-        w.cama
-      )
-      .split("|")
-      .every(Boolean)
-  );
+  const assigned=canonicalWorkers;
 
   const group=(
     field:string,
@@ -250,14 +332,14 @@ async function snapshot(closeDay=false,force=false){
     occupancy,
     committed_occupancy:committedOccupancy,
 
-    total_workers:s.workers.length,
+    total_workers:canonicalWorkers.length,
 
-    female:s.workers.filter(
+    female:canonicalWorkers.filter(
       (x:any)=>
         plain(x.sexo).includes("FEM")
     ).length,
 
-    male:s.workers.filter(
+    male:canonicalWorkers.filter(
       (x:any)=>
         plain(x.sexo).includes("MASC")
     ).length,

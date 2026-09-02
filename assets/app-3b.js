@@ -470,6 +470,316 @@ function renderHistory(){const d=A.data,today=todayISO(),dates=[...new Set(d.sna
 ${snap?`<div class="kpi-grid mb">${kpi('Capacidad',snap.capacity,`${snap.base_capacity} base · ${snap.blocked} bloqueadas`)}${kpi('Ocupadas',snap.occupied,`${fmt1(snap.occupancy)}%`)}${kpi('Reservadas',snap.reserved,'','reserve')}${kpi('Libres',snap.free)}${kpi('Comprometido',`${fmt1(snap.committed_occupancy)}%`)}${kpi('Trabajadores',snap.total_workers)}</div><div class="grid-2"><section class="panel"><h3>Tendencia últimos 30 registros/días</h3>${svgForecast(trend.map(s=>({label:fmtShort(s.snapshot_date),capacity:Number(s.capacity)||0,physical:Number(s.occupied)||0,reserved:Number(s.reserved)||0,committed:(Number(s.occupied)||0)+(Number(s.reserved)||0)})))}<div class="metric-row"><span>Promedio comprometido</span><strong>${fmt1(avg)}%</strong></div><div class="metric-row"><span>Máximo</span><strong>${fmt1(max)}%</strong></div><div class="metric-row"><span>Mínimo</span><strong>${fmt1(min)}%</strong></div><div class="metric-row"><span>Variación vs. cierre previo</span><strong>${variation>=0?'+':''}${fmt1(variation)} pp</strong></div></section><section class="panel"><h3>Distribución del cierre</h3><h4>Empresas</h4>${bars(parseList(snap.companies_json))}<h4 class="mt">Turnos</h4>${bars(parseList(snap.shifts_json))}<h4 class="mt">Módulos</h4>${bars(parseList(snap.modules_json))}</section></div><div class="grid-2 mt"><section class="panel"><h3>Movimientos del día</h3>${table(parseList(snap.movements_json),[{label:'Tipo',key:'movement_type'},{label:'Turno',key:'shift'},{label:'Empresa',key:'company'},{label:'Personas',key:'people_count'},{label:'Hora',key:'bus_time'},{label:'Bus',key:'bus'}],{limit:100})}</section><section class="panel"><h3>Reservas activas del día</h3>${table(parseList(snap.reservations_json),[{label:'Persona',key:'person_name'},{label:'Llegada',key:'arrival_date'},{label:'Salida',key:'departure_date'},{label:'Módulo',key:'module'},{label:'Hab.',key:'room'},{label:'Cama',key:'bed'},{label:'Camas',key:'bed_count'}],{limit:100})}</section></div>`:'<div class="notice warn">No existe fotografía histórica para la fecha seleccionada.</div>'}`;
   $('#historyDate')?.addEventListener('change',e=>{A.historyDate=e.target.value;renderHistory()});$('#snapshotBtn')?.addEventListener('click',async()=>{try{await advApi('snapshot_today',{method:'POST',body:{},token:A.token});showMessage('Snapshot actualizado.');await loadAll({snapshot:false})}catch(err){showMessage(err.message,'error')}});$('#closeDayBtn')?.addEventListener('click',async()=>{if(!confirm('¿Confirmas CERRAR DÍA? El cierre histórico quedará congelado para hoy.'))return;try{const r=await advApi('close_day',{method:'POST',body:{snapshot_date:today},token:A.token});showMessage(r.message||'Cierre diario guardado.');await loadAll({snapshot:false})}catch(err){showMessage(err.message,'error')}})}
 
-function renderMovements(){const d=A.data,rows=[...d.movements].sort((a,b)=>clean(b.movement_date).localeCompare(clean(a.movement_date))||clean(a.bus_time).localeCompare(clean(b.bus_time)));$('#view-movements').innerHTML=`<div class="section-head"><div><h2>Movimientos de personal</h2><div class="muted">Subidas y bajadas utilizadas por la planificación y proyección gerencial.</div></div></div><section class="panel mb"><h3>Registrar movimiento</h3><form id="movementForm" class="form-grid"><label class="field"><span>Fecha</span><input name="movement_date" type="date" value="${todayISO()}" required></label><label class="field"><span>Tipo</span><select name="movement_type"><option>SUBIDA</option><option>BAJADA</option></select></label><label class="field"><span>Personas</span><input name="people_count" type="number" min="0" max="10000" required></label><label class="field"><span>Turno</span><input name="shift"></label><label class="field"><span>Empresa</span><input name="company"></label><label class="field"><span>Hora bus</span><input name="bus_time" type="time"></label><label class="field"><span>Bus / móvil</span><input name="bus"></label><label class="field"><span>Notas</span><input name="notes"></label><div><button class="btn btn-primary" type="submit">Registrar movimiento</button></div></form></section>${table(rows,[{label:'Fecha',render:r=>fmtDate(r.movement_date)},{label:'Tipo',render:r=>`<span class="badge ${plain(r.movement_type)==='SUBIDA'?'green':'blue'}">${esc(r.movement_type)}</span>`},{label:'Personas',key:'people_count'},{label:'Turno',key:'shift'},{label:'Empresa',key:'company'},{label:'Hora',key:'bus_time'},{label:'Bus',key:'bus'},{label:'Notas',key:'notes'}],{limit:500})}`;$('#movementForm').addEventListener('submit',async e=>{e.preventDefault();const b=Object.fromEntries(new FormData(e.currentTarget));b.people_count=Number(b.people_count);try{await advApi('add_movement',{method:'POST',body:b,token:A.token});showMessage('Movimiento registrado.');e.currentTarget.reset();await loadAll()}catch(err){showMessage(err.message,'error')}})}
+function renderMovements(){
+  const d=A.data;
 
+  const rows=[...d.movements].sort(
+    (a,b)=>
+      clean(b.movement_date).localeCompare(
+        clean(a.movement_date)
+      )||
+      clean(a.bus_time).localeCompare(
+        clean(b.bus_time)
+      )
+  );
+
+  const lifecycle=row=>
+    plain(
+      row.lifecycle_status||
+      'LEGACY_UNRESOLVED'
+    );
+
+  const statusBadge=row=>{
+    const status=lifecycle(row);
+
+    const tone=
+      status==='PROGRAMADO'
+        ? 'amber'
+        : status==='EJECUTADO'
+          ? 'green'
+          : status==='CANCELADO'
+            ? 'red'
+            : 'blue';
+
+    return (
+      `<span class="badge ${tone}">`+
+      `${esc(status)}</span>`
+    );
+  };
+
+  const actions=row=>{
+    if(lifecycle(row)!=='PROGRAMADO'){
+      return '—';
+    }
+
+    return `
+      <div class="toolbar">
+        <button
+          class="btn btn-secondary small-btn"
+          type="button"
+          data-move-execute="${Number(row.id)}"
+        >Marcar ejecutado</button>
+
+        <button
+          class="btn btn-danger small-btn"
+          type="button"
+          data-move-cancel="${Number(row.id)}"
+        >Cancelar</button>
+      </div>
+    `;
+  };
+
+  $('#view-movements').innerHTML=`
+    <div class="section-head">
+      <div>
+        <h2>Movimientos de personal</h2>
+        <div class="muted">
+          Los movimientos nuevos quedan PROGRAMADOS.
+          Sólo movimientos futuros PROGRAMADOS afectan
+          la planificación y proyección.
+        </div>
+      </div>
+    </div>
+
+    <section class="panel mb">
+      <h3>Registrar movimiento</h3>
+
+      <form id="movementForm" class="form-grid">
+        <label class="field">
+          <span>Fecha</span>
+          <input
+            name="movement_date"
+            type="date"
+            value="${todayISO()}"
+            required
+          >
+        </label>
+
+        <label class="field">
+          <span>Tipo</span>
+          <select name="movement_type">
+            <option>SUBIDA</option>
+            <option>BAJADA</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Personas</span>
+          <input
+            name="people_count"
+            type="number"
+            min="0"
+            max="10000"
+            required
+          >
+        </label>
+
+        <label class="field">
+          <span>Turno</span>
+          <input name="shift">
+        </label>
+
+        <label class="field">
+          <span>Empresa</span>
+          <input name="company">
+        </label>
+
+        <label class="field">
+          <span>Hora bus</span>
+          <input
+            name="bus_time"
+            type="time"
+          >
+        </label>
+
+        <label class="field">
+          <span>Bus / móvil</span>
+          <input name="bus">
+        </label>
+
+        <label class="field">
+          <span>Notas</span>
+          <input name="notes">
+        </label>
+
+        <div>
+          <button
+            class="btn btn-primary"
+            type="submit"
+          >Registrar movimiento</button>
+        </div>
+      </form>
+    </section>
+
+    ${table(
+      rows,
+      [
+        {
+          label:'Fecha',
+          render:r=>fmtDate(r.movement_date)
+        },
+        {
+          label:'Tipo',
+          render:r=>`
+            <span class="badge ${
+              plain(r.movement_type)==='SUBIDA'
+                ? 'green'
+                : 'blue'
+            }">${esc(r.movement_type)}</span>
+          `
+        },
+        {
+          label:'Personas',
+          key:'people_count'
+        },
+        {
+          label:'Turno',
+          key:'shift'
+        },
+        {
+          label:'Empresa',
+          key:'company'
+        },
+        {
+          label:'Hora',
+          key:'bus_time'
+        },
+        {
+          label:'Bus',
+          key:'bus'
+        },
+        {
+          label:'Estado',
+          render:statusBadge
+        },
+        {
+          label:'Notas',
+          key:'notes'
+        },
+        {
+          label:'Acciones',
+          render:actions
+        }
+      ],
+      {
+        limit:500
+      }
+    )}
+  `;
+
+  $('#movementForm')
+    .addEventListener(
+      'submit',
+      async e=>{
+        e.preventDefault();
+
+        const b=
+          Object.fromEntries(
+            new FormData(
+              e.currentTarget
+            )
+          );
+
+        b.people_count=
+          Number(
+            b.people_count
+          );
+
+        try{
+          await advApi(
+            'add_movement',
+            {
+              method:'POST',
+              body:b,
+              token:A.token
+            }
+          );
+
+          showMessage(
+            'Movimiento registrado como PROGRAMADO.'
+          );
+
+          e.currentTarget.reset();
+
+          await loadAll({
+            snapshot:false
+          });
+        }catch(err){
+          showMessage(
+            err.message,
+            'error'
+          );
+        }
+      }
+    );
+
+  const changeStatus=
+    async(
+      id,
+      status
+    )=>{
+      try{
+        await advApi(
+          'movement_status',
+          {
+            method:'POST',
+            body:{
+              id,
+              status
+            },
+            token:A.token
+          }
+        );
+
+        showMessage(
+          status==='EJECUTADO'
+            ? 'Movimiento marcado como EJECUTADO.'
+            : 'Movimiento CANCELADO.'
+        );
+
+        await loadAll({
+          snapshot:false
+        });
+      }catch(err){
+        showMessage(
+          err.message,
+          'error'
+        );
+      }
+    };
+
+  $('#view-movements')
+    .querySelectorAll(
+      '[data-move-execute]'
+    )
+    .forEach(
+      button=>
+        button.addEventListener(
+          'click',
+          ()=>changeStatus(
+            Number(
+              button.dataset.moveExecute
+            ),
+            'EJECUTADO'
+          )
+        )
+    );
+
+  $('#view-movements')
+    .querySelectorAll(
+      '[data-move-cancel]'
+    )
+    .forEach(
+      button=>
+        button.addEventListener(
+          'click',
+          ()=>changeStatus(
+            Number(
+              button.dataset.moveCancel
+            ),
+            'CANCELADO'
+          )
+        )
+    );
+}
 function inventoryOptions(data){const modules=[...new Set(data.inventory.map(x=>clean(x.module)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));return modules}

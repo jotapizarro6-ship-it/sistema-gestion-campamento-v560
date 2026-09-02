@@ -3,7 +3,7 @@
   if(typeof window==='undefined'||window.__CAMP_SEMANTIC_MODEL_RUNTIME__)return;
   window.__CAMP_SEMANTIC_MODEL_RUNTIME__=true;
 
-  const VERSION='20260901-r4-capacity-v1';
+  const VERSION='20260902-r5-movement-lifecycle-v1';
   const cache=new WeakMap();
   const nowMs=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
 
@@ -33,8 +33,68 @@
       assignedWorkers.push(w);occupiedKeys.add(k);if(!workerByBed.has(k))workerByBed.set(k,w);
     }
     const capacityByDate=new Map();for(const r of capacities){const d=clean(r.capacity_date);if(d&&!capacityByDate.has(d))capacityByDate.set(d,Number(r.capacity)||0)}
+    const movementToday=todayISO();
     const movementsByDate=new Map();
-    for(const r of movements){const d=clean(r.movement_date);if(!d)continue;let x=movementsByDate.get(d);if(!x){x={SUBIDA:0,BAJADA:0};movementsByDate.set(d,x)}const k=plain(r.movement_type);if(k in x)x[k]+=Number(r.people_count)||0}
+
+    for(const r of movements){
+      const d=clean(r.movement_date);
+
+      if(!d){
+        continue;
+      }
+
+      const lifecycle=
+        plain(
+          r.lifecycle_status||
+          'LEGACY_UNRESOLVED'
+        );
+
+      /*
+       * R5:
+       * Future planning uses PROGRAMADO only.
+       * CANCELADO never contributes to current/history totals.
+       */
+      if(
+        d>movementToday &&
+        lifecycle!=='PROGRAMADO'
+      ){
+        continue;
+      }
+
+      if(
+        d<=movementToday &&
+        lifecycle==='CANCELADO'
+      ){
+        continue;
+      }
+
+      let x=
+        movementsByDate.get(d);
+
+      if(!x){
+        x={
+          SUBIDA:0,
+          BAJADA:0
+        };
+
+        movementsByDate.set(
+          d,
+          x
+        );
+      }
+
+      const k=
+        plain(
+          r.movement_type
+        );
+
+      if(k in x){
+        x[k]+=
+          Number(
+            r.people_count
+          )||0;
+      }
+    }
     const activeReservations=reservations.filter(r=>['PENDIENTE','CONFIRMADA'].includes(plain(r.status)));
     const activeBlocks=blocks.filter(b=>plain(b.status)==='ACTIVO');
     const model={
@@ -92,10 +152,78 @@ function fastBlocksOn(ds,data){
     m.reservedByDate.set(ds,n);return n;
   }
   function fastProjectedPhysical(ds,data){
-    const m=getModel(data);if(m.projectedByDate.has(ds))return m.projectedByDate.get(ds);
-    const today=todayISO(),occ=m.occupiedKeys.size;if(ds<=today){m.projectedByDate.set(ds,occ);return occ}
-    let up=0,down=0;for(const r of m.movements){const d=clean(r.movement_date);if(d>today&&d<=ds){const k=plain(r.movement_type);if(k==='SUBIDA')up+=Number(r.people_count)||0;else if(k==='BAJADA')down+=Number(r.people_count)||0}}
-    const out=Math.max(occ+up-down,0);m.projectedByDate.set(ds,out);return out;
+    const m=getModel(data);
+
+    if(
+      m.projectedByDate.has(ds)
+    ){
+      return m.projectedByDate.get(ds);
+    }
+
+    const today=todayISO();
+    const occ=m.occupiedKeys.size;
+
+    if(ds<=today){
+      m.projectedByDate.set(
+        ds,
+        occ
+      );
+
+      return occ;
+    }
+
+    let up=0;
+    let down=0;
+
+    for(const r of m.movements){
+      const d=
+        clean(
+          r.movement_date
+        );
+
+      const lifecycle=
+        plain(
+          r.lifecycle_status||
+          'LEGACY_UNRESOLVED'
+        );
+
+      if(
+        d>today &&
+        d<=ds &&
+        lifecycle==='PROGRAMADO'
+      ){
+        const k=
+          plain(
+            r.movement_type
+          );
+
+        if(k==='SUBIDA'){
+          up+=
+            Number(
+              r.people_count
+            )||0;
+        }
+        else if(k==='BAJADA'){
+          down+=
+            Number(
+              r.people_count
+            )||0;
+        }
+      }
+    }
+
+    const out=
+      Math.max(
+        occ+up-down,
+        0
+      );
+
+    m.projectedByDate.set(
+      ds,
+      out
+    );
+
+    return out;
   }
   function fastPendingArrivals(data){
     const today=todayISO(),m=getModel(data);let total=0,future=0,dueToday=0,overdue=0;

@@ -424,7 +424,236 @@ async function addReservation(b:any){const arrival=clean(b.arrival_date),departu
 async function addBlock(b:any){let module=clean(b.module),room=clean(b.room),bed=clean(b.bed).toUpperCase();const start=clean(b.start_date),end=clean(b.end_date)||null,reason=clean(b.reason)||"Fuera de servicio";if(!module||!room||!bed)return {ok:false,error:"Indica módulo, habitación y cama para el bloqueo."};if(!validDate(start)||(end&&!validDate(end)))return {ok:false,error:"Las fechas del bloqueo no son válidas."};if(end&&end<start)return {ok:false,error:"La fecha de término no puede ser anterior al inicio."};const s=await state(),inv=s.inventory.find((x:any)=>key(x.module,x.room,x.bed)===key(module,room,bed));if(!inv)return {ok:false,error:"No fue posible identificar esa cama en el inventario actual."};module=inv.module;room=inv.room;bed=inv.bed;if(start<=today()){const occ=s.workers.find((x:any)=>clean(x.rut)&&key(x.modulo,x.habitacion,x.cama)===key(module,room,bed));if(occ)return {ok:false,error:`No se puede bloquear desde hoy una cama ocupada por ${occ.nombre||"un trabajador"}.`}}const e=end||"9999-12-31";if(s.blocks.some((x:any)=>plain(x.status)==="ACTIVO"&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.start_date)<=e&&(!clean(x.end_date)||clean(x.end_date)>=start)))return {ok:false,error:"Ya existe un bloqueo activo que se cruza con esas fechas."};const rr=s.reservations.find((x:any)=>active(x)&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.arrival_date)<=e&&(!clean(x.departure_date)||clean(x.departure_date)>start));if(rr)return {ok:false,error:`No se puede bloquear: existe una reserva cruzada para ${rr.person_name}.`};const stamp=now(),{data,error}=await db.from("bed_blocks").insert({module,room,bed,start_date:start,end_date:end,reason,status:"ACTIVO",created_at:stamp,updated_at:stamp}).select("*").single();if(error)throw error;return {ok:true,data}}
 Deno.serve(async(req:Request)=>{try{if(req.method==="OPTIONS")return new Response(null,{status:204,headers});if(!await admin(req))return out({ok:false,error:"No autorizado"},401);const a=new URL(req.url).searchParams.get("action")||"";
 if(req.method==="GET"&&a==="advanced_state")return out({ok:true,data:await state()});
-if(req.method==="POST"&&a==="add_movement"){const b=await body(req),d=clean(b.movement_date),n=Number(b.people_count),t=plain(b.movement_type||"SUBIDA");if(!validDate(d))return out({ok:false,error:"Indica una fecha válida para el movimiento."},400);if(!Number.isInteger(n)||n<0||n>10000)return out({ok:false,error:"La cantidad de personas debe estar entre 0 y 10.000."},400);if(!["SUBIDA","BAJADA"].includes(t))return out({ok:false,error:"El tipo de movimiento no es válido."},400);const {data,error}=await db.from("movements").insert({movement_date:d,movement_type:t,shift:clean(b.shift),company:clean(b.company),people_count:n,bus_time:clean(b.bus_time),bus:clean(b.bus),notes:clean(b.notes),created_at:now()}).select("*").single();if(error)throw error;return out({ok:true,data})}
+if(req.method==="POST"&&a==="add_movement"){
+  const b=await body(req);
+  const d=clean(b.movement_date);
+  const n=Number(b.people_count);
+  const t=plain(
+    b.movement_type||
+    "SUBIDA"
+  );
+
+  if(!validDate(d)){
+    return out(
+      {
+        ok:false,
+        error:
+          "Indica una fecha válida para el movimiento."
+      },
+      400
+    );
+  }
+
+  if(
+    !Number.isInteger(n)||
+    n<0||
+    n>10000
+  ){
+    return out(
+      {
+        ok:false,
+        error:
+          "La cantidad de personas debe estar entre 0 y 10.000."
+      },
+      400
+    );
+  }
+
+  if(
+    ![
+      "SUBIDA",
+      "BAJADA"
+    ].includes(t)
+  ){
+    return out(
+      {
+        ok:false,
+        error:
+          "El tipo de movimiento no es válido."
+      },
+      400
+    );
+  }
+
+  const {
+    data,
+    error
+  }=
+    await db
+      .from("movements")
+      .insert({
+        movement_date:d,
+        movement_type:t,
+        shift:clean(b.shift),
+        company:clean(b.company),
+        people_count:n,
+        bus_time:clean(b.bus_time),
+        bus:clean(b.bus),
+        notes:clean(b.notes),
+
+        lifecycle_status:
+          "PROGRAMADO",
+
+        executed_at:null,
+        cancelled_at:null,
+
+        created_at:now()
+      })
+      .select("*")
+      .single();
+
+  if(error)throw error;
+
+  return out({
+    ok:true,
+    data
+  });
+}
+
+if(req.method==="POST"&&a==="movement_status"){
+  const b=await body(req);
+
+  const id=Number(b.id);
+
+  const next=
+    plain(
+      b.status
+    );
+
+  if(
+    !Number.isInteger(id)||
+    id<=0
+  ){
+    return out(
+      {
+        ok:false,
+        error:
+          "Movimiento inválido."
+      },
+      400
+    );
+  }
+
+  if(
+    ![
+      "EJECUTADO",
+      "CANCELADO"
+    ].includes(next)
+  ){
+    return out(
+      {
+        ok:false,
+        error:
+          "Estado de movimiento no válido."
+      },
+      400
+    );
+  }
+
+  /*
+   * Atomic terminal transition:
+   * the UPDATE itself requires PROGRAMADO.
+   *
+   * This avoids a read-then-write race between
+   * EJECUTADO and CANCELADO.
+   */
+  const stamp=
+    new Date().toISOString();
+
+  const patch=
+    next==="EJECUTADO"
+      ? {
+          lifecycle_status:
+            "EJECUTADO",
+          executed_at:stamp,
+          cancelled_at:null
+        }
+      : {
+          lifecycle_status:
+            "CANCELADO",
+          executed_at:null,
+          cancelled_at:stamp
+        };
+
+  const {
+    data,
+    error
+  }=
+    await db
+      .from("movements")
+      .update(patch)
+      .eq(
+        "id",
+        id
+      )
+      .eq(
+        "lifecycle_status",
+        "PROGRAMADO"
+      )
+      .select(
+        "id,lifecycle_status,executed_at,cancelled_at"
+      )
+      .maybeSingle();
+
+  if(error)throw error;
+
+  if(data){
+    return out({
+      ok:true,
+      data
+    });
+  }
+
+  /*
+   * No row changed. Distinguish missing row
+   * from a terminal/non-programmed row.
+   */
+  const {
+    data:current,
+    error:readError
+  }=
+    await db
+      .from("movements")
+      .select(
+        "id,lifecycle_status,executed_at,cancelled_at"
+      )
+      .eq(
+        "id",
+        id
+      )
+      .maybeSingle();
+
+  if(readError)throw readError;
+
+  if(!current){
+    return out(
+      {
+        ok:false,
+        error:
+          "Movimiento no encontrado."
+      },
+      404
+    );
+  }
+
+  return out(
+    {
+      ok:false,
+      code:
+        "MOVEMENT_TERMINAL",
+
+      error:
+        "Sólo un movimiento PROGRAMADO puede cambiar de estado.",
+
+      data:{
+        id:current.id,
+        lifecycle_status:
+          current.lifecycle_status
+      }
+    },
+    409
+  );
+}
 if(req.method==="POST"&&a==="add_block"){const x=await addBlock(await body(req));return out(x,x.ok?200:400)}
 if(req.method==="POST"&&a==="close_block"){const b=await body(req),{data,error}=await db.from("bed_blocks").update({status:"CERRADO",updated_at:now()}).eq("id",Number(b.id)).select("id,status").maybeSingle();if(error)throw error;return out({ok:!!data,data,error:data?null:"Bloqueo no encontrado"},data?200:404)}
 if(req.method==="POST"&&a==="add_res_advanced"){const x=await addReservation(await body(req));return out(x,x.ok?200:400)}

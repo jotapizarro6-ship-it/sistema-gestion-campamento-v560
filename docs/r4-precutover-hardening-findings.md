@@ -1,6 +1,6 @@
 # GARPI R4 PRE-CUTOVER HARDENING
 
-Status: RED
+Status: GREEN (local hardening; production cutover still HOLD)
 Scope: local/reversible only
 Production changes: NONE
 
@@ -47,3 +47,24 @@ Do not:
 - weaken HMAC;
 - weaken RLS;
 - expose service_role.
+
+## GREEN hardening design
+
+The historical RED findings are preserved in commit
+c4f42084d26f9ad71d0e275cdab96eb4dcf69be4.
+
+The local GREEN hardening adds:
+
+1. Versioned campamento-v560-raw source.
+2. No legacy capacity fallback 132.
+3. daily_capacity = 0 support.
+4. Operational-universe Capacity V1 fallback.
+5. source_operational_revision certificate on snapshot_today.
+6. Revision checks before/after population reads and before snapshot write.
+7. Transactional statement triggers on operational source tables.
+8. operational_revision advance in the same PostgreSQL transaction as
+   each source-table mutation.
+9. close_day_r4 rejection of stale open snapshots.
+10. Existing closed snapshots remain idempotent before the new fence.
+
+No production migration or Edge deploy is performed by this branch work.

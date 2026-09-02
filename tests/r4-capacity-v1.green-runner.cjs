@@ -125,10 +125,19 @@ const checks={
     /inventoryKeys\.has\s*\(\s*k\s*\)/.test(sem) &&
     /504/.test(resilience),
 
+  /*
+   * U12 is the release-wiring gate for the still-active
+   * R4 Capacity V1 semantic contract.
+   *
+   * R5 changes shell/runtime release identifiers but must
+   * keep the R4 capacity baseline and green runners wired.
+   */
   U12:
-    app4.includes("r4-capacity-v1") &&
-    sw.includes("r4-capacity-v1") &&
-    ver.includes("r4-capacity-v1") &&
+    sem.includes("20260902-r5-movement-lifecycle-v1") &&
+    app4.includes("20260902-r5-movement-lifecycle-v1") &&
+    sw.includes("campamento-shell-5.6.1-modern.12-r5-operational-v1") &&
+    ver.includes("5.6.1-modern.12-r5-operational-v1") &&
+    ver.includes("r5-operational-v1") &&
     wf.includes("r4-capacity-v1.baseline-runner.cjs") &&
     wf.includes("r4-capacity-v1.green-runner.cjs")
 };

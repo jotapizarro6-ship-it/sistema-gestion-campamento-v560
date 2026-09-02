@@ -14,12 +14,12 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   addStyle('assets/workforce-mod-moi.css?v=20260829-modmoi1');
   addStyle('assets/ui-experience-fixes.css?v=20260829-ui1');
   addStyle('assets/decision-cockpit.css?v=20260830-decision1');
-  document.write('<script src="assets/app-4-core.js"></script>');
+  document.write('<script src="assets/app-4-core.js?v=20260902-r5c-refresh1"></script>');
   document.write('<script src="assets/consults-export-xlsx.js?v=20260829-cleanup1"></script>');
   document.write('<script src="assets/audit-fixes.js"></script>');
   document.write('<script src="assets/final-audit-fixes.js"></script>');
   document.write('<script src="assets/responsive-admin.js?v=20260829-deepnav1"></script>');
-  document.write('<script src="assets/semantic-model-runtime.js?v=20260901-r4-capacity-v1"></script>');
+  document.write('<script src="assets/semantic-model-runtime.js?v=20260902-r5-movement-lifecycle-v1"></script>');
   document.write('<script src="assets/bi-dashboard.js?v=20260901-r2"></script>');
   document.write('<script src="assets/control-center.js"></script>');
   document.write('<script src="assets/advanced-sections.js"></script>');

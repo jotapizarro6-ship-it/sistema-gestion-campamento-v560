@@ -53,8 +53,8 @@ const data={
     {id:3,arrival_date:tomorrow,departure_date:afterTomorrow,person_name:'FUTURO',module:null,room:null,bed:null,bed_count:1,status:'PENDIENTE'}
   ],
   movements:[
-    {movement_date:tomorrow,movement_type:'SUBIDA',people_count:3},
-    {movement_date:tomorrow,movement_type:'BAJADA',people_count:1}
+    {movement_date:tomorrow,movement_type:'SUBIDA',people_count:3,lifecycle_status:'PROGRAMADO'},
+    {movement_date:tomorrow,movement_type:'BAJADA',people_count:1,lifecycle_status:'PROGRAMADO'}
   ],
   capacities:[
     {capacity_date:today,capacity:4},

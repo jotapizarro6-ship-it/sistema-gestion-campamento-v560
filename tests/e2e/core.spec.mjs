@@ -76,9 +76,9 @@ test('cabecera smartphone replica referencia final aprobada en múltiples anchos
     expect(Math.abs(mobile.sync.left-mobile.menu.left)).toBeLessThanOrEqual(2);
 
     expect(mobile.refresh.display).not.toBe('none');
-    expect(mobile.refresh.width).toBeGreaterThanOrEqual(width<=340?98:width<=380?104:112);
-    expect(mobile.refresh.height).toBeGreaterThanOrEqual(width<=380?34:36);
-    expect(mobile.refresh.height).toBeLessThanOrEqual(37);
+    expect(mobile.refresh.width).toBeGreaterThanOrEqual(120);
+    expect(mobile.refresh.height).toBeGreaterThanOrEqual(44);
+    expect(mobile.refresh.height).toBeLessThanOrEqual(45);
     expect(mobile.refresh.fontSize).toBeGreaterThan(0);
     expect(mobile.refresh.text).toContain('Actualizar');
     expect(Math.abs(mobile.refresh.right-mobile.profile.right)).toBeLessThanOrEqual(2);
@@ -93,15 +93,15 @@ test('cabecera smartphone replica referencia final aprobada en múltiples anchos
 
     expect(mobile.menuStyle.display).toBe('grid');
     expect(mobile.menuStyle.placeItems).toContain('center');
-    expect(mobile.menu.width).toBeGreaterThanOrEqual(width<=340?34:width<=380?36:38);
-    expect(mobile.menu.width).toBeLessThanOrEqual(38);
+    expect(mobile.menu.width).toBeGreaterThanOrEqual(width<=380?44:48);
+    expect(mobile.menu.width).toBeLessThanOrEqual(width<=380?45:49);
     expect(mobile.menu.height).toBe(mobile.menu.width);
     expect(mobile.menuStyle.bg).toContain('linear-gradient');
     expect(mobile.menuStyle.pseudoWidth).toBeGreaterThanOrEqual(18);
     expect(mobile.menuStyle.pseudoHeight).toBeGreaterThanOrEqual(11);
-    expect(Math.abs(mobile.brand.top-mobile.menu.top)).toBeLessThanOrEqual(12);
+    expect(Math.abs(mobile.brand.top-mobile.menu.top)).toBeLessThanOrEqual(18);
 
-    expect(mobile.topbarHeight).toBeLessThanOrEqual(86);
+    expect(mobile.topbarHeight).toBeLessThanOrEqual(92);
     expect(mobile.scrollWidth).toBeLessThanOrEqual(mobile.clientWidth+1);
   }
 
@@ -122,7 +122,7 @@ test('cabecera smartphone replica referencia final aprobada en múltiples anchos
   expect(installable.height).toBeGreaterThanOrEqual(31);
   expect(installable.fontSize).toBeGreaterThan(0);
   expect(installable.text).toContain('Instalar aplicación');
-  expect(installable.topbarHeight).toBeLessThanOrEqual(124);
+  expect(installable.topbarHeight).toBeLessThanOrEqual(126);
   expect(installable.scrollWidth).toBeLessThanOrEqual(installable.clientWidth+1);
 
   await page.setViewportSize({width:1366,height:768});

@@ -13,7 +13,47 @@ function renderExports(){const d=A.data;$('#view-exports').innerHTML=`<div class
 
 function switchView(v){A.currentView=v;$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('.nav-btn').forEach(x=>x.classList.toggle('active',x.dataset.view===v));const b=$(`.nav-btn[data-view="${v}"]`);$('#pageTitle').textContent=b?.textContent||'Administración';$('#sidebar').classList.remove('open');history.replaceState(null,'',`#${v}`)}
 function logoutAdmin(){sessionStorage.removeItem('camp_admin_token');A.token=null;A.data=null;$('#adminApp')?.classList.add('hidden');$('#adminLoginScreen')?.classList.remove('hidden');if($('#adminPassword'))$('#adminPassword').value=''}
-function initAdmin(){if(!$('#adminLoginForm'))return;$('#detailClose').addEventListener('click',()=>$('#detailDialog').close());$('#detailDialog').addEventListener('click',e=>{if(e.target===$('#detailDialog'))$('#detailDialog').close()});$('#menuBtn').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));$('#logoutBtn').addEventListener('click',logoutAdmin);$('#refreshAllBtn').addEventListener('click',()=>loadAll());$$('.nav-btn').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+function initAdmin(){if(!$('#adminLoginForm'))return;$('#detailClose').addEventListener('click',()=>$('#detailDialog').close());$('#detailDialog').addEventListener('click',e=>{if(e.target===$('#detailDialog'))$('#detailDialog').close()});$('#menuBtn').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));$('#logoutBtn').addEventListener('click',logoutAdmin);$('#refreshAllBtn').addEventListener('click',async()=>{
+  const button=$('#refreshAllBtn');
+
+  if(
+    !button||
+    button.dataset.syncing==='true'
+  ){
+    return;
+  }
+
+  button.dataset.syncing='true';
+  button.disabled=true;
+  button.setAttribute(
+    'aria-busy',
+    'true'
+  );
+
+  try{
+    /*
+     * resilience-runtime owns window.loadAll after boot.
+     * Always use the current integration wrapper rather than
+     * relying on an older captured identifier.
+     */
+    const refresh=
+      typeof window.loadAll==='function'
+        ? window.loadAll
+        : loadAll;
+
+    await refresh();
+  }finally{
+    button.removeAttribute(
+      'data-syncing'
+    );
+
+    button.disabled=false;
+
+    button.removeAttribute(
+      'aria-busy'
+    );
+  }
+});$$('.nav-btn').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
   $('#adminLoginForm').addEventListener('submit',async e=>{e.preventDefault();const msg=$('#adminLoginMessage'),pwd=$('#adminPassword').value;msg.innerHTML=htmlNotice('Verificando acceso…','info');try{const r=await webApi('admin_login',{method:'POST',body:{password:pwd}});A.token=r.token;sessionStorage.setItem('camp_admin_token',A.token);msg.innerHTML='';$('#adminLoginScreen').classList.add('hidden');$('#adminApp').classList.remove('hidden');const hash=location.hash.slice(1);switchView($(`.nav-btn[data-view="${hash}"]`)?hash:'overview');await loadAll()}catch(err){msg.innerHTML=htmlNotice(err.message||'Contraseña incorrecta.','error')}});
   const existing=sessionStorage.getItem('camp_admin_token');if(existing){A.token=existing;$('#adminLoginScreen').classList.add('hidden');$('#adminApp').classList.remove('hidden');const hash=location.hash.slice(1);switchView($(`.nav-btn[data-view="${hash}"]`)?hash:'overview');loadAll().catch(()=>logoutAdmin())}
 }

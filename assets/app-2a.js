@@ -219,8 +219,39 @@ function capacityFor(ds,data){
     : null;
 }
 function blocksOn(ds,data){const m=new Map();for(const b of data.blocks){if(plain(b.status)==='ACTIVO'&&clean(b.start_date)<=ds&&(!clean(b.end_date)||clean(b.end_date)>=ds))m.set(lkey(b.module,b.room,b.bed),b)}return m}
-function movementTotals(ds,data){const x={SUBIDA:0,BAJADA:0};for(const m of data.movements.filter(r=>clean(r.movement_date)===ds)){const k=plain(m.movement_type);if(k in x)x[k]+=Number(m.people_count)||0}return x}
-function projectedPhysical(ds,data){const today=todayISO(),occ=physicalOccupied(data);if(ds<=today)return occ;let up=0,down=0;for(const m of data.movements){const d=clean(m.movement_date);if(d>today&&d<=ds){if(plain(m.movement_type)==='SUBIDA')up+=Number(m.people_count)||0;if(plain(m.movement_type)==='BAJADA')down+=Number(m.people_count)||0}}return Math.max(occ+up-down,0)}
+function movementLifecycle(m){return plain(m?.lifecycle_status||'LEGACY_UNRESOLVED')}
+function movementTotals(ds,data){
+  const today=todayISO(),x={SUBIDA:0,BAJADA:0};
+  for(const m of data.movements.filter(r=>clean(r.movement_date)===ds)){
+    const status=movementLifecycle(m);
+    if(ds>today&&status!=='PROGRAMADO')continue;
+    if(ds<=today&&status==='CANCELADO')continue;
+    const k=plain(m.movement_type);
+    if(k in x)x[k]+=Number(m.people_count)||0;
+  }
+  return x;
+}
+function projectedPhysical(ds,data){
+  const today=todayISO(),occ=physicalOccupied(data);
+  if(ds<=today)return occ;
+  let up=0,down=0;
+  for(const m of data.movements){
+    const d=clean(m.movement_date);
+    if(
+      d>today&&
+      d<=ds&&
+      movementLifecycle(m)==='PROGRAMADO'
+    ){
+      if(plain(m.movement_type)==='SUBIDA'){
+        up+=Number(m.people_count)||0;
+      }
+      if(plain(m.movement_type)==='BAJADA'){
+        down+=Number(m.people_count)||0;
+      }
+    }
+  }
+  return Math.max(occ+up-down,0);
+}
 function pendingArrivals(data){const today=todayISO();let total=0,future=0,dueToday=0,overdue=0;for(const r of data.reservations.filter(x=>['PENDIENTE','CONFIRMADA'].includes(plain(x.status))&&(!clean(x.departure_date)||clean(x.departure_date)>today))){const count=Math.max(Number(r.bed_count)||0,0),arr=clean(r.arrival_date);let rem;if(arr>today){rem=count;future+=rem}else{rem=Math.max(count-fulfilled(r,data,today),0);if(arr===today)dueToday+=rem;else if(arr<today)overdue+=rem}total+=rem}return{total,future,today:dueToday,overdue}}
 function pendingDepartures(data){const today=todayISO();let total=0,dueToday=0,overdue=0;for(const r of data.reservations.filter(x=>['PENDIENTE','CONFIRMADA'].includes(plain(x.status))&&clean(x.departure_date)&&clean(x.departure_date)<=today)){const c=Math.max(Number(r.bed_count)||0,0);total+=c;if(r.departure_date===today)dueToday+=c;else overdue+=c}return{total,today:dueToday,overdue}}
 function forecast30(data){

@@ -1,6 +1,214 @@
-async function loadAll({snapshot=true}={}){
-  $('#syncBadge').textContent='Sincronizando';$('#syncBadge').className='status-pill warn';
-  try{if(snapshot)await advApi('snapshot_today',{method:'POST',body:{},token:A.token});const [state,consults,imports]=await Promise.all([advApi('advanced_state',{token:A.token}),webApi('consults',{token:A.token}).catch(()=>({data:[]})),webApi('imports',{token:A.token}).catch(()=>({data:[]}))]);A.data=state.data;A.consults=consults.data||[];A.imports=imports.data||[];const source=A.data.settings.source_file||'Sin planilla',upd=A.data.settings.last_update||'—';$('#systemMeta').textContent=`Base central Supabase · ${source} · ${upd}`;$('#syncBadge').textContent='Actualizado';$('#syncBadge').className='status-pill ok';renderAll();return true}catch(err){$('#syncBadge').textContent='Error';$('#syncBadge').className='status-pill bad';if(err.status===401){logoutAdmin();return false}showMessage(err.message||'Error al cargar la base.','error');return false}
+let loadAllSequence=0;
+let loadAllPending=0;
+
+function loadAllSyncState(
+  text,
+  tone
+){
+  const badge=
+    $('#syncBadge');
+
+  if(!badge){
+    return;
+  }
+
+  badge.textContent=
+    text;
+
+  badge.className=
+    `status-pill ${tone}`;
+}
+
+function loadAllRefreshBusy(
+  busy
+){
+  const button=
+    $('#refreshAllBtn');
+
+  if(!button){
+    return;
+  }
+
+  button.disabled=
+    Boolean(busy);
+
+  if(busy){
+    button.setAttribute(
+      'aria-busy',
+      'true'
+    );
+
+    button.setAttribute(
+      'data-syncing',
+      'true'
+    );
+  }else{
+    button.removeAttribute(
+      'aria-busy'
+    );
+
+    button.removeAttribute(
+      'data-syncing'
+    );
+  }
+}
+
+async function loadAll(
+  {
+    snapshot=true
+  }={}
+){
+  const sequence=
+    ++loadAllSequence;
+
+  loadAllPending++;
+
+  loadAllRefreshBusy(
+    true
+  );
+
+  loadAllSyncState(
+    'Sincronizando',
+    'warn'
+  );
+
+  try{
+    if(snapshot){
+      await advApi(
+        'snapshot_today',
+        {
+          method:'POST',
+          body:{},
+          token:A.token
+        }
+      );
+    }
+
+    const [
+      state,
+      consults,
+      imports
+    ]=
+      await Promise.all([
+        advApi(
+          'advanced_state',
+          {
+            token:A.token
+          }
+        ),
+
+        webApi(
+          'consults',
+          {
+            token:A.token
+          }
+        ).catch(
+          ()=>({
+            data:[]
+          })
+        ),
+
+        webApi(
+          'imports',
+          {
+            token:A.token
+          }
+        ).catch(
+          ()=>({
+            data:[]
+          })
+        )
+      ]);
+
+    /*
+     * A newer synchronization started while this one
+     * was waiting on the network.
+     *
+     * Do not let an old response overwrite newer state.
+     */
+    if(
+      sequence!==
+      loadAllSequence
+    ){
+      return true;
+    }
+
+    A.data=
+      state.data;
+
+    A.consults=
+      consults.data||
+      [];
+
+    A.imports=
+      imports.data||
+      [];
+
+    const source=
+      A.data.settings.source_file||
+      'Sin planilla';
+
+    const updated=
+      A.data.settings.last_update||
+      '—';
+
+    $('#systemMeta').textContent=
+      `Base central Supabase · ${source} · ${updated}`;
+
+    loadAllSyncState(
+      'Actualizado',
+      'ok'
+    );
+
+    renderAll();
+
+    return true;
+  }catch(err){
+    /*
+     * Authentication expiry is never stale:
+     * terminate the admin session immediately.
+     */
+    if(err.status===401){
+      logoutAdmin();
+      return false;
+    }
+
+    /*
+     * If another load started after this one,
+     * its UI status owns the screen.
+     */
+    if(
+      sequence!==
+      loadAllSequence
+    ){
+      return false;
+    }
+
+    loadAllSyncState(
+      'Error',
+      'bad'
+    );
+
+    showMessage(
+      err.message||
+      'Error al cargar la base.',
+      'error'
+    );
+
+    return false;
+  }finally{
+    loadAllPending=
+      Math.max(
+        loadAllPending-1,
+        0
+      );
+
+    if(loadAllPending===0){
+      loadAllRefreshBusy(
+        false
+      );
+    }
+  }
 }
 function renderAll(){if(!A.data)return;renderOverview();renderControl();renderPlanning();renderManagement();renderHistory();renderMovements();renderReservations();renderBlocks();renderWorkers();renderConsults();renderExcel();renderExports()}
 

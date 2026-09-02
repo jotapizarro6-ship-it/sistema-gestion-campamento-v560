@@ -37,7 +37,7 @@
     display:grid!important;
     grid-template-columns:minmax(0,1fr) auto!important;
     grid-template-areas:"sync profile" "context refresh"!important;
-    grid-template-rows:28px 38px!important;
+    grid-template-rows:28px 48px!important;
     align-items:center!important;
     column-gap:8px!important;
     row-gap:3px!important;
@@ -52,7 +52,7 @@
     grid-area:context!important;
     width:100%!important;
     display:grid!important;
-    grid-template-columns:38px minmax(0,1fr)!important;
+    grid-template-columns:48px minmax(0,1fr)!important;
     align-items:center!important;
     gap:8px!important;
     min-width:0!important;
@@ -71,15 +71,15 @@
   html body #menuBtn{
     display:grid!important;
     place-items:center!important;
-    width:38px!important;
-    height:38px!important;
-    min-width:38px!important;
-    min-height:38px!important;
+    width:48px!important;
+    height:48px!important;
+    min-width:48px!important;
+    min-height:48px!important;
     padding:0!important;
     margin:0!important;
     font-size:0!important;
     line-height:1!important;
-    border-radius:10px!important;
+    border-radius:12px!important;
   }
   html body #menuBtn::before{
     content:""!important;
@@ -144,14 +144,14 @@
     justify-self:end!important;
     align-self:center!important;
     width:auto!important;
-    min-width:112px!important;
-    max-width:126px!important;
-    height:36px!important;
-    min-height:36px!important;
-    padding:0 10px!important;
+    min-width:120px!important;
+    max-width:136px!important;
+    height:44px!important;
+    min-height:44px!important;
+    padding:0 11px!important;
     margin:0!important;
-    border-radius:9px!important;
-    font-size:11px!important;
+    border-radius:10px!important;
+    font-size:11.5px!important;
     font-weight:850!important;
     line-height:1!important;
     white-space:nowrap!important;
@@ -181,29 +181,29 @@
 /* Teléfonos compactos: conserva la misma composición reduciendo escala, nunca ocultando acciones. */
 @media(max-width:380px){
   html body .admin-topbar .topbar-admin{
-    grid-template-rows:27px 36px!important;
+    grid-template-rows:27px 44px!important;
     column-gap:7px!important;
     row-gap:3px!important;
     padding-left:9px!important;
     padding-right:9px!important;
   }
-  html body .camp-topbar-context{grid-template-columns:36px minmax(0,1fr)!important;gap:7px!important}
-  html body #menuBtn{width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important}
+  html body .camp-topbar-context{grid-template-columns:44px minmax(0,1fr)!important;gap:7px!important}
+  html body #menuBtn{width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important}
   html body #menuBtn::before{width:19px!important;height:12px!important;background:linear-gradient(currentColor,currentColor) center top/19px 2.3px no-repeat,linear-gradient(currentColor,currentColor) center/19px 2.3px no-repeat,linear-gradient(currentColor,currentColor) center bottom/19px 2.3px no-repeat!important}
   html body .camp-topbar-title .brand{font-size:clamp(14px,4.15vw,15.5px)!important}
   html body .ops-profile-badge{max-width:92px!important;height:25px!important;min-height:25px!important;padding:0 7px!important;font-size:9.5px!important}
   html body #syncBadge.status-pill{max-width:106px!important;height:26px!important;min-height:26px!important;padding:0 7px!important;font-size:9.5px!important}
-  html body #refreshAllBtn{min-width:104px!important;max-width:116px!important;height:34px!important;min-height:34px!important;padding:0 8px!important;font-size:10.5px!important}
+  html body #refreshAllBtn{min-width:120px!important;max-width:128px!important;height:44px!important;min-height:44px!important;padding:0 9px!important;font-size:10.5px!important}
 }
 
 @media(max-width:340px){
   html body .admin-topbar .topbar-admin{column-gap:6px!important;padding-left:8px!important;padding-right:8px!important}
-  html body .camp-topbar-context{grid-template-columns:34px minmax(0,1fr)!important;gap:6px!important}
-  html body #menuBtn{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important}
+  html body .camp-topbar-context{grid-template-columns:44px minmax(0,1fr)!important;gap:6px!important}
+  html body #menuBtn{width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important}
   html body .camp-topbar-title .brand{font-size:13.5px!important}
   html body .ops-profile-badge{max-width:86px!important;font-size:9px!important;padding:0 6px!important}
   html body #syncBadge.status-pill{max-width:100px!important;font-size:9px!important;padding:0 6px!important}
-  html body #refreshAllBtn{min-width:98px!important;max-width:108px!important;font-size:10px!important;padding:0 7px!important}
+  html body #refreshAllBtn{min-width:120px!important;max-width:128px!important;height:44px!important;min-height:44px!important;font-size:10px!important;padding:0 7px!important}
 }
 
 /* Informe ejecutivo sin pop-up: se imprime desde el mismo documento. */

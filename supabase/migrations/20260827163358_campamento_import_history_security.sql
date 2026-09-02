@@ -1,0 +1,1 @@
+ALTER TABLE public.import_history ENABLE ROW LEVEL SECURITY;;

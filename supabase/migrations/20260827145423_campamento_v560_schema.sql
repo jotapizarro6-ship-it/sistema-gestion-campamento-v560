@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS public.workers(id BIGSERIAL PRIMARY KEY,rut TEXT UNIQUE NOT NULL,nombre TEXT,turno TEXT,modulo TEXT,habitacion TEXT,cama TEXT,empresa TEXT,especialidad TEXT,categoria TEXT,sexo TEXT,updated_at TEXT DEFAULT CURRENT_TIMESTAMP::text);
+CREATE TABLE IF NOT EXISTS public.settings(key TEXT PRIMARY KEY,value TEXT);
+CREATE TABLE IF NOT EXISTS public.consultation_log(id BIGSERIAL PRIMARY KEY,rut TEXT NOT NULL,nombre TEXT,consultado_at TEXT NOT NULL,ip TEXT,status TEXT NOT NULL DEFAULT 'ASIGNADO',modulo TEXT,habitacion TEXT,cama TEXT,user_agent TEXT);
+CREATE TABLE IF NOT EXISTS public.daily_capacity(capacity_date TEXT PRIMARY KEY,capacity INTEGER NOT NULL,updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS public.bed_inventory(module TEXT NOT NULL,room TEXT NOT NULL,bed TEXT NOT NULL,room_type TEXT,camp TEXT,updated_at TEXT NOT NULL,PRIMARY KEY(module,room,bed));
+CREATE TABLE IF NOT EXISTS public.bed_blocks(id BIGSERIAL PRIMARY KEY,module TEXT NOT NULL,room TEXT NOT NULL,bed TEXT NOT NULL,start_date TEXT NOT NULL,end_date TEXT,reason TEXT,status TEXT NOT NULL DEFAULT 'ACTIVO',created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS public.reservations(id BIGSERIAL PRIMARY KEY,arrival_date TEXT NOT NULL,departure_date TEXT,person_name TEXT NOT NULL,role_area TEXT,module TEXT,room TEXT,bed TEXT,bed_count INTEGER NOT NULL DEFAULT 1,notes TEXT,status TEXT NOT NULL DEFAULT 'PENDIENTE',created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS public.movements(id BIGSERIAL PRIMARY KEY,movement_date TEXT NOT NULL,movement_type TEXT NOT NULL,shift TEXT,company TEXT,people_count INTEGER NOT NULL DEFAULT 0,bus_time TEXT,bus TEXT,notes TEXT,created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS public.daily_snapshots(snapshot_date TEXT PRIMARY KEY,base_capacity INTEGER NOT NULL DEFAULT 0,blocked INTEGER NOT NULL DEFAULT 0,capacity INTEGER NOT NULL,occupied INTEGER NOT NULL,reserved INTEGER NOT NULL,reserved_today INTEGER NOT NULL,free INTEGER NOT NULL,occupancy DOUBLE PRECISION NOT NULL,committed_occupancy DOUBLE PRECISION NOT NULL,total_workers INTEGER NOT NULL,female INTEGER NOT NULL,male INTEGER NOT NULL,companies_json TEXT,shifts_json TEXT,modules_json TEXT,movements_json TEXT,reservations_json TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,closed_at TEXT NOT NULL DEFAULT '');
+CREATE INDEX IF NOT EXISTS idx_workers_location ON public.workers(modulo,habitacion,cama);
+CREATE INDEX IF NOT EXISTS idx_reservations_dates_status ON public.reservations(arrival_date,departure_date,status);
+CREATE INDEX IF NOT EXISTS idx_reservations_location ON public.reservations(module,room,bed);
+CREATE INDEX IF NOT EXISTS idx_movements_date ON public.movements(movement_date);
+CREATE INDEX IF NOT EXISTS idx_consultation_log_time ON public.consultation_log(consultado_at DESC);
+CREATE INDEX IF NOT EXISTS idx_blocks_location_dates ON public.bed_blocks(module,room,bed,start_date,end_date,status);;

@@ -1,0 +1,86 @@
+{
+  "release": "R4",
+  "name": "Capacity V1",
+  "base_main": "4214101bac2c7b4c2abb01268f0b870218127f1d",
+  "release_class": "SEMANTIC_CUTOVER",
+  "production_apply": false,
+  "database_apply": false,
+  "rules": [
+    {
+      "id": "R4-U01",
+      "title": "one canonical Capacity V1 resolver exists",
+      "requirement": "All capacity consumers use one resolver exposing value, source and availability."
+    },
+    {
+      "id": "R4-U02",
+      "title": "exact daily capacity has first priority including zero",
+      "requirement": "An exact daily_capacity row wins. Explicit zero must never fall through."
+    },
+    {
+      "id": "R4-U03",
+      "title": "operational universe is the only fallback",
+      "requirement": "Without exact daily capacity, use operational universe. Settings defaults are forbidden."
+    },
+    {
+      "id": "R4-U04",
+      "title": "missing capacity fails closed",
+      "requirement": "Without exact capacity or usable operational universe, return CAPACITY_UNAVAILABLE."
+    },
+    {
+      "id": "R4-U05",
+      "title": "legacy 132 capacity assumptions are removed",
+      "requirement": "No active Capacity V1 path may depend on daily_capacity_default or hardcoded 132 fallback."
+    },
+    {
+      "id": "R4-U06",
+      "title": "bed blocks reduce capacity after base resolution",
+      "requirement": "Effective capacity is resolved base capacity minus inclusive active blocks."
+    },
+    {
+      "id": "R4-U07",
+      "title": "forecast and planning propagate provenance",
+      "requirement": "Forecast and planning expose capacity_source and capacity_available."
+    },
+    {
+      "id": "R4-U08",
+      "title": "unavailable capacity never fabricates metrics",
+      "requirement": "Unavailable capacity must not invent free beds, deficit, percentages or risk."
+    },
+    {
+      "id": "R4-U09",
+      "title": "new closures write snapshot provenance V1",
+      "requirement": "R4 closures persist capacity provenance and operational evidence atomically."
+    },
+    {
+      "id": "R4-U10",
+      "title": "legacy snapshots remain unresolved",
+      "requirement": "Pre-R4 snapshots remain LEGACY_UNRESOLVED with no fabricated history."
+    },
+    {
+      "id": "R4-U11",
+      "title": "R2 population and HTTP 504 resilience remain intact",
+      "requirement": "Canonical population semantics and HTTP 504 resilience must remain unchanged."
+    },
+    {
+      "id": "R4-U12",
+      "title": "R4 cutover is auditable and CI enforced",
+      "requirement": "Runtime markers, tests and CI identify Capacity V1."
+    }
+  ],
+  "expected_baseline_pass": [
+    "R4-U10",
+    "R4-U11"
+  ],
+  "expected_baseline_fail": [
+    "R4-U01",
+    "R4-U02",
+    "R4-U03",
+    "R4-U04",
+    "R4-U05",
+    "R4-U06",
+    "R4-U07",
+    "R4-U08",
+    "R4-U09",
+    "R4-U12"
+  ]
+}

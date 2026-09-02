@@ -57,6 +57,11 @@ jobs:
           node --check assets/operations-suite-echarts.js
           node --check assets/public-date.js
           node --check assets/public-worker-v2.js
+          node --check assets/semantic-model-runtime.js
+          node --check tests/r4-capacity-v1-core-smoke.cjs
+          node --check tests/r4-capacity-v1-analytics-smoke.cjs
+          node --check tests/r4-capacity-v1-close-smoke.cjs
+          node --check tests/r4-capacity-v1.green-runner.cjs
       - name: Pruebas funcionales v5.6.0
         run: node tests/functional-smoke.mjs
       - name: Pruebas Centro de Control y What-if
@@ -69,10 +74,41 @@ jobs:
         run: node tests/consults-navigation-freeze-smoke.mjs
       - name: Prueba dotación MOD MOI 2000 trabajadores
         run: node tests/workforce-mod-moi-smoke.mjs
-      - name: Validar R3 Schema Foundations
+      - name: Validar R3 Schema Foundations historico
         run: |
-          node tests/r3-schema-foundations.baseline-runner.cjs
-          node tests/r3-schema-foundations.green-runner.cjs
+          set -euo pipefail
+
+          R3_RED_DIR="${RUNNER_TEMP}/garpi-r3-red-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          R3_GREEN_DIR="${RUNNER_TEMP}/garpi-r3-green-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+          cleanup_r3() {
+            git worktree remove --force "$R3_RED_DIR" >/dev/null 2>&1 || true
+            git worktree remove --force "$R3_GREEN_DIR" >/dev/null 2>&1 || true
+            git worktree prune
+          }
+
+          trap cleanup_r3 EXIT
+
+          rm -rf "$R3_RED_DIR" "$R3_GREEN_DIR"
+
+          git worktree add --detach "$R3_RED_DIR" 44024fb9968cc76d442a95f032f6a4d33ae0be25
+          (
+            cd "$R3_RED_DIR"
+            node tests/r3-schema-foundations.baseline-runner.cjs
+          )
+
+          git worktree add --detach "$R3_GREEN_DIR" 4214101bac2c7b4c2abb01268f0b870218127f1d
+          (
+            cd "$R3_GREEN_DIR"
+            node tests/r3-schema-foundations.green-runner.cjs
+          )
+      - name: Validar R4 Capacity V1
+        run: |
+          node tests/r4-capacity-v1.baseline-runner.cjs
+          node tests/r4-capacity-v1-core-smoke.cjs
+          node tests/r4-capacity-v1-analytics-smoke.cjs
+          node tests/r4-capacity-v1-close-smoke.cjs
+          node tests/r4-capacity-v1.green-runner.cjs
       - name: Validar estructura web
         run: |
           test -f index.html
@@ -82,6 +118,12 @@ jobs:
           test -f assets/public-assignment-emphasis.css
           test -f assets/public-worker-v2.css
           test -f assets/public-worker-v2.js
+          test -f tests/r4-capacity-v1-core-smoke.cjs
+          test -f tests/r4-capacity-v1-analytics-smoke.cjs
+          test -f tests/r4-capacity-v1-close-smoke.cjs
+          test -f tests/r4-capacity-v1.green-runner.cjs
+          test -f supabase/migrations/20260901193000_r4_capacity_v1_close.sql
+          test -f version.json
           test -f assets/public-date.js
           test -f assets/final-audit-fixes.js
           test -f assets/bi-dashboard.js

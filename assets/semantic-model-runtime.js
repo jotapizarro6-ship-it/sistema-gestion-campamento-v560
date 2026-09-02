@@ -3,7 +3,7 @@
   if(typeof window==='undefined'||window.__CAMP_SEMANTIC_MODEL_RUNTIME__)return;
   window.__CAMP_SEMANTIC_MODEL_RUNTIME__=true;
 
-  const VERSION='20260901-semantic2';
+  const VERSION='20260901-r4-capacity-v1';
   const cache=new WeakMap();
   const nowMs=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
 
@@ -56,9 +56,17 @@
   function fastOccupiedSet(data){return getModel(data).occupiedKeys}
   function fastPhysicalOccupied(data){return getModel(data).occupiedKeys.size}
   function fastCapacityFor(ds,data){
-    const m=getModel(data);return m.capacityByDate.has(ds)?Number(m.capacityByDate.get(ds)||0):(Number(data?.settings?.daily_capacity_default||132)||132);
+    const resolved=
+      resolveCapacityV1(
+        ds,
+        data
+      );
+
+    return resolved.capacity_available
+      ? resolved.base_capacity
+      : null;
   }
-  function fastBlocksOn(ds,data){
+function fastBlocksOn(ds,data){
     const m=getModel(data);if(m.blocksByDate.has(ds))return m.blocksByDate.get(ds);
     const out=new Map();for(const b of m.activeBlocks){if(clean(b.start_date)<=ds&&(!clean(b.end_date)||clean(b.end_date)>=ds))out.set(lkey(b.module,b.room,b.bed),b)}
     m.blocksByDate.set(ds,out);return out;
@@ -100,16 +108,156 @@
     return{total,today:dueToday,overdue};
   }
   function fastForecast30(data){
-    const today=todayISO(),m=getModel(data);if(m.forecastByDay.has(today))return m.forecastByDay.get(today);
-    let physical=m.occupiedKeys.size;const out=[];
-    for(let i=0;i<30;i++){
-      const ds=addDays(today,i),base=fastCapacityFor(ds,data),blocked=fastBlocksOn(ds,data).size,cap=Math.max(base-blocked,0),mv=fastMovementTotals(ds,data);if(i>0)physical=Math.max(physical+mv.SUBIDA-mv.BAJADA,0);
-      const res=fastReservedCount(ds,data),committed=physical+res,pct=cap?Math.round(committed/cap*1000)/10:(committed?100:0),over=Math.max(committed-cap,0),state=over?'over':(pct>=90?'critical':pct>=80?'attention':'normal');
-      out.push({date:ds,label:fmtShort(ds),base_capacity:base,blocked,capacity:cap,physical,reserved:res,committed,free:Math.max(cap-committed,0),pct,over,up:mv.SUBIDA,down:mv.BAJADA,state});
+    const today=
+      todayISO();
+
+    const m=
+      getModel(data);
+
+    if(
+      m.forecastByDay.has(today)
+    ){
+      return m.forecastByDay.get(today);
     }
-    m.forecastByDay.set(today,out);return out;
+
+    let physical=
+      m.occupiedKeys.size;
+
+    const out=[];
+
+    for(let i=0;i<30;i++){
+      const ds=
+        addDays(
+          today,
+          i
+        );
+
+      const capacityInfo=
+        effectiveCapacityV1(
+          ds,
+          data
+        );
+
+      const mv=
+        fastMovementTotals(
+          ds,
+          data
+        );
+
+      if(i>0){
+        physical=
+          Math.max(
+            physical+
+            mv.SUBIDA-
+            mv.BAJADA,
+            0
+          );
+      }
+
+      const reserved=
+        fastReservedCount(
+          ds,
+          data
+        );
+
+      const committed=
+        physical+
+        reserved;
+
+      let free=null;
+      let pct=null;
+      let over=null;
+      let state='unavailable';
+
+      if(
+        capacityInfo.capacity_available
+      ){
+        const cap=
+          capacityInfo.capacity;
+
+        free=
+          Math.max(
+            cap-committed,
+            0
+          );
+
+        pct=
+          cap
+            ? Math.round(
+                committed/cap*1000
+              )/10
+            : (
+                committed
+                  ? 100
+                  : 0
+              );
+
+        over=
+          Math.max(
+            committed-cap,
+            0
+          );
+
+        state=
+          over>0
+            ? 'over'
+            : pct>=90
+              ? 'critical'
+              : pct>=80
+                ? 'attention'
+                : 'normal';
+      }
+
+      out.push({
+        date:ds,
+        label:fmtShort(ds),
+
+        base_capacity:
+          capacityInfo.base_capacity,
+
+        blocked:
+          capacityInfo.blocked,
+
+        capacity:
+          capacityInfo.capacity,
+
+        effective_capacity:
+          capacityInfo.effective_capacity,
+
+        capacity_available:
+          capacityInfo.capacity_available,
+
+        capacity_source:
+          capacityInfo.capacity_source,
+
+        capacity_code:
+          capacityInfo.code,
+
+        operational_universe_count:
+          capacityInfo.operational_universe_count,
+
+        physical,
+        reserved,
+        committed,
+        free,
+        pct,
+        over,
+
+        up:mv.SUBIDA,
+        down:mv.BAJADA,
+
+        state
+      });
+    }
+
+    m.forecastByDay.set(
+      today,
+      out
+    );
+
+    return out;
   }
-  function fastHeatmap(data,ds=todayISO()){
+function fastHeatmap(data,ds=todayISO()){
     const m=getModel(data);if(m.heatmapByDate.has(ds))return m.heatmapByDate.get(ds);
     const rmap=new Map();for(const r of m.activeReservations){if(clean(r.arrival_date)<=ds&&(!clean(r.departure_date)||clean(r.departure_date)>ds)&&clean(r.module)&&clean(r.room)&&clean(r.bed))rmap.set(lkey(r.module,r.room,r.bed),r)}
     const bmap=fastBlocksOn(ds,data),items=[],roll=new Map();

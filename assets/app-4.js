@@ -19,7 +19,7 @@ if(typeof document!=='undefined'&&typeof document.write==='function'){
   document.write('<script src="assets/audit-fixes.js"></script>');
   document.write('<script src="assets/final-audit-fixes.js"></script>');
   document.write('<script src="assets/responsive-admin.js?v=20260829-deepnav1"></script>');
-  document.write('<script src="assets/semantic-model-runtime.js?v=20260901-r2"></script>');
+  document.write('<script src="assets/semantic-model-runtime.js?v=20260901-r4-capacity-v1"></script>');
   document.write('<script src="assets/bi-dashboard.js?v=20260901-r2"></script>');
   document.write('<script src="assets/control-center.js"></script>');
   document.write('<script src="assets/advanced-sections.js"></script>');

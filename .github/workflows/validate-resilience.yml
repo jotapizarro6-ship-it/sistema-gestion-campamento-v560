@@ -36,8 +36,8 @@ jobs:
           test -f supabase/functions/campamento-web-api/index.ts
           test -f supabase/functions/campamento-control-api/index.ts
           test -f supabase/functions/campamento-workforce-api/index.ts
-          test -f supabase/migrations/20260830004000_operational_revision.sql
-          grep -q "claim_operational_revision" supabase/migrations/20260830004000_operational_revision.sql
+          test -f supabase/migrations/20260830004324_operational_revision.sql
+          grep -q "claim_operational_revision" supabase/migrations/20260830004324_operational_revision.sql
           grep -q "action==='claim_revision'" supabase/functions/campamento-v560-fast/index.ts
           grep -q "action==='health'" supabase/functions/campamento-v560-fast/index.ts
           grep -q "action:'claim_revision'" supabase/functions/campamento-v560-safe/index.ts

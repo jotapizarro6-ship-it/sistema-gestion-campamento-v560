@@ -8,7 +8,7 @@ const safe=fs.readFileSync('supabase/functions/campamento-v560-safe/index.ts','u
 const web=fs.readFileSync('supabase/functions/campamento-web-api/index.ts','utf8');
 const control=fs.readFileSync('supabase/functions/campamento-control-api/index.ts','utf8');
 const workforce=fs.readFileSync('supabase/functions/campamento-workforce-api/index.ts','utf8');
-const migration=fs.readFileSync('supabase/migrations/20260830004000_operational_revision.sql','utf8');
+const migration=fs.readFileSync('supabase/migrations/20260830004324_operational_revision.sql','utf8');
 
 assert.match(runtime,/navigator\.onLine/,'Debe detectar pérdida de conexión');
 assert.match(runtime,/AbortController/,'Debe aplicar timeout de red');

@@ -388,20 +388,36 @@ async function snapshot(closeDay=false,force=false){
           )
   };
 
-  const {data,error}=await db
-    .from("daily_snapshots")
-    .upsert(
-      payload,
-      {
-        onConflict:"snapshot_date"
-      }
-    )
-    .select("*")
-    .single();
+  const {
+    data:writeResult,
+    error:writeError
+  }=await db.rpc(
+    "upsert_open_snapshot_r4",
+    {
+      p_snapshot_date:ds,
+      p_expected_revision:sourceRevisionAfter,
+      p_snapshot:payload
+    }
+  );
 
-  if(error)throw error;
+  if(writeError){
+    throw new Error(
+      String(
+        writeError.message||
+        writeError.details||
+        writeError.code||
+        "SNAPSHOT_WRITE_FAILED"
+      )
+    );
+  }
 
-  return data;
+  const persisted=
+    writeResult&&
+    typeof writeResult==="object"
+      ? writeResult
+      : {};
+
+  return persisted.snapshot||persisted;
 }
 
 async function addReservation(b:any){const arrival=clean(b.arrival_date),departure=clean(b.departure_date)||null,name=clean(b.person_name),count=Number(b.bed_count||1);let module=clean(b.module),room=clean(b.room),bed=clean(b.bed).toUpperCase();if(!arrival||!name)return {ok:false,error:"Fecha de llegada y nombre son obligatorios."};if(!validDate(arrival)||(departure&&!validDate(departure)))return {ok:false,error:"Las fechas de la reserva no son válidas."};if(departure&&departure<=arrival)return {ok:false,error:"La salida debe ser posterior a la llegada."};if(!Number.isInteger(count)||count<1||count>1000)return {ok:false,error:"La cantidad de camas debe estar entre 1 y 1.000."};if(bed&&(!module||!room))return {ok:false,error:"Si selecciona una cama exacta, debe indicar también módulo y habitación."};if(module&&room&&bed&&count!==1)return {ok:false,error:"Una reserva con cama exacta debe corresponder a 1 cama."};const s=await state();if(module&&room&&bed){const inv=s.inventory.find((x:any)=>key(x.module,x.room,x.bed)===key(module,room,bed));if(!inv)return {ok:false,error:"No fue posible identificar esa cama en el inventario actual."};module=inv.module;room=inv.room;bed=inv.bed;const occ=s.workers.find((x:any)=>clean(x.rut)&&key(x.modulo,x.habitacion,x.cama)===key(module,room,bed));if(occ)return {ok:false,error:`La cama indicada figura actualmente ocupada por ${occ.nombre||"un trabajador"}.`};const end=departure||"9999-12-31";if(s.blocks.some((x:any)=>plain(x.status)==="ACTIVO"&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.start_date)<end&&(!clean(x.end_date)||clean(x.end_date)>=arrival)))return {ok:false,error:"Esa cama está fuera de servicio durante la reserva."};if(s.reservations.some((x:any)=>active(x)&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.arrival_date)<end&&(!clean(x.departure_date)||clean(x.departure_date)>arrival)))return {ok:false,error:"Esa cama ya tiene una reserva que se cruza con las fechas indicadas."}}const stamp=now(),{data,error}=await db.from("reservations").insert({arrival_date:arrival,departure_date:departure,person_name:name,role_area:clean(b.role_area),module:module||null,room:room||null,bed:bed||null,bed_count:count,notes:clean(b.notes),status:"PENDIENTE",created_at:stamp,updated_at:stamp}).select("*").single();if(error)throw error;return {ok:true,data}}
@@ -416,7 +432,14 @@ if(req.method==="POST"&&a==="reservation_status"){const b=await body(req),status
 if(req.method==="POST"&&a==="update_capacity"){const b=await body(req),d=clean(b.capacity_date)||today(),c=Number(b.capacity);if(!validDate(d))return out({ok:false,error:"La fecha de capacidad no es válida."},400);if(!Number.isInteger(c)||c<0||c>10000)return out({ok:false,error:"La capacidad debe estar entre 0 y 10.000 camas."},400);const {error}=await db.from("daily_capacity").upsert({capacity_date:d,capacity:c,updated_at:now()},{onConflict:"capacity_date"});if(error)throw error;return out({ok:true,data:{capacity_date:d,capacity:c}})}
 if(req.method==="POST"&&a==="update_cost"){const b=await body(req),v=Number(b.cost_per_bed_day);if(!Number.isFinite(v)||v<0||v>100000000)return out({ok:false,error:"El costo por cama-día debe ser igual o mayor a $0."},400);const {error}=await db.from("settings").upsert({key:"cost_per_bed_day",value:String(v)},{onConflict:"key"});if(error)throw error;return out({ok:true,data:{cost_per_bed_day:v}})}
 if(req.method==="POST"&&a==="snapshot_today")return out({ok:true,data:await snapshot(false,false)});
-if(req.method==="POST"&&a==="close_day"){const b=await body(req),d=clean(b.snapshot_date)||today();if(d!==today())return out({ok:false,error:"Por seguridad, el cierre diario solo puede confirmarse para la fecha actual."},400);return out({ok:true,data:await snapshot(true,false),message:`Cierre operacional guardado para ${d}.`})}
+if(req.method==="POST"&&a==="close_day")return out(
+  {
+    ok:false,
+    code:"R4_CLOSE_REQUIRES_SAFE_EDGE",
+    error:"El cierre R4 debe ejecutarse mediante campamento-v560-safe."
+  },
+  409
+);
 if(req.method==="GET"&&a==="backup_json")return out({ok:true,data:{generated_at:now(),version:"cloud-v5.6.0",...(await state())}});
 return out({ok:false,error:"Ruta no encontrada"},404)}
 catch(e){

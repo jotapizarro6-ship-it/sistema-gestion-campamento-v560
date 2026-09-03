@@ -6,7 +6,8 @@ const db=createClient(
   {auth:{persistSession:false}}
 );
 
-const STATE_API='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-v560-fast';
+const SUPABASE_ORIGIN=(Deno.env.get('SUPABASE_URL')||'').replace(/\/+$/,'');
+const STATE_API=`${SUPABASE_ORIGIN}/functions/v1/campamento-v560-fast`;
 const enc=new TextEncoder();
 const RULE_KEY="workforce_classification_rules";
 const cors={

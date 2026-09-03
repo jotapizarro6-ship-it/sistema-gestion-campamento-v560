@@ -67,7 +67,7 @@
   let uploadWarm=false;
   function warmUploadApi(){
     if(uploadWarm||!window.fetch)return;uploadWarm=true;
-    const url='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-upload-api?action=warm';
+    const url=window.GARPI_ENV.functionUrl('campamento-upload-api','action=warm');
     window.fetch(url,{method:'OPTIONS'}).catch(()=>{uploadWarm=false});
   }
   function installExcelPrewarm(){

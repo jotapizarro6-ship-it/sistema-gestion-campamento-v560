@@ -1,7 +1,8 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const db=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,{auth:{persistSession:false}});
-const STATE_API='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-v560-fast';
+const SUPABASE_ORIGIN=(Deno.env.get('SUPABASE_URL')||'').replace(/\/+$/,'');
+const STATE_API=`${SUPABASE_ORIGIN}/functions/v1/campamento-v560-fast`;
 const enc=new TextEncoder();
 const cors={"access-control-allow-origin":"*","access-control-allow-headers":"authorization,content-type","access-control-allow-methods":"GET,POST,OPTIONS","cache-control":"no-store","x-content-type-options":"nosniff"};
 const json=(data:any,status=200,extra:Record<string,string>={})=>new Response(JSON.stringify(data),{status,headers:{...cors,"content-type":"application/json; charset=utf-8",...extra}});

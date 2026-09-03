@@ -1,0 +1,32 @@
+name: Validar budgets de performance GARPI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  performance-budget:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          check-latest: false
+
+      - name: Validar sintaxis del harness
+        run: node --check tests/performance-budget-smoke.mjs
+
+      - name: Ejecutar budgets de performance
+        run: node tests/performance-budget-smoke.mjs

@@ -1,0 +1,54 @@
+{
+    "schema":  1,
+    "identity":  {
+                     "source_sha":  "291fd0c8939e7b850e50ca1b78be605f89eeea39",
+                     "baseline_sha256":  "9410FAFCB51EE1B9C0150CB12F0ABC80FF90278D652664C87D1B8510430ACD17",
+                     "baseline_phase":  "R7D-A"
+                 },
+    "dataset":  {
+                    "high_volume":  {
+                                        "workers":  2000,
+                                        "beds":  2000,
+                                        "reservations":  300,
+                                        "movements":  180,
+                                        "blocks":  120
+                                    }
+                },
+    "static_payload":  {
+                           "index_html_max_bytes":  8192,
+                           "admin_html_max_bytes":  32768,
+                           "js_css_file_count_max":  80,
+                           "js_css_total_max_bytes":  750000,
+                           "largest_js_css_asset_max_bytes":  65536
+                       },
+    "high_volume":  {
+                        "regression_runs":  10,
+                        "p95":  {
+                                    "analytics_ms":  500,
+                                    "semantic_ms":  50,
+                                    "cache_single_ms":  5,
+                                    "cache_25_ms":  50,
+                                    "heap_mb":  64
+                                }
+                    },
+    "local_health_load":  {
+                              "request_count_per_endpoint":  100,
+                              "concurrency":  5,
+                              "required_availability_percent":  100,
+                              "p95_ms":  {
+                                             "fast":  1000,
+                                             "safe":  1000
+                                         },
+                              "p99_ms":  {
+                                             "fast":  750,
+                                             "safe":  750
+                                         }
+                          },
+    "policy":  {
+                   "percentile_algorithm":  "nearest-rank",
+                   "regression_budget_breach":  "FAIL",
+                   "availability_breach":  "FAIL",
+                   "production_load_allowed":  false,
+                   "synthetic_data_only":  true
+               }
+}

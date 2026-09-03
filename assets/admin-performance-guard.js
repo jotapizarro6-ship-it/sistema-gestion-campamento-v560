@@ -4,7 +4,7 @@
   window.__CAMP_ADMIN_PERFORMANCE_GUARD__=true;
 
   const VERSION='20260829-adminperf1';
-  const SUPABASE_HOST='usrstcxiluvsizoxwlxj.supabase.co';
+  const SUPABASE_HOST=window.GARPI_ENV.supabaseHost;
   const API_TIMEOUT_GET=15000;
   const API_TIMEOUT_POST=30000;
   const API_TIMEOUT_UPLOAD=60000;

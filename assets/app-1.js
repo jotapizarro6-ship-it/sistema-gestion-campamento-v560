@@ -1,7 +1,7 @@
 'use strict';
 
-const WEB_API='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-web-api';
-const ADV_API='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-v560-safe';
+const WEB_API=window.GARPI_ENV.functionUrl('campamento-web-api');
+const ADV_API=window.GARPI_ENV.functionUrl('campamento-v560-safe');
 const TZ='America/Santiago';
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];

@@ -22,7 +22,7 @@
       try{
         if(typeof input==='string'){
           const u=new URL(input,window.location?.href||undefined);
-          if(u.hostname==='usrstcxiluvsizoxwlxj.supabase.co'&&u.pathname.includes('/functions/v1/')&&!u.searchParams.has('forceFunctionRegion')){
+          if(!window.GARPI_ENV.isStagingLocal&&u.origin===window.GARPI_ENV.supabaseOrigin&&u.pathname.includes('/functions/v1/')&&!u.searchParams.has('forceFunctionRegion')){
             u.searchParams.set('forceFunctionRegion',DB_REGION);next=u.toString();
           }
         }

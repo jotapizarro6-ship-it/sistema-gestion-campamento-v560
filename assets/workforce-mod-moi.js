@@ -1,7 +1,7 @@
 (()=>{
   'use strict';
   const VERSION='20260901-modmoi2';
-  const API='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-workforce-api';
+  const API=window.GARPI_ENV.functionUrl('campamento-workforce-api');
   const state={rules:{},loaded:false,loading:null,turno:'TODOS',empresa:'TODAS',expanded:new Set(),saving:false,error:''};
   const fold=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim().replace(/\s+/g,' ');
   const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));

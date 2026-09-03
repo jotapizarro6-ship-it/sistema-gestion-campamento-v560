@@ -44,6 +44,7 @@ const context={
   console,Date,String,Number,Array,Object,Promise,Error,Intl,setTimeout,clearTimeout,
   alert(){},esc:v=>String(v??''),table:()=>''
 };
+context.window.GARPI_ENV=Object.freeze({mode:'production',isStagingLocal:false,productionOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',stagingOrigin:'http://127.0.0.1:54321',supabaseOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',supabaseHost:'usrstcxiluvsizoxwlxj.supabase.co',functionsOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1',functionUrl(name,query){const base=this.functionsOrigin+'/'+String(name);const q=query==null?'':String(query).trim();return q?base+(q.startsWith('?')?q:'?'+q):base;}});
 vm.createContext(context);
 vm.runInContext(code,context);
 const api=context.window.CampConsultExport;

@@ -3,7 +3,7 @@
   if(typeof window==='undefined'||typeof A==='undefined'||window.__CAMP_OPERATIONS_CORE__)return;
   window.__CAMP_OPERATIONS_CORE__=true;
 
-  const CONTROL_API='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-control-api';
+  const CONTROL_API=window.GARPI_ENV.functionUrl('campamento-control-api');
   const PROFILE_KEY='camp_session_profile_v1';
   const RESILIENCE_KEY='camp_resilience_summary_v1';
   const AUDIT_QUEUE_KEY='camp_audit_queue_v1';

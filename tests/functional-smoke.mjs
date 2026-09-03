@@ -15,6 +15,7 @@ const sandbox={
   Blob:globalThis.Blob,URL:globalThis.URL,FormData:globalThis.FormData,
   fetch:async()=>{throw new Error('fetch no debe ejecutarse en smoke test');}
 };
+sandbox.window={GARPI_ENV:Object.freeze({mode:'production',isStagingLocal:false,productionOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',stagingOrigin:'http://127.0.0.1:54321',supabaseOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',supabaseHost:'usrstcxiluvsizoxwlxj.supabase.co',functionsOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1',functionUrl(name,query){const base=this.functionsOrigin+'/'+String(name);const q=query==null?'':String(query).trim();return q?base+(q.startsWith('?')?q:'?'+q):base;}})};
 sandbox.globalThis=sandbox;
 vm.createContext(sandbox);
 vm.runInContext(source,sandbox,{filename:'campamento-browser.js'});

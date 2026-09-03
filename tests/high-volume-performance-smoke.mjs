@@ -8,6 +8,7 @@ const source=['assets/app-1.js','assets/app-2a.js','assets/app-2b.js','assets/se
 
 const sandbox={console,Date,Intl,URL,setTimeout,clearTimeout,performance,location:{href:'https://example.test/admin.html',hash:'#overview'}};
 sandbox.window=sandbox;
+sandbox.GARPI_ENV=Object.freeze({mode:'production',isStagingLocal:false,productionOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',stagingOrigin:'http://127.0.0.1:54321',supabaseOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',supabaseHost:'usrstcxiluvsizoxwlxj.supabase.co',functionsOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1',functionUrl(name,query){const base=this.functionsOrigin+'/'+String(name);const q=query==null?'':String(query).trim();return q?base+(q.startsWith('?')?q:'?'+q):base;}});
 sandbox.fetch=async()=>({ok:true,text:async()=>'{"ok":true}'});
 vm.createContext(sandbox);
 vm.runInContext(source,sandbox,{filename:'high-volume-bundle.js'});

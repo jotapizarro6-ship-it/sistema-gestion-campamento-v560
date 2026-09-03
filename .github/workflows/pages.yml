@@ -26,7 +26,7 @@ jobs:
         with:
           node-version: '24'
       - name: Instalar herramientas fijadas
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Validar TypeScript
         run: npm run typecheck
       - name: Compilar frontend TypeScript
@@ -75,7 +75,7 @@ jobs:
           node-version: '24'
       - name: Construir frontend TypeScript
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npm run build
       - name: Configurar Pages
         uses: actions/configure-pages@v5

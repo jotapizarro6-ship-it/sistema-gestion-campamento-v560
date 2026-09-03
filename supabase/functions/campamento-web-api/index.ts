@@ -1,7 +1,6 @@
-const SUPABASE_ORIGIN=(Deno.env.get('SUPABASE_URL')||'').replace(/\/+$/,'');
-const UPSTREAM=`${SUPABASE_ORIGIN}/functions/v1/campamento-api`;
-const UPLOAD_UPSTREAM=`${SUPABASE_ORIGIN}/functions/v1/campamento-upload-api`;
-const STATE_UPSTREAM=`${SUPABASE_ORIGIN}/functions/v1/campamento-v560-fast`;
+const UPSTREAM='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-api';
+const UPLOAD_UPSTREAM='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-upload-api';
+const STATE_UPSTREAM='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-v560-fast';
 const CONCURRENCY_ACTIONS=new Set(['save_worker','upload_excel']);
 const cors={
   'access-control-allow-origin':'*',

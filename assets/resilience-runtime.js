@@ -2,7 +2,7 @@
   'use strict';
   if(typeof window==='undefined'||typeof window.fetch!=='function')return;
 
-  const SUPABASE_ORIGIN=window.GARPI_ENV.supabaseOrigin;
+  const SUPABASE_ORIGIN='https://usrstcxiluvsizoxwlxj.supabase.co';
   const RETRYABLE_STATUS=new Set([408,425,429,502,503,504]);
   const IDEMPOTENT_POSTS=new Set(['snapshot_today']);
   const VERSION_EXEMPT_ACTIONS=new Set(['snapshot_today','close_day','audit','lookup','admin_login']);

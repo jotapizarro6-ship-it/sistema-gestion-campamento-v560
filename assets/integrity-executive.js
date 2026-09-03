@@ -3,7 +3,7 @@
   if(typeof window==='undefined'||!window.CampOps||window.__CAMP_INTEGRITY_EXECUTIVE__)return;
   window.__CAMP_INTEGRITY_EXECUTIVE__=true;
 
-  const RECOVERY_API=window.GARPI_ENV.functionUrl('campamento-recovery-api');
+  const RECOVERY_API='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-recovery-api';
   const norm=v=>String(v??'').trim().toUpperCase().replace(/\s+/g,' ');
   const bedKey=(m,r,b)=>[norm(m),norm(r),norm(b)].join('|');
   const isActiveReservation=r=>['PENDIENTE','CONFIRMADA'].includes(norm(r?.status));

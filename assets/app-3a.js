@@ -1,6 +1,5 @@
 let loadAllSequence=0;
 let loadAllPending=0;
-let loadAllSnapshotFlight=null;
 
 function loadAllSyncState(
   text,
@@ -54,7 +53,7 @@ function loadAllRefreshBusy(
   }
 }
 
-async function loadAllRun(
+async function loadAll(
   {
     snapshot=true
   }={}
@@ -211,53 +210,6 @@ async function loadAllRun(
     }
   }
 }
-
-async function loadAll(
-  options={}
-){
-  const snapshot=
-    options?.snapshot!==false;
-
-  /*
-   * Snapshot-producing refreshes are single-flight.
-   *
-   * Two manual refresh requests while the first synchronization is
-   * active must share the same snapshot_today operation.
-   *
-   * snapshot:false remains concurrent so R5C latest-request-wins
-   * semantics continue to work for overlapping read-only refreshes.
-   */
-  if(!snapshot){
-    return loadAllRun(
-      options
-    );
-  }
-
-  if(loadAllSnapshotFlight){
-    return loadAllSnapshotFlight;
-  }
-
-  const flight=
-    loadAllRun(
-      options
-    );
-
-  loadAllSnapshotFlight=
-    flight;
-
-  try{
-    return await flight;
-  }finally{
-    if(
-      loadAllSnapshotFlight===
-      flight
-    ){
-      loadAllSnapshotFlight=
-        null;
-    }
-  }
-}
-
 function renderAll(){if(!A.data)return;renderOverview();renderControl();renderPlanning();renderManagement();renderHistory();renderMovements();renderReservations();renderBlocks();renderWorkers();renderConsults();renderExcel();renderExports()}
 
 function renderOverview(){const d=A.data,an=analytics(d),mv=an.mv,closed=d.snapshots.find(s=>s.snapshot_date===an.today),view=$('#view-overview');view.innerHTML=`

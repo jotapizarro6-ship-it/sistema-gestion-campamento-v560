@@ -19,7 +19,6 @@ const sandbox={
   }
 };
 sandbox.window=sandbox;
-sandbox.GARPI_ENV=Object.freeze({mode:'production',isStagingLocal:false,productionOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',stagingOrigin:'http://127.0.0.1:54321',supabaseOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',supabaseHost:'usrstcxiluvsizoxwlxj.supabase.co',functionsOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1',functionUrl(name,query){const base=this.functionsOrigin+'/'+String(name);const q=query==null?'':String(query).trim();return q?base+(q.startsWith('?')?q:'?'+q):base;}});
 vm.createContext(sandbox);
 vm.runInContext(source,sandbox,{filename:'admin-performance-guard.js'});
 

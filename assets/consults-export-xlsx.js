@@ -1,7 +1,7 @@
 'use strict';
 (()=>{
   const SHEETJS_URL='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-  const CONSULTS_API=window.GARPI_ENV.functionUrl('campamento-consults-api');
+  const CONSULTS_API='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-consults-api';
   const PAGE_SIZE=100;
   const EXPORT_PAGE_SIZE=500;
   const REQUEST_TIMEOUT_MS=15000;

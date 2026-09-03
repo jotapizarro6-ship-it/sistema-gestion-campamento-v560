@@ -8,10 +8,7 @@ assert.match(src,/camp:view-rendered/,'El panel debe renderizar únicamente al c
 assert.match(src,/campamento-workforce-api/,'La clasificación persistente debe usar API protegida.');
 
 const context={console,setTimeout,clearTimeout,globalThis:null,occupiedWorkers:data=>Array.isArray(data?.canonicalWorkers)?data.canonicalWorkers:[]};
-context.window=context;
 context.globalThis=context;
-context.GARPI_ENV=Object.freeze({mode:'production',isStagingLocal:false,productionOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',stagingOrigin:'http://127.0.0.1:54321',supabaseOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',supabaseHost:'usrstcxiluvsizoxwlxj.supabase.co',functionsOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1',functionUrl(name,query){const base=this.functionsOrigin+'/'+String(name);const q=query==null?'':String(query).trim();return q?base+(q.startsWith('?')?q:'?'+q):base;}});
-context.addEventListener=()=>{};
 vm.createContext(context);
 vm.runInContext(src,context,{filename:'workforce-mod-moi.js'});
 const model=context.CampWorkforceMODMOI;

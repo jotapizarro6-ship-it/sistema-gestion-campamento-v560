@@ -1,0 +1,737 @@
+/*
+ * GARPI TECH BLUE C2 — COMPACT EXECUTIVE UI
+ * Final presentation refinement.
+ *
+ * CSS ONLY.
+ * No DOM behavior, API, business logic, persistence or PWA lifecycle.
+ */
+
+body.admin-page{
+  --navy:#072a3f;
+  --navy2:#0b4059;
+  --blue:#117fa8;
+  --sky:#eaf7fa;
+  --bg:#f1f6f8;
+  --card:#ffffff;
+  --text:#17384a;
+  --muted:#667c88;
+  --border:#d5e4ea;
+  --green:#19a97a;
+  --greenbg:#e5f7f0;
+  --amber:#d49a2a;
+  --amberbg:#fff4dc;
+  --red:#c84b58;
+  --redbg:#fdecef;
+  --shadow:0 5px 18px rgba(7,42,63,.055);
+
+  background:
+    linear-gradient(
+      180deg,
+      #edf4f7 0%,
+      #f7fafb 65%,
+      #eef5f7 100%
+    );
+
+  color:#17384a;
+}
+
+/* ================================================================
+   APP CHROME
+   ================================================================ */
+
+body.admin-page .admin-topbar{
+  background:
+    linear-gradient(
+      112deg,
+      #06283d 0%,
+      #09384f 55%,
+      #0a4b60 100%
+    );
+
+  border-bottom:2px solid rgba(37,189,209,.34);
+
+  box-shadow:
+    0 6px 18px rgba(5,31,46,.15);
+}
+
+body.admin-page .sidebar{
+  background:
+    linear-gradient(
+      180deg,
+      #06283d 0%,
+      #08364d 52%,
+      #072d43 100%
+    );
+
+  border-right:1px solid rgba(37,189,209,.18);
+}
+
+body.admin-page .sidebar-brand{
+  border-bottom-color:rgba(157,219,229,.12);
+}
+
+body.admin-page .sidebar .subtitle{
+  color:#a9c3cf;
+}
+
+body.admin-page .nav-btn{
+  color:#d7e7ed;
+}
+
+body.admin-page .nav-btn:hover{
+  background:rgba(26,147,180,.10);
+  border-color:rgba(72,190,213,.10);
+}
+
+body.admin-page .nav-btn.active{
+  background:
+    linear-gradient(
+      90deg,
+      rgba(18,142,177,.28),
+      rgba(15,92,126,.15)
+    );
+
+  border-color:rgba(64,191,215,.16);
+
+  box-shadow:
+    inset 3px 0 0 #25bdd1;
+}
+
+/* ================================================================
+   SURFACES / DEPTH
+   ================================================================ */
+
+body.admin-page .panel,
+body.admin-page .kpi,
+body.admin-page .dc-card,
+body.admin-page .dc-filter-strip,
+body.admin-page .dc-legacy-details,
+body.admin-page .worker-result-card,
+body.admin-page .worker-match-card{
+  background:#ffffff;
+  border-color:#d8e6eb;
+
+  box-shadow:
+    0 4px 16px rgba(7,42,63,.045);
+}
+
+body.admin-page .dc-card,
+body.admin-page .panel{
+  border-width:1px;
+}
+
+body.admin-page .dc-card-head h3,
+body.admin-page .section-head h2{
+  color:#17384a;
+}
+
+body.admin-page .dc-card-head p,
+body.admin-page .muted{
+  color:#667c88;
+}
+
+/* ================================================================
+   COCKPIT HERO
+   Less cyan surface; cyan becomes an accent.
+   ================================================================ */
+
+body.admin-page .dc-hero{
+  background:
+    linear-gradient(
+      132deg,
+      #072b40 0%,
+      #093c52 62%,
+      #0a4e60 100%
+    );
+
+  border:1px solid rgba(70,192,211,.16);
+
+  box-shadow:
+    0 9px 26px rgba(5,35,52,.13);
+}
+
+body.admin-page .dc-hero-kpi{
+  background:rgba(255,255,255,.085);
+  border-color:rgba(192,231,237,.14);
+}
+
+body.admin-page .dc-status{
+  background:rgba(229,249,243,.105);
+  border-color:rgba(105,218,189,.25);
+}
+
+body.admin-page .dc-status i{
+  background:#64dcb2;
+  box-shadow:0 0 0 3px rgba(100,220,178,.09);
+}
+
+/* Cyan only for interaction/data emphasis. */
+
+body.admin-page .dc-track i,
+body.admin-page .progress>span,
+body.admin-page .bar>span{
+  background:
+    linear-gradient(
+      90deg,
+      #25bdd1 0%,
+      #117fa8 100%
+    );
+}
+
+body.admin-page .dc-chip.active,
+body.admin-page .dc-dim.active,
+body.admin-page .tab-chip.active{
+  background:#0a455d;
+  border-color:#0a455d;
+  color:#fff;
+}
+
+body.admin-page .dc-tag,
+body.admin-page .badge.blue{
+  background:#e7f5f8;
+  color:#145e75;
+}
+
+/* ================================================================
+   BUTTONS
+   ================================================================ */
+
+body.admin-page .btn-primary{
+  background:
+    linear-gradient(
+      135deg,
+      #138caf,
+      #0c6f94
+    );
+
+  box-shadow:
+    0 4px 12px rgba(12,111,148,.16);
+}
+
+body.admin-page #refreshAllBtn,
+body.admin-page #campPwaInstall{
+  color:#173f51;
+  background:#f7fbfc;
+  border-color:#cbdfe6;
+}
+
+body.admin-page .sidebar-footer .btn-secondary{
+  background:#edf5f8;
+  color:#16394a;
+}
+
+/* ================================================================
+   DESKTOP — EXECUTIVE DENSITY
+   ================================================================ */
+
+@media(min-width:701px){
+
+  body.admin-page .topbar-admin{
+    max-width:1400px;
+    margin-left:auto;
+    margin-right:auto;
+    padding-left:20px;
+    padding-right:20px;
+  }
+
+  body.admin-page .content{
+    width:100%;
+    max-width:1400px;
+    margin-left:auto;
+    margin-right:auto;
+    padding:
+      18px
+      20px
+      28px;
+  }
+
+  body.admin-page .dc-shell{
+    gap:12px;
+  }
+
+  body.admin-page .dc-grid{
+    gap:12px;
+  }
+
+  body.admin-page .dc-card{
+    border-radius:14px;
+  }
+
+  body.admin-page .dc-filter-strip{
+    min-height:38px;
+    border-radius:11px;
+  }
+
+  body.admin-page .dc-legacy-details{
+    border-color:#d8e6eb;
+  }
+
+  body.admin-page .dc-hero{
+    border-radius:15px;
+  }
+}
+
+/* ================================================================
+   SMARTPHONE — COMPACT EXECUTIVE
+   Existing certified topbar geometry remains authoritative.
+   ================================================================ */
+
+@media(max-width:700px){
+
+  html body.admin-page{
+    background:
+      linear-gradient(
+        180deg,
+        #edf4f7,
+        #f5f9fa 72%,
+        #edf4f6
+      );
+  }
+
+  html body.admin-page .content{
+    padding:
+      8px
+      8px
+      20px!important;
+  }
+
+  /*
+   * INSTALL ACTION
+   *
+   * Keep it functional, textual and >= certified minimum.
+   * Reduce it from a dominant full control to a secondary compact chip.
+   */
+
+  html body.admin-page #campPwaInstall{
+    width:auto!important;
+    min-width:136px!important;
+    max-width:172px!important;
+
+    height:32px!important;
+    min-height:32px!important;
+
+    padding:
+      0
+      12px!important;
+
+    border-radius:999px!important;
+
+    font-size:11.5px!important;
+    line-height:1!important;
+
+    color:#245064!important;
+
+    background:#eef7f9!important;
+
+    border:1px solid #c8e1e7!important;
+
+    box-shadow:none!important;
+  }
+
+  /*
+   * Certified status/profile relationship remains untouched.
+   */
+
+  html body.admin-page .ops-profile-badge{
+    background:#fff2cf!important;
+    color:#684b12!important;
+    border-color:#efd79a!important;
+  }
+
+  /*
+   * DRAWER
+   */
+
+  html body.admin-page .sidebar{
+    width:min(80vw,288px)!important;
+
+    padding:
+      max(11px,env(safe-area-inset-top))
+      9px
+      max(10px,env(safe-area-inset-bottom))!important;
+
+    border-right:1px solid rgba(53,189,211,.20)!important;
+
+    box-shadow:
+      12px
+      0
+      32px
+      rgba(3,24,37,.25)!important;
+  }
+
+  html body.admin-page .sidebar-brand{
+    padding:
+      2px
+      10px
+      10px!important;
+  }
+
+  html body.admin-page .sidebar-brand .brand{
+    font-size:19px!important;
+    line-height:1.15!important;
+  }
+
+  html body.admin-page .sidebar-brand .subtitle{
+    margin-top:4px!important;
+    font-size:10.5px!important;
+  }
+
+  html body.admin-page .nav-list{
+    gap:1px!important;
+
+    padding:
+      6px
+      0
+      4px!important;
+  }
+
+  html body.admin-page .nav-btn{
+    min-height:44px!important;
+
+    padding:
+      8px
+      12px!important;
+
+    border-radius:10px!important;
+
+    font-size:12.5px!important;
+    line-height:1.2!important;
+  }
+
+  html body.admin-page .sidebar-footer{
+    padding-top:8px!important;
+  }
+
+  html body.admin-page .sidebar-footer .btn{
+    height:44px!important;
+    min-height:44px!important;
+
+    padding:
+      0
+      14px!important;
+
+    border-radius:12px!important;
+
+    font-size:14px!important;
+
+    box-shadow:none!important;
+  }
+
+  /*
+   * HERO
+   */
+
+  html body.admin-page .dc-shell{
+    gap:8px!important;
+  }
+
+  html body.admin-page .dc-hero{
+    padding:10px!important;
+
+    border-radius:16px!important;
+
+    box-shadow:
+      0
+      7px
+      19px
+      rgba(5,35,52,.12)!important;
+  }
+
+  html body.admin-page .dc-hero-top{
+    gap:5px!important;
+  }
+
+  html body.admin-page .dc-eyebrow{
+    font-size:9.5px!important;
+    letter-spacing:.9px!important;
+  }
+
+  html body.admin-page .dc-hero h2{
+    margin:
+      2px
+      0
+      4px!important;
+
+    font-size:
+      clamp(
+        20px,
+        5.35vw,
+        22px
+      )!important;
+
+    line-height:1.1!important;
+  }
+
+  html body.admin-page .dc-hero p{
+    margin-bottom:0!important;
+
+    font-size:10.7px!important;
+    line-height:1.34!important;
+  }
+
+  html body.admin-page .dc-status{
+    padding:
+      5px
+      8px!important;
+
+    font-size:8.6px!important;
+  }
+
+  /*
+   * 2 x 2 operational metrics.
+   */
+
+  html body.admin-page .dc-hero-grid{
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0,1fr)
+      )!important;
+
+    gap:6px!important;
+
+    margin-top:8px!important;
+  }
+
+  html body.admin-page .dc-hero-kpi{
+    min-height:72px!important;
+
+    padding:
+      8px
+      9px!important;
+
+    border-radius:11px!important;
+  }
+
+  html body.admin-page .dc-hero-kpi span{
+    font-size:8px!important;
+    letter-spacing:.7px!important;
+  }
+
+  html body.admin-page .dc-hero-kpi strong{
+    margin-top:3px!important;
+
+    font-size:19.5px!important;
+    line-height:1.04!important;
+  }
+
+  html body.admin-page .dc-hero-kpi small{
+    margin-top:3px!important;
+
+    font-size:9px!important;
+    line-height:1.25!important;
+  }
+
+  /*
+   * INTEGRITY = compact status strip rather than a fifth large card.
+   *
+   * No fake progress meter is rendered; the real dynamic percentage
+   * remains authoritative.
+   */
+
+  html body.admin-page .dc-hero-kpi:last-child{
+    grid-column:1/-1!important;
+
+    display:grid!important;
+
+    grid-template-columns:
+      minmax(0,1fr)
+      auto!important;
+
+    grid-template-areas:
+      "label value"
+      "meta meta"!important;
+
+    align-items:center!important;
+
+    column-gap:10px!important;
+    row-gap:1px!important;
+
+    min-height:50px!important;
+
+    padding:
+      7px
+      10px!important;
+
+    border-left:
+      3px
+      solid
+      #26bda6!important;
+
+    background:
+      linear-gradient(
+        90deg,
+        rgba(55,188,170,.11),
+        rgba(255,255,255,.075)
+      )!important;
+  }
+
+  html body.admin-page .dc-hero-kpi:last-child span{
+    grid-area:label!important;
+  }
+
+  html body.admin-page .dc-hero-kpi:last-child strong{
+    grid-area:value!important;
+
+    justify-self:end!important;
+
+    margin-top:0!important;
+
+    font-size:19px!important;
+  }
+
+  html body.admin-page .dc-hero-kpi:last-child small{
+    grid-area:meta!important;
+
+    margin-top:0!important;
+  }
+
+  /*
+   * SECONDARY CONTENT
+   */
+
+  html body.admin-page .dc-grid{
+    gap:8px!important;
+  }
+
+  html body.admin-page .dc-filter-strip{
+    min-height:42px!important;
+
+    padding:
+      6px
+      8px!important;
+
+    border-radius:12px!important;
+  }
+
+  html body.admin-page .dc-card{
+    padding:
+      11px
+      10px!important;
+
+    border-radius:13px!important;
+
+    box-shadow:
+      0
+      4px
+      13px
+      rgba(7,42,63,.045)!important;
+  }
+
+  html body.admin-page .dc-card-head{
+    margin-bottom:8px!important;
+  }
+
+  html body.admin-page .dc-card-head h3{
+    font-size:15px!important;
+  }
+
+  html body.admin-page .dc-card-head p{
+    font-size:10.2px!important;
+  }
+
+  html body.admin-page .panel{
+    padding:12px!important;
+
+    border-radius:13px!important;
+
+    box-shadow:
+      0
+      4px
+      13px
+      rgba(7,42,63,.045)!important;
+  }
+
+  html body.admin-page .section-head{
+    margin-bottom:10px!important;
+  }
+
+  /*
+   * No expensive glass/backdrop effects on smartphone.
+   */
+
+  html body.admin-page .camp-topbar-status{
+    backdrop-filter:none!important;
+  }
+}
+
+/* ================================================================
+   COMPACT SMARTPHONES
+   ================================================================ */
+
+@media(max-width:380px){
+
+  html body.admin-page .content{
+    padding-left:7px!important;
+    padding-right:7px!important;
+  }
+
+  html body.admin-page .sidebar{
+    width:min(81vw,282px)!important;
+  }
+
+  html body.admin-page .dc-hero{
+    padding:9px!important;
+  }
+
+  html body.admin-page .dc-hero h2{
+    font-size:19.5px!important;
+  }
+
+  html body.admin-page .dc-hero-kpi{
+    min-height:69px!important;
+
+    padding:
+      7px
+      8px!important;
+  }
+
+  html body.admin-page .dc-hero-kpi strong{
+    font-size:18.5px!important;
+  }
+
+  html body.admin-page .dc-hero-kpi:last-child{
+    min-height:48px!important;
+  }
+
+  html body.admin-page #campPwaInstall{
+    min-width:128px!important;
+    max-width:158px!important;
+
+    padding:
+      0
+      10px!important;
+
+    font-size:11px!important;
+  }
+}
+
+/* ================================================================
+   ACCESSIBILITY
+   ================================================================ */
+
+@media(prefers-reduced-motion:reduce){
+
+  body.admin-page *,
+  body.admin-page *::before,
+  body.admin-page *::after{
+    scroll-behavior:auto!important;
+  }
+}
+/* ====================================================================
+   R10-C2A MOBILE TOPBAR GEOMETRY CONTRACT
+
+   Preserve the C2 technological separator without contributing layout
+   pixels to the certified <=126px installable smartphone topbar.
+   ==================================================================== */
+
+@media(max-width:700px){
+
+  html body.admin-page .admin-topbar{
+    border-bottom-width:0!important;
+
+    box-shadow:
+      inset 0 -1px 0 rgba(37,189,209,.34),
+      0 6px 18px rgba(5,31,46,.15)!important;
+  }
+}

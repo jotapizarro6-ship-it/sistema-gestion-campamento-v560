@@ -1,5 +1,5 @@
 'use strict';
-const CACHE_VERSION='campamento-shell-5.6.1-modern.12-r5-operational-v1-public-clean1';
+const CACHE_VERSION='campamento-shell-5.6.1-modern.12-r5-operational-v1-public-clean2';
 const SHELL=[
   './','./index.html','./admin.html','./manifest.webmanifest',
   './assets/styles.css','./assets/app-1.js','./assets/app-2a.js','./assets/app-2b.js','./assets/app-3a.js','./assets/app-3b.js','./assets/app-4.js',
@@ -15,11 +15,37 @@ async function precache(){
     try{const r=await fetch(scoped(p),{cache:'reload'});if(r.ok)await cache.put(scoped(p),r.clone())}catch(_){/* instalación tolerante */}
   }));
 }
-self.addEventListener('install',event=>event.waitUntil(precache()));
+self.addEventListener('install',event=>event.waitUntil((async()=>{
+  await precache();
+  await self.skipWaiting();
+})()));
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
   const keys=await caches.keys();
   await Promise.all(keys.filter(k=>k.startsWith('campamento-shell-')&&k!==CACHE_VERSION).map(k=>caches.delete(k)));
   await self.clients.claim();
+
+  /*
+   * A new public shell must replace an obsolete worker lookup page
+   * immediately. Only public root/index windows are navigated.
+   * admin.html and all other routes are intentionally untouched.
+   */
+  const scopePath=new URL(self.registration.scope).pathname.replace(/\/?$/,'/');
+  const windows=await self.clients.matchAll({
+    type:'window',
+    includeUncontrolled:true
+  });
+
+  await Promise.all(windows.map(async client=>{
+    try{
+      const path=new URL(client.url).pathname;
+      if(
+        path===scopePath||
+        path===`${scopePath}index.html`
+      ){
+        await client.navigate(client.url);
+      }
+    }catch(_){}
+  }));
 })()));
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting()});
 async function networkFirstNavigation(request){

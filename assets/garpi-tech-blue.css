@@ -1,0 +1,543 @@
+/*
+ * GARPI TECH BLUE VISUAL LAYER
+ * R10-C1
+ *
+ * Presentation-only refinement.
+ * No operational logic, DOM structure, API, persistence or workflow behavior.
+ */
+
+body.admin-page{
+  --navy:#08283f;
+  --navy2:#0d4965;
+  --blue:#0c87b6;
+  --sky:#e8f7fb;
+  --bg:#eef4f7;
+  --card:#ffffff;
+  --text:#163247;
+  --muted:#607684;
+  --border:#d5e3e9;
+  --green:#0f9f74;
+  --greenbg:#e7f8f1;
+  --amber:#a96d13;
+  --amberbg:#fff5df;
+  --red:#b73b48;
+  --redbg:#fdecef;
+  --shadow:0 8px 24px rgba(8,40,63,.075);
+  background:#eef4f7;
+  color:#163247;
+}
+
+/* ---------- Main chrome ---------- */
+
+body.admin-page .admin-topbar{
+  background:
+    linear-gradient(
+      118deg,
+      #07263b 0%,
+      #0a3853 48%,
+      #0b5269 100%
+    );
+  border-bottom:1px solid rgba(38,190,215,.30);
+  box-shadow:0 7px 22px rgba(4,27,43,.18);
+}
+
+body.admin-page .sidebar{
+  background:
+    linear-gradient(
+      180deg,
+      #08263d 0%,
+      #0b3049 58%,
+      #09283f 100%
+    );
+  border-right:1px solid rgba(42,189,214,.18);
+  box-shadow:8px 0 28px rgba(4,25,41,.08);
+}
+
+body.admin-page .sidebar-brand{
+  border-bottom-color:rgba(130,212,226,.15);
+}
+
+body.admin-page .sidebar .brand{
+  color:#f4fbfd;
+  letter-spacing:-.02em;
+}
+
+body.admin-page .sidebar .subtitle{
+  color:#a9c2cf;
+  opacity:1;
+}
+
+body.admin-page .nav-btn{
+  position:relative;
+  color:#d7e7ee;
+  border:1px solid transparent;
+  transition:
+    background-color .14s ease,
+    border-color .14s ease,
+    color .14s ease;
+}
+
+body.admin-page .nav-btn:hover{
+  color:#ffffff;
+  background:rgba(40,169,199,.11);
+  border-color:rgba(80,190,213,.08);
+}
+
+body.admin-page .nav-btn.active{
+  color:#ffffff;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(22,154,191,.30),
+      rgba(32,119,160,.22)
+    );
+  border-color:rgba(76,197,219,.18);
+  box-shadow:
+    inset 3px 0 0 #27c0d8,
+    0 4px 12px rgba(3,24,40,.08);
+}
+
+body.admin-page .sidebar-footer .btn-secondary{
+  background:#eaf3f7;
+  color:#18384b;
+  border:1px solid rgba(255,255,255,.22);
+}
+
+/* ---------- Buttons / interaction ---------- */
+
+body.admin-page .btn-primary{
+  background:
+    linear-gradient(
+      135deg,
+      #0e93bd,
+      #0b719f
+    );
+  color:#fff;
+  box-shadow:0 5px 14px rgba(11,113,159,.18);
+}
+
+body.admin-page .btn-primary:hover{
+  filter:brightness(.98);
+}
+
+body.admin-page .btn-secondary{
+  background:#e9f1f5;
+  color:#244454;
+}
+
+body.admin-page .btn:focus-visible,
+body.admin-page .icon-btn:focus-visible,
+body.admin-page .nav-btn:focus-visible,
+body.admin-page .dc-chip:focus-visible,
+body.admin-page .dc-dim:focus-visible{
+  outline:3px solid rgba(25,177,205,.32);
+  outline-offset:2px;
+}
+
+/* ---------- Cards / visual hierarchy ---------- */
+
+body.admin-page .panel,
+body.admin-page .kpi,
+body.admin-page .dc-card,
+body.admin-page .dc-filter-strip,
+body.admin-page .dc-legacy-details{
+  border-color:#d6e4ea;
+  box-shadow:0 6px 18px rgba(8,40,63,.055);
+}
+
+body.admin-page .panel,
+body.admin-page .dc-card,
+body.admin-page .dc-filter-strip{
+  background:#ffffff;
+}
+
+body.admin-page .dc-card-head h3,
+body.admin-page .section-head h2{
+  color:#17384c;
+  letter-spacing:-.018em;
+}
+
+body.admin-page .muted,
+body.admin-page .dc-card-head p{
+  color:#607684;
+}
+
+/* ---------- Decision cockpit ---------- */
+
+body.admin-page .dc-hero{
+  background:
+    linear-gradient(
+      135deg,
+      #082b42 0%,
+      #0b435d 58%,
+      #0d6074 100%
+    );
+  border:1px solid rgba(82,202,219,.18);
+  box-shadow:0 12px 30px rgba(6,36,55,.15);
+}
+
+body.admin-page .dc-eyebrow{
+  color:#ccebf1;
+  opacity:.92;
+}
+
+body.admin-page .dc-hero p{
+  color:#dcecf1;
+}
+
+body.admin-page .dc-hero-kpi{
+  background:rgba(255,255,255,.105);
+  border-color:rgba(182,231,239,.16);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+}
+
+body.admin-page .dc-hero-kpi span{
+  color:#cce5ec;
+}
+
+body.admin-page .dc-hero-kpi small{
+  color:#dcebf0;
+}
+
+body.admin-page .dc-status{
+  background:rgba(223,249,244,.11);
+  border-color:rgba(115,220,194,.28);
+}
+
+body.admin-page .dc-status i{
+  background:#68dfb4;
+  box-shadow:0 0 0 3px rgba(104,223,180,.10);
+}
+
+body.admin-page .dc-track,
+body.admin-page .progress,
+body.admin-page .bar{
+  background:#e4edf1;
+}
+
+body.admin-page .dc-track i,
+body.admin-page .progress>span,
+body.admin-page .bar>span{
+  background:
+    linear-gradient(
+      90deg,
+      #23b5cf,
+      #1582b1
+    );
+}
+
+body.admin-page .dc-chip.active,
+body.admin-page .dc-dim.active,
+body.admin-page .tab-chip.active{
+  background:#0b4964;
+  border-color:#0b4964;
+  color:#fff;
+}
+
+body.admin-page .dc-tag,
+body.admin-page .badge.blue{
+  background:#e5f5f9;
+  color:#175b73;
+}
+
+/* ---------- Operational state colors ---------- */
+
+body.admin-page .status-pill.ok,
+body.admin-page .badge.green{
+  background:#e2f7ef;
+  color:#087654;
+}
+
+body.admin-page .status-pill.warn,
+body.admin-page .badge.amber{
+  background:#fff2d6;
+  color:#86580e;
+}
+
+body.admin-page .status-pill.bad,
+body.admin-page .badge.red{
+  background:#fdebed;
+  color:#9b2d3a;
+}
+
+/* Administrator is identity, not a warning: use cool tech treatment. */
+
+body.admin-page .ops-profile-badge{
+  background:#f1fbfd;
+  color:#174a5e;
+  border-color:#a8dce6;
+  box-shadow:0 3px 10px rgba(4,29,45,.10);
+}
+
+body.admin-page #refreshAllBtn,
+body.admin-page #campPwaInstall{
+  color:#173d50;
+  border-color:rgba(158,210,220,.62);
+  background:#f8fcfd;
+}
+
+/* ---------- Desktop refinement ---------- */
+
+@media(min-width:701px){
+
+  body.admin-page .content{
+    padding-top:20px;
+  }
+
+  body.admin-page .dc-shell{
+    gap:13px;
+  }
+
+  body.admin-page .dc-grid{
+    gap:11px;
+  }
+
+  body.admin-page .dc-card{
+    border-radius:14px;
+  }
+
+  body.admin-page .dc-filter-strip{
+    border-radius:12px;
+  }
+}
+
+/* ====================================================================
+   SMARTPHONE
+   Keep all actions, reduce chrome height, maximize operational content.
+   ==================================================================== */
+
+@media(max-width:700px){
+
+  html body.admin-page{
+    background:#eef4f7;
+  }
+
+
+  /* More usable content width */
+
+  html body.admin-page .content{
+    padding:9px 8px 22px!important;
+    max-width:none!important;
+  }
+
+  /* Drawer: less screen obstruction, same navigation functionality */
+
+  html body.admin-page .sidebar{
+    width:min(82vw,300px)!important;
+    padding:
+      max(13px,env(safe-area-inset-top))
+      10px
+      max(12px,env(safe-area-inset-bottom))!important;
+    border-right:1px solid rgba(50,191,216,.22)!important;
+    box-shadow:12px 0 34px rgba(3,22,36,.27)!important;
+  }
+
+  html body.admin-page .sidebar-brand{
+    padding:3px 10px 12px!important;
+  }
+
+  html body.admin-page .sidebar-brand .brand{
+    font-size:20px!important;
+    line-height:1.15!important;
+  }
+
+  html body.admin-page .sidebar-brand .subtitle{
+    margin-top:5px!important;
+    font-size:11px!important;
+  }
+
+  html body.admin-page .nav-list{
+    gap:2px!important;
+    padding:9px 0!important;
+  }
+
+  html body.admin-page .nav-btn{
+    min-height:42px!important;
+    padding:9px 12px!important;
+    border-radius:10px!important;
+    font-size:12.5px!important;
+  }
+
+  /* Decision Cockpit density */
+
+  html body.admin-page .dc-shell{
+    gap:9px!important;
+  }
+
+  html body.admin-page .dc-hero{
+    padding:12px!important;
+    border-radius:15px!important;
+    box-shadow:0 8px 22px rgba(5,34,53,.13)!important;
+  }
+
+  html body.admin-page .dc-hero-top{
+    gap:7px!important;
+  }
+
+  html body.admin-page .dc-eyebrow{
+    font-size:10px!important;
+    letter-spacing:1px!important;
+  }
+
+  html body.admin-page .dc-hero h2{
+    margin:3px 0 5px!important;
+    font-size:clamp(20px,5.5vw,23px)!important;
+    line-height:1.12!important;
+  }
+
+  html body.admin-page .dc-hero p{
+    font-size:11.5px!important;
+    line-height:1.4!important;
+  }
+
+  html body.admin-page .dc-status{
+    padding:6px 8px!important;
+    font-size:8.8px!important;
+  }
+
+  html body.admin-page .dc-hero-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:7px!important;
+    margin-top:10px!important;
+  }
+
+  html body.admin-page .dc-hero-kpi{
+    min-height:82px!important;
+    padding:9px 10px!important;
+    border-radius:12px!important;
+  }
+
+  html body.admin-page .dc-hero-kpi span{
+    font-size:8.5px!important;
+  }
+
+  html body.admin-page .dc-hero-kpi strong{
+    margin-top:4px!important;
+    font-size:20px!important;
+  }
+
+  html body.admin-page .dc-hero-kpi small{
+    font-size:9.5px!important;
+    line-height:1.3!important;
+  }
+
+  /* Five KPIs = symmetric 2x2 + final operational integrity full width */
+
+  html body.admin-page .dc-hero-kpi:last-child{
+    grid-column:1/-1!important;
+  }
+
+  html body.admin-page .dc-grid{
+    gap:9px!important;
+  }
+
+  html body.admin-page .dc-card{
+    padding:12px 11px!important;
+    border-radius:13px!important;
+    box-shadow:0 4px 14px rgba(8,40,63,.05)!important;
+  }
+
+  html body.admin-page .dc-card-head{
+    margin-bottom:9px!important;
+  }
+
+  html body.admin-page .dc-card-head h3{
+    font-size:15.5px!important;
+  }
+
+  html body.admin-page .dc-card-head p{
+    font-size:10.5px!important;
+  }
+
+  html body.admin-page .dc-filter-strip{
+    padding:7px 9px!important;
+    border-radius:12px!important;
+  }
+
+  html body.admin-page .panel{
+    padding:13px!important;
+    border-radius:13px!important;
+    box-shadow:0 4px 14px rgba(8,40,63,.05)!important;
+  }
+
+  html body.admin-page .dc-legacy-details{
+    border-radius:12px!important;
+  }
+
+  /* Avoid adding GPU-heavy visual effects on mobile */
+
+  html body.admin-page .camp-topbar-status{
+    backdrop-filter:none!important;
+  }
+}
+
+/* Compact smartphones */
+
+@media(max-width:380px){
+
+
+
+  html body.admin-page .content{
+    padding-left:7px!important;
+    padding-right:7px!important;
+  }
+
+  html body.admin-page .dc-hero{
+    padding:11px!important;
+  }
+
+  html body.admin-page .dc-hero h2{
+    font-size:19.5px!important;
+  }
+
+  html body.admin-page .dc-hero-kpi{
+    min-height:79px!important;
+    padding:8px 9px!important;
+  }
+
+  html body.admin-page .dc-hero-kpi strong{
+    font-size:19px!important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+
+  body.admin-page .nav-btn,
+  body.admin-page .btn{
+    transition:none!important;
+  }
+}
+/* ====================================================================
+   R10-C1E CERTIFIED MOBILE HEADER CONTRACT
+   Visual colors only. Structural dimensions remain owned by the
+   previously certified responsive header implementation.
+   ==================================================================== */
+
+@media(max-width:700px){
+
+  html body.admin-page .camp-topbar-title .brand{
+    color:#f5fbfd!important;
+  }
+
+  html body.admin-page .ops-profile-badge{
+    background:#fff2cf!important;
+    color:#684b12!important;
+    border-color:#efd79a!important;
+    box-shadow:0 3px 10px rgba(4,29,45,.08)!important;
+  }
+
+  html body.admin-page #menuBtn{
+    color:#173c50!important;
+    background:#f1f8fa!important;
+    border-color:#d6e8ed!important;
+    box-shadow:0 3px 9px rgba(4,28,44,.08)!important;
+  }
+
+  html body.admin-page #refreshAllBtn,
+  html body.admin-page #campPwaInstall{
+    color:#173d50!important;
+    background:#f8fcfd!important;
+    border-color:#cde4ea!important;
+    box-shadow:0 3px 9px rgba(4,28,44,.07)!important;
+  }
+}

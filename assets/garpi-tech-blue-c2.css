@@ -735,3 +735,61 @@ body.admin-page .sidebar-footer .btn-secondary{
       0 6px 18px rgba(5,31,46,.15)!important;
   }
 }
+/* ====================================================================
+   R10-C2B DESKTOP CONTRAST POLISH
+
+   Final desktop-only visual polish based on real production screenshots.
+
+   Intent:
+   - improve secondary-text legibility
+   - make lower dashboard cards read as deliberate surfaces
+   - strengthen chart/data contrast slightly
+   - leave all mobile geometry and mobile presentation untouched
+   ==================================================================== */
+
+@media(min-width:701px){
+
+  /* Secondary information: firmer without competing with primary text. */
+
+  body.admin-page .content .dc-card-head p,
+  body.admin-page .content .muted{
+    color:#586f7b;
+  }
+
+  body.admin-page .content .dc-card small{
+    color:#5a7380;
+  }
+
+  /* Lower dashboard surfaces: clearer boundaries on wide displays. */
+
+  body.admin-page .content .dc-card,
+  body.admin-page .content .panel,
+  body.admin-page .content .dc-filter-strip,
+  body.admin-page .content .dc-legacy-details{
+    border-color:#cfdee4;
+
+    box-shadow:
+      0 5px 16px rgba(7,42,63,.055);
+  }
+
+  /* Chart tracks should remain quiet, but visible against white cards. */
+
+  body.admin-page .content .dc-track,
+  body.admin-page .content .progress,
+  body.admin-page .content .bar{
+    background:#dce8ed;
+  }
+
+  /* Data bars: slightly deeper cyan/blue for better executive contrast. */
+
+  body.admin-page .content .dc-track i,
+  body.admin-page .content .progress>span,
+  body.admin-page .content .bar>span{
+    background:
+      linear-gradient(
+        90deg,
+        #20b4c8 0%,
+        #117fa8 100%
+      );
+  }
+}

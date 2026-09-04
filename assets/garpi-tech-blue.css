@@ -312,185 +312,6 @@ body.admin-page #campPwaInstall{
     background:#eef4f7;
   }
 
-  /*
-   * TWO ROW TOP BAR
-   *
-   * Row 1:
-   *   Actualizado                    Administrador
-   *
-   * Row 2:
-   *   Menu + current page        Refresh | Install
-   *
-   * Refresh and Install remain real buttons; only their visible
-   * presentation becomes compact/iconographic.
-   */
-
-  html body.admin-page .admin-topbar .topbar-admin{
-    display:grid!important;
-    grid-template-columns:minmax(0,1fr) 42px 42px!important;
-    grid-template-areas:
-      "sync profile profile"
-      "context refresh install"!important;
-    grid-template-rows:25px 42px!important;
-    align-items:center!important;
-    column-gap:6px!important;
-    row-gap:4px!important;
-    min-height:0!important;
-    padding:
-      max(5px,env(safe-area-inset-top))
-      9px
-      7px!important;
-  }
-
-  html body.admin-page .top-actions.camp-topbar-actions,
-  html body.admin-page .camp-topbar-status,
-  html body.admin-page .camp-topbar-buttons{
-    display:contents!important;
-  }
-
-  html body.admin-page .camp-topbar-context{
-    grid-area:context!important;
-    width:100%!important;
-    display:grid!important;
-    grid-template-columns:42px minmax(0,1fr)!important;
-    align-items:center!important;
-    gap:7px!important;
-    min-width:0!important;
-  }
-
-  html body.admin-page #menuBtn{
-    display:grid!important;
-    place-items:center!important;
-    width:42px!important;
-    height:42px!important;
-    min-width:42px!important;
-    min-height:42px!important;
-    padding:0!important;
-    margin:0!important;
-    border-radius:12px!important;
-    color:#173c50!important;
-    background:#f1f8fa!important;
-    border:1px solid #d6e8ed!important;
-    box-shadow:0 3px 9px rgba(4,28,44,.08)!important;
-  }
-
-  html body.admin-page #menuBtn::before{
-    width:19px!important;
-    height:12px!important;
-    background:
-      linear-gradient(currentColor,currentColor)
-        center top/19px 2.2px no-repeat,
-      linear-gradient(currentColor,currentColor)
-        center/19px 2.2px no-repeat,
-      linear-gradient(currentColor,currentColor)
-        center bottom/19px 2.2px no-repeat!important;
-  }
-
-  html body.admin-page .camp-topbar-title{
-    min-width:0!important;
-  }
-
-  html body.admin-page .camp-topbar-title .brand{
-    color:#f5fbfd!important;
-    font-size:clamp(14px,4.15vw,16.5px)!important;
-    line-height:1.08!important;
-    white-space:nowrap!important;
-    overflow:hidden!important;
-    text-overflow:ellipsis!important;
-  }
-
-  html body.admin-page .camp-topbar-title .subtitle,
-  html body.admin-page .camp-topbar-mobile-role{
-    display:none!important;
-  }
-
-  html body.admin-page #syncBadge.status-pill{
-    grid-area:sync!important;
-    justify-self:start!important;
-    width:auto!important;
-    min-width:0!important;
-    max-width:112px!important;
-    height:25px!important;
-    min-height:25px!important;
-    padding:0 8px!important;
-    margin:0!important;
-    gap:6px!important;
-    border-radius:999px!important;
-    font-size:9.5px!important;
-    line-height:1!important;
-    white-space:nowrap!important;
-    overflow:hidden!important;
-    text-overflow:ellipsis!important;
-    box-shadow:none!important;
-  }
-
-  html body.admin-page .ops-profile-badge{
-    grid-area:profile!important;
-    justify-self:end!important;
-    align-self:center!important;
-    width:auto!important;
-    min-width:0!important;
-    max-width:91px!important;
-    height:25px!important;
-    min-height:25px!important;
-    padding:0 8px!important;
-    margin:0!important;
-    border-radius:999px!important;
-    background:#e8f8fb!important;
-    border-color:#9edbe6!important;
-    color:#134b60!important;
-    font-size:9.5px!important;
-    font-weight:850!important;
-    line-height:1!important;
-    box-shadow:none!important;
-    white-space:nowrap!important;
-  }
-
-  html body.admin-page #refreshAllBtn{
-    grid-area:refresh!important;
-    justify-self:end!important;
-    width:42px!important;
-    min-width:42px!important;
-    max-width:42px!important;
-    height:42px!important;
-    min-height:42px!important;
-    padding:0!important;
-    margin:0!important;
-    border-radius:12px!important;
-    font-size:0!important;
-    color:#17465b!important;
-    background:#f4fafc!important;
-    border:1px solid #cde4ea!important;
-    box-shadow:0 3px 9px rgba(4,28,44,.07)!important;
-  }
-
-  html body.admin-page #refreshAllBtn::before{
-    font-size:19px!important;
-  }
-
-  html body.admin-page #campPwaInstall{
-    grid-area:install!important;
-    grid-column:auto!important;
-    grid-row:auto!important;
-    justify-self:end!important;
-    width:42px!important;
-    min-width:42px!important;
-    max-width:42px!important;
-    height:42px!important;
-    min-height:42px!important;
-    padding:0!important;
-    margin:0!important;
-    border-radius:12px!important;
-    font-size:0!important;
-    color:#17465b!important;
-    background:#f4fafc!important;
-    border:1px solid #cde4ea!important;
-    box-shadow:0 3px 9px rgba(4,28,44,.07)!important;
-  }
-
-  html body.admin-page #campPwaInstall::before{
-    font-size:18px!important;
-  }
 
   /* More usable content width */
 
@@ -654,44 +475,7 @@ body.admin-page #campPwaInstall{
 
 @media(max-width:380px){
 
-  html body.admin-page .admin-topbar .topbar-admin{
-    grid-template-columns:minmax(0,1fr) 40px 40px!important;
-    grid-template-rows:24px 40px!important;
-    column-gap:5px!important;
-    padding-left:8px!important;
-    padding-right:8px!important;
-  }
 
-  html body.admin-page .camp-topbar-context{
-    grid-template-columns:40px minmax(0,1fr)!important;
-    gap:6px!important;
-  }
-
-  html body.admin-page #menuBtn,
-  html body.admin-page #refreshAllBtn,
-  html body.admin-page #campPwaInstall{
-    width:40px!important;
-    min-width:40px!important;
-    max-width:40px!important;
-    height:40px!important;
-    min-height:40px!important;
-  }
-
-  html body.admin-page .camp-topbar-title .brand{
-    font-size:14px!important;
-  }
-
-  html body.admin-page .ops-profile-badge{
-    max-width:86px!important;
-    padding:0 7px!important;
-    font-size:9px!important;
-  }
-
-  html body.admin-page #syncBadge.status-pill{
-    max-width:104px!important;
-    padding:0 7px!important;
-    font-size:9px!important;
-  }
 
   html body.admin-page .content{
     padding-left:7px!important;
@@ -721,5 +505,39 @@ body.admin-page #campPwaInstall{
   body.admin-page .nav-btn,
   body.admin-page .btn{
     transition:none!important;
+  }
+}
+/* ====================================================================
+   R10-C1E CERTIFIED MOBILE HEADER CONTRACT
+   Visual colors only. Structural dimensions remain owned by the
+   previously certified responsive header implementation.
+   ==================================================================== */
+
+@media(max-width:700px){
+
+  html body.admin-page .camp-topbar-title .brand{
+    color:#f5fbfd!important;
+  }
+
+  html body.admin-page .ops-profile-badge{
+    background:#fff2cf!important;
+    color:#684b12!important;
+    border-color:#efd79a!important;
+    box-shadow:0 3px 10px rgba(4,29,45,.08)!important;
+  }
+
+  html body.admin-page #menuBtn{
+    color:#173c50!important;
+    background:#f1f8fa!important;
+    border-color:#d6e8ed!important;
+    box-shadow:0 3px 9px rgba(4,28,44,.08)!important;
+  }
+
+  html body.admin-page #refreshAllBtn,
+  html body.admin-page #campPwaInstall{
+    color:#173d50!important;
+    background:#f8fcfd!important;
+    border-color:#cde4ea!important;
+    box-shadow:0 3px 9px rgba(4,28,44,.07)!important;
   }
 }

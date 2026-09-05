@@ -6,6 +6,7 @@ const childProcess = require('child_process');
 const esbuild = require('esbuild');
 const { patchNativeAdminAuth } = require('./native/patch-admin-auth.cjs');
 const { patchNativeRuntimeEnv } = require('./native/patch-runtime-env.cjs');
+const { patchNativeAdminSync } = require('./native/patch-admin-sync.cjs');
 
 const root = path.resolve(__dirname, '..');
 const out = path.join(root, 'mobile-dist');
@@ -76,6 +77,19 @@ requireFile(nativeRuntimeEnvPath);
 const nativeRuntimeEnvPatch =
   patchNativeRuntimeEnv(
     nativeRuntimeEnvPath
+  );
+
+const nativeAdminStatePath = path.join(
+  out,
+  'assets',
+  'app-3a.js'
+);
+
+requireFile(nativeAdminStatePath);
+
+const nativeSyncPatch =
+  patchNativeAdminSync(
+    nativeAdminStatePath
   );
 
 const nativeAdminCorePath = path.join(
@@ -338,3 +352,4 @@ console.log('PUBLIC PAGE   : OMITTED');
 console.log('NATIVE RUNTIME: BUNDLED');
 console.log('NATIVE AUTH   : SECURE STORAGE');
 console.log('NATIVE BACKEND: PRODUCTION');
+console.log('NATIVE SYNC   : REVISION + SQLITE');

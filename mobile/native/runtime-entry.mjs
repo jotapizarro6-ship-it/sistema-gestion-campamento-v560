@@ -18,6 +18,10 @@ import {
   localDatabaseContract
 } from './local-db.mjs';
 
+import {
+  createNativeSyncEngine
+} from './sync-engine.mjs';
+
 const state = {
   ready: false,
   error: null,
@@ -29,6 +33,9 @@ const session =
   createSecureSessionStore(
     SecureStorage
   );
+
+const sync =
+  createNativeSyncEngine();
 
 function publicStatus() {
   return Object.freeze({
@@ -71,6 +78,8 @@ async function boot() {
   state.database =
     await initializeLocalDatabase();
 
+  await sync.initialize();
+
   state.ready = true;
   state.error = null;
 
@@ -89,6 +98,7 @@ async function boot() {
 const api = Object.freeze({
   version: 1,
   session,
+  sync,
   database: Object.freeze({
     contract: localDatabaseContract,
     clearOperationalCache

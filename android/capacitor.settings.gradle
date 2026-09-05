@@ -7,3 +7,9 @@ project(':aparajita-capacitor-secure-storage').projectDir = new File('../node_mo
 
 include ':capacitor-community-sqlite'
 project(':capacitor-community-sqlite').projectDir = new File('../node_modules/@capacitor-community/sqlite/android')
+
+include ':capacitor-app'
+project(':capacitor-app').projectDir = new File('../node_modules/@capacitor/app/android')
+
+include ':capacitor-network'
+project(':capacitor-network').projectDir = new File('../node_modules/@capacitor/network/android')

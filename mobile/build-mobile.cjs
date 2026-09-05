@@ -7,6 +7,8 @@ const esbuild = require('esbuild');
 const { patchNativeAdminAuth } = require('./native/patch-admin-auth.cjs');
 const { patchNativeRuntimeEnv } = require('./native/patch-runtime-env.cjs');
 const { patchNativeAdminSync } = require('./native/patch-admin-sync.cjs');
+const { patchNativeAdminOffline } = require('./native/patch-admin-offline.cjs');
+const { patchNativeEffectiveLoaders } = require('./native/patch-effective-loaders.cjs');
 
 const root = path.resolve(__dirname, '..');
 const out = path.join(root, 'mobile-dist');
@@ -92,6 +94,53 @@ const nativeSyncPatch =
     nativeAdminStatePath
   );
 
+const nativeAdminApiPath = path.join(
+  out,
+  'assets',
+  'app-1.js'
+);
+
+const nativeOperationsCorePath = path.join(
+  out,
+  'assets',
+  'operations-core.js'
+);
+
+requireFile(nativeAdminApiPath);
+requireFile(nativeOperationsCorePath);
+
+const nativeOfflinePatch =
+  patchNativeAdminOffline({
+    adminApiPath:
+      nativeAdminApiPath,
+    adminStatePath:
+      nativeAdminStatePath,
+    operationsCorePath:
+      nativeOperationsCorePath
+  });
+
+const nativeHighVolumePath = path.join(
+  out,
+  'assets',
+  'high-volume-runtime.js'
+);
+
+const nativeResiliencePath = path.join(
+  out,
+  'assets',
+  'resilience-runtime.js'
+);
+
+requireFile(nativeHighVolumePath);
+requireFile(nativeResiliencePath);
+
+const nativeEffectiveLoadersPatch =
+  patchNativeEffectiveLoaders({
+    highVolumePath:
+      nativeHighVolumePath,
+    resiliencePath:
+      nativeResiliencePath
+  });
 const nativeAdminCorePath = path.join(
   out,
   'assets',

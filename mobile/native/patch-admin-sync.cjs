@@ -69,7 +69,7 @@ function patchNativeAdminSync(filePath) {
     '',
     '        await nativeFoundation.sync.captureRemoteState({',
     '          data:A.data,',
-    '          operationalRevision:A.stateVersion,',
+    '          operationalRevision:state.state_version,',
     "          reason:'loadAll'",
     '        });',
     '      }',

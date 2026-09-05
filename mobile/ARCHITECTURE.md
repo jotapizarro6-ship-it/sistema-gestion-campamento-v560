@@ -98,3 +98,21 @@ The generated Android copy of `garpi-runtime-env.js` therefore treats `GARPI_NAT
 The Web/PWA source keeps its existing localhost staging behavior unchanged.
 
 This distinction is security-sensitive: WebView origin describes where bundled HTML is served; it must never implicitly select the operational backend.
+
+## R11-D deterministic synchronization
+
+The Android client reconciles against the central GARPI operational revision.
+
+- Central GARPI/Supabase remains authoritative.
+- `advanced_state.state_version` is the authoritative revision attached to a downloaded operational state.
+- `GET action=revision` is used as a lightweight reconciliation probe.
+- If local and remote revisions match, no full operational refresh is required.
+- If the remote revision is newer or no local replica exists, Android performs a read-only `loadAll({snapshot:false})`.
+- A successful remote state is transactionally written to encrypted SQLite.
+- SQLite never claims authority over central state.
+- A local revision ahead of the server is fail-closed and treated as an integrity error.
+- Foreground and network-reconnect events request reconciliation.
+- No interval polling is used.
+- No critical offline mutation queue is enabled.
+- Public consult logs and import history are not persisted in the operational SQLite replica in this layer, reducing cached PII.
+- Private Realtime Broadcast remains a later optimization signal; revision reconciliation remains authoritative.

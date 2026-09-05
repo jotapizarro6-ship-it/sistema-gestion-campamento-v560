@@ -1,5 +1,15 @@
 {
     "appId":  "cl.garpi.campamento.admin",
     "appName":  "GARPI Admin",
-    "webDir":  "mobile-dist"
+    "webDir":  "mobile-dist",
+    "plugins":  {
+                    "CapacitorSQLite":  {
+                                            "androidIsEncryption":  true,
+                                            "androidBiometric":  {
+                                                                     "biometricAuth":  false,
+                                                                     "biometricTitle":  "GARPI Admin",
+                                                                     "biometricSubTitle":  "Base local protegida"
+                                                                 }
+                                        }
+                }
 }

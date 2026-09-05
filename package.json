@@ -1,24 +1,27 @@
 {
-    "name":  "sistema-gestion-campamento",
-    "version":  "5.6.1",
-    "private":  true,
-    "description":  "Sistema de GestiÃ³n de Campamento Â· frontend estÃ¡tico, PWA y validaciÃ³n E2E",
-    "scripts":  {
-                    "build":  "tsc -p tsconfig.json",
-                    "typecheck":  "tsc -p tsconfig.json --noEmit",
-                    "test:modern":  "node tests/modernization-smoke.mjs",
-                    "test:e2e":  "playwright test",
-                    "mobile:build":  "npm run build \u0026\u0026 node mobile/build-mobile.cjs",
-                    "mobile:sync":  "npm run mobile:build \u0026\u0026 cap sync android",
-                    "mobile:open":  "cap open android"
-                },
-    "devDependencies":  {
-                            "@capacitor/cli":  "8.5.1",
-                            "@playwright/test":  "1.62.1",
-                            "typescript":  "7.0.2"
-                        },
-    "dependencies":  {
-                         "@capacitor/android":  "8.5.1",
-                         "@capacitor/core":  "8.5.1"
-                     }
+    "name": "sistema-gestion-campamento",
+    "version": "5.6.1",
+    "private": true,
+    "description": "Sistema de GestiÃ³n de Campamento Â· frontend estÃ¡tico, PWA y validaciÃ³n E2E",
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "test:modern": "node tests/modernization-smoke.mjs",
+        "test:e2e": "playwright test",
+        "mobile:build": "npm run build && node mobile/build-mobile.cjs",
+        "mobile:sync": "npm run mobile:build && cap sync android",
+        "mobile:open": "cap open android"
+    },
+    "devDependencies": {
+        "@capacitor/cli": "8.5.1",
+        "@playwright/test": "1.62.1",
+        "esbuild": "0.28.2",
+        "typescript": "7.0.2"
+    },
+    "dependencies": {
+        "@aparajita/capacitor-secure-storage": "8.0.0",
+        "@capacitor-community/sqlite": "8.1.1",
+        "@capacitor/android": "8.5.1",
+        "@capacitor/core": "8.5.1"
+    }
 }

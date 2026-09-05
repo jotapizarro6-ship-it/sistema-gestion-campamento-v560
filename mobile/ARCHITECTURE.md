@@ -71,3 +71,30 @@ SQLite changes will use schema migrations.
 
 The Web/PWA and Android clients share domain/backend contracts while
 platform-specific capabilities remain isolated.
+
+## R11-C1 Secure Native Foundation
+
+The Android client uses a native-only secure foundation:
+
+- `@aparajita/capacitor-secure-storage` stores authenticated session material.
+- The administrator password is never persisted.
+- Native session storage has no LocalStorage or SessionStorage fallback.
+- `@capacitor-community/sqlite` provides the local replica/cache database.
+- Android SQLite encryption is enabled with SQLCipher.
+- The database encryption secret is generated on-device and retained by the native SQLite secure store.
+- Android application backup is disabled to avoid restoring encrypted application data without its device-bound protection material.
+- SQLite schema upgrades are versioned; normal upgrades must migrate rather than drop/recreate the database.
+- SQLite remains a cache/replica only. Supabase/GARPI APIs remain authoritative.
+- R11-C1A creates only the encrypted schema foundation. Operational synchronization is introduced later in R11-D.
+- Critical offline mutations remain blocked by policy.
+- Logout will clear secure session material and operational cache through the native foundation.
+
+### Native backend environment
+
+Capacitor serves bundled assets from a local WebView origin. That local shell origin is not a GARPI staging environment.
+
+The generated Android copy of `garpi-runtime-env.js` therefore treats `GARPI_NATIVE.native === true` with platform `android` as the official mobile client and selects the central production GARPI/Supabase backend.
+
+The Web/PWA source keeps its existing localhost staging behavior unchanged.
+
+This distinction is security-sensitive: WebView origin describes where bundled HTML is served; it must never implicitly select the operational backend.

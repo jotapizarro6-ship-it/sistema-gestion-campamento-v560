@@ -3,6 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 const childProcess = require('child_process');
+const esbuild = require('esbuild');
+const { patchNativeAdminAuth } = require('./native/patch-admin-auth.cjs');
+const { patchNativeRuntimeEnv } = require('./native/patch-runtime-env.cjs');
 
 const root = path.resolve(__dirname, '..');
 const out = path.join(root, 'mobile-dist');
@@ -22,6 +25,12 @@ const nativeBootstrapPath = path.join(
   'mobile',
   'garpi-native-bootstrap.js'
 );
+const nativeRuntimeEntryPath = path.join(
+  root,
+  'mobile',
+  'native',
+  'runtime-entry.mjs'
+);
 
 const requireFile = file => {
   if (!fs.existsSync(file)) {
@@ -33,6 +42,7 @@ requireFile(adminPath);
 requireFile(assetsPath);
 requireFile(mobileVersionPath);
 requireFile(nativeBootstrapPath);
+requireFile(nativeRuntimeEntryPath);
 
 const mobileVersion = JSON.parse(
   fs.readFileSync(mobileVersionPath, 'utf8')
@@ -54,6 +64,51 @@ fs.cpSync(
     recursive: true
   }
 );
+
+const nativeRuntimeEnvPath = path.join(
+  out,
+  'assets',
+  'garpi-runtime-env.js'
+);
+
+requireFile(nativeRuntimeEnvPath);
+
+const nativeRuntimeEnvPatch =
+  patchNativeRuntimeEnv(
+    nativeRuntimeEnvPath
+  );
+
+const nativeAdminCorePath = path.join(
+  out,
+  'assets',
+  'app-4-core.js'
+);
+
+requireFile(nativeAdminCorePath);
+
+const nativeAuthPatch =
+  patchNativeAdminAuth(
+    nativeAdminCorePath
+  );
+
+const nativeRuntimeOutputPath = path.join(
+  out,
+  'assets',
+  'garpi-native-runtime.js'
+);
+
+esbuild.buildSync({
+  entryPoints: [nativeRuntimeEntryPath],
+  outfile: nativeRuntimeOutputPath,
+  bundle: true,
+  platform: 'browser',
+  format: 'iife',
+  target: ['chrome120'],
+  sourcemap: false,
+  minify: false,
+  legalComments: 'none',
+  charset: 'utf8'
+});
 
 let html = fs.readFileSync(
   adminPath,
@@ -86,7 +141,8 @@ if (!html.includes(runtimeAnchor)) {
 html = html.replace(
   runtimeAnchor,
   '<script src="assets/garpi-native-bootstrap.js"></script>\n  ' +
-    runtimeAnchor
+    runtimeAnchor +
+    '\n  <script src="assets/garpi-native-runtime.js"></script>'
 );
 
 const headMarker =
@@ -252,6 +308,22 @@ if (
   );
 }
 
+if (!fs.existsSync(nativeRuntimeOutputPath)) {
+  throw new Error(
+    'Native secure runtime bundle was not generated.'
+  );
+}
+
+if (
+  !mobileIndex.includes(
+    'assets/garpi-native-runtime.js'
+  )
+) {
+  throw new Error(
+    'Native secure runtime script was not injected.'
+  );
+}
+
 console.log('GARPI MOBILE BUILD: OK');
 console.log(`WEB DIR       : ${out}`);
 console.log(`APP ID        : ${buildIdentity.appId}`);
@@ -263,3 +335,6 @@ console.log(`SOURCE SHA    : ${buildIdentity.sourceGitSha}`);
 console.log('PWA RUNTIME   : OMITTED');
 console.log('SERVICE WORKER: OMITTED');
 console.log('PUBLIC PAGE   : OMITTED');
+console.log('NATIVE RUNTIME: BUNDLED');
+console.log('NATIVE AUTH   : SECURE STORAGE');
+console.log('NATIVE BACKEND: PRODUCTION');

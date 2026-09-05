@@ -111,20 +111,48 @@ async function openConnection() {
   return db;
 }
 
+function isAlreadyClosedError(error) {
+  const message =
+    String(
+      error?.message ??
+      error ??
+      ''
+    );
+
+  return message.includes(
+    'No available connection for database'
+  );
+}
+
 async function closeConnection(db) {
-  try {
-    if (db) {
-      await db.close();
-    }
-  } finally {
+  let closeError = null;
+
+  if (db) {
     try {
-      await sqlite.closeConnection(
-        DATABASE_NAME,
-        false
-      );
-    } catch {
-      // Connection may already be closed. No secret or data is logged.
+      await db.close();
+    } catch (error) {
+      if (!isAlreadyClosedError(error)) {
+        closeError = error;
+      }
     }
+  }
+
+  try {
+    await sqlite.closeConnection(
+      DATABASE_NAME,
+      false
+    );
+  } catch (error) {
+    if (
+      !isAlreadyClosedError(error) &&
+      !closeError
+    ) {
+      closeError = error;
+    }
+  }
+
+  if (closeError) {
+    throw closeError;
   }
 }
 
@@ -228,7 +256,7 @@ async function verifySchema(db) {
   return expected;
 }
 
-export async function initializeLocalDatabase() {
+async function initializeLocalDatabaseUnlocked() {
   const secretState =
     await ensureEncryptionSecret();
 
@@ -266,7 +294,7 @@ export async function initializeLocalDatabase() {
   }
 }
 
-export async function clearOperationalCache() {
+async function clearOperationalCacheUnlocked() {
   let db = null;
 
   try {
@@ -330,7 +358,7 @@ function parseReplicaPayload(text) {
   }
 }
 
-export async function writeOperationalReplica({
+async function writeOperationalReplicaUnlocked({
   data,
   operationalRevision,
   reason = 'remote-load'
@@ -456,7 +484,7 @@ export async function writeOperationalReplica({
   });
 }
 
-export async function readSyncState() {
+async function readSyncStateUnlocked() {
   let db = null;
 
   try {
@@ -505,7 +533,7 @@ export async function readSyncState() {
   }
 }
 
-export async function readOperationalReplica() {
+async function readOperationalReplicaUnlocked() {
   let db = null;
 
   try {
@@ -576,3 +604,59 @@ export const localDatabaseContract =
     encrypted: true,
     authoritative: false
   });
+
+let dbOperationTail =
+  Promise.resolve();
+
+function serializeDbOperation(operation) {
+  const run =
+    dbOperationTail.then(
+      operation,
+      operation
+    );
+
+  dbOperationTail =
+    run.then(
+      () => undefined,
+      () => undefined
+    );
+
+  return run;
+}
+
+export async function initializeLocalDatabase() {
+  return await serializeDbOperation(
+    () =>
+      initializeLocalDatabaseUnlocked()
+  );
+}
+
+export async function clearOperationalCache() {
+  return await serializeDbOperation(
+    () =>
+      clearOperationalCacheUnlocked()
+  );
+}
+
+export async function writeOperationalReplica(options) {
+  return await serializeDbOperation(
+    () =>
+      writeOperationalReplicaUnlocked(
+        options
+      )
+  );
+}
+
+export async function readSyncState() {
+  return await serializeDbOperation(
+    () =>
+      readSyncStateUnlocked()
+  );
+}
+
+export async function readOperationalReplica() {
+  return await serializeDbOperation(
+    () =>
+      readOperationalReplicaUnlocked()
+  );
+}

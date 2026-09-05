@@ -1,0 +1,7 @@
+{
+    "versionName":  "0.1.0-dev",
+    "versionCode":  1,
+    "schemaVersion":  1,
+    "channel":  "development",
+    "backendContract":  "r5-operational-v1"
+}

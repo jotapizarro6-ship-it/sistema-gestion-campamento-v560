@@ -1,7 +1,5 @@
 {
+    "released_at":  "2026-09-02T17:45:25Z",
     "version":  "5.6.1-modern.12-r5-operational-v1",
-    "released_at":  "2026-09-02T17:55:08-04:00",
-    "channel":  "r5-operational-v1",
-    "source_sha":  "291fd0c8939e7b850e50ca1b78be605f89eeea39",
-    "observability_schema":  1
+    "channel":  "r5-operational-v1"
 }

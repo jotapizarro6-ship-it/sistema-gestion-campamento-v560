@@ -19,7 +19,6 @@ assert.match(uiCss,/@media print/,'Debe existir una presentación dedicada al PD
 assert.match(uiCss,/#syncBadge\.status-pill\{display:inline-flex!important/,'El estado actualizado debe permanecer visible en móvil.');
 
 const ctx={console,Date,Map,Set,Number,String,Math,JSON,window:{},A:{ops:{actions:[],plan_events:[]}},CampOps:{registerRenderer(){}},todayISO:()=> '2026-08-28',fmtDate:v=>v,fmt1:v=>Number(v||0).toFixed(1),fmtInt:v=>String(Number(v||0)),esc:v=>String(v??''),analytics:d=>d.__analytics};
-ctx.window.GARPI_ENV=Object.freeze({mode:'production',isStagingLocal:false,productionOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',stagingOrigin:'http://127.0.0.1:54321',supabaseOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',supabaseHost:'usrstcxiluvsizoxwlxj.supabase.co',functionsOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1',functionUrl(name,query){const base=this.functionsOrigin+'/'+String(name);const q=query==null?'':String(query).trim();return q?base+(q.startsWith('?')?q:'?'+q):base;}});
 ctx.window.CampOps=ctx.CampOps;
 vm.createContext(ctx);vm.runInContext(code,ctx);
 const api=ctx.window.CampIntegrityExecutive;assert.ok(api,'Debe exponer API de pruebas');

@@ -1,7 +1,6 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const SUPABASE_ORIGIN=(Deno.env.get('SUPABASE_URL')||'').replace(/\/+$/,'');
-const UPSTREAM=`${SUPABASE_ORIGIN}/functions/v1/campamento-v560-fast`;
+const UPSTREAM='https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1/campamento-v560-fast';
 const TZ='America/Santiago';
 const cors={
   'access-control-allow-origin':'*',

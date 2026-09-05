@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GARPI Admin</string>
+    <string name="title_activity_main">GARPI Admin</string>
+    <string name="package_name">cl.garpi.campamento.admin</string>
+    <string name="custom_url_scheme">cl.garpi.campamento.admin</string>
+</resources>

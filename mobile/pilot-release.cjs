@@ -580,14 +580,16 @@ console.log(
 );
 console.log('');
 
-const npmCommand =
-  process.platform === 'win32'
-    ? 'npm.cmd'
-    : 'npm';
+const npmCliPath = process.env.npm_execpath;
+
+if (!npmCliPath || !fs.existsSync(npmCliPath)) {
+  fail('GARPI_PILOT_NPM_CLI_UNAVAILABLE');
+}
 
 run(
-  npmCommand,
+  process.execPath,
   [
+    npmCliPath,
     'run',
     'mobile:sync'
   ],

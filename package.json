@@ -10,7 +10,8 @@
         "test:e2e": "playwright test",
         "mobile:build": "npm run build && node mobile/build-mobile.cjs",
         "mobile:sync": "npm run mobile:build && cap sync android",
-        "mobile:open": "cap open android"
+        "mobile:open": "cap open android",
+        "mobile:pilot": "node mobile/pilot-release.cjs"
     },
     "devDependencies": {
         "@capacitor/cli": "8.5.1",

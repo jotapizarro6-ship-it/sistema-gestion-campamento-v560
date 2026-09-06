@@ -67,14 +67,17 @@ function prepareInvocation(command, args) {
     return `"${text}"`;
   });
 
+  const commandLine = commandParts.join(' ');
+
   return {
     command: cmdExe,
     args: [
       '/d',
       '/s',
       '/c',
-      commandParts.join(' ')
-    ]
+      '"' + commandLine + '"'
+    ],
+    windowsVerbatimArguments: true
   };
 }
 
@@ -93,6 +96,8 @@ function run(command, args, options = {}) {
       cwd: root,
       env: process.env,
       encoding: 'utf8',
+      windowsVerbatimArguments:
+        Boolean(invocation.windowsVerbatimArguments),
       stdio: capture
         ? ['ignore', 'pipe', 'pipe']
         : 'inherit'

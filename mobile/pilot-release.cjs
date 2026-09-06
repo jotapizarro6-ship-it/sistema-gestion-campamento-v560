@@ -28,17 +28,71 @@ function readJson(file) {
   );
 }
 
+function prepareInvocation(command, args) {
+  const extension = path
+    .extname(String(command))
+    .toLowerCase();
+
+  const isWindowsBatch =
+    process.platform === 'win32' &&
+    (
+      extension === '.bat' ||
+      extension === '.cmd'
+    );
+
+  if (!isWindowsBatch) {
+    return {
+      command,
+      args
+    };
+  }
+
+  const cmdExe =
+    process.env.ComSpec ||
+    process.env.COMSPEC ||
+    'cmd.exe';
+
+  const commandParts = [
+    command,
+    ...args
+  ].map(value => {
+    const text = String(value);
+
+    if (/[\r\n"&|<>^%!]/.test(text)) {
+      fail(
+        'GARPI_PILOT_UNSAFE_WINDOWS_BATCH_ARGUMENT'
+      );
+    }
+
+    return `"${text}"`;
+  });
+
+  return {
+    command: cmdExe,
+    args: [
+      '/d',
+      '/s',
+      '/c',
+      commandParts.join(' ')
+    ]
+  };
+}
+
 function run(command, args, options = {}) {
   const capture = Boolean(options.capture);
 
-  const result = spawnSync(
+  const invocation = prepareInvocation(
     command,
-    args,
+    args
+  );
+
+  const result = spawnSync(
+    invocation.command,
+    invocation.args,
     {
       cwd: root,
       env: process.env,
       encoding: 'utf8',
-      shell: process.platform === 'win32',
       stdio: capture
         ? ['ignore', 'pipe', 'pipe']
         : 'inherit'
@@ -99,8 +153,7 @@ function assertIgnored(relativePath, errorCode) {
     ],
     {
       cwd: root,
-      encoding: 'utf8',
-      shell: process.platform === 'win32'
+      encoding: 'utf8'
     }
   );
 

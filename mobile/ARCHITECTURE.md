@@ -41,9 +41,9 @@ Local database schema version:
 
 `1`
 
-## Future R11 layers
+## R11-A2 deferred layers (historical)
 
-The following are intentionally not implemented during R11-A2:
+The following were intentionally not implemented during R11-A2:
 
 - secure native authentication/session storage;
 - SQLite replica/cache;
@@ -71,6 +71,38 @@ SQLite changes will use schema migrations.
 
 The Web/PWA and Android clients share domain/backend contracts while
 platform-specific capabilities remain isolated.
+
+### Pilot release operations
+
+The Android Pilot release is generated with:
+
+`npm run mobile:pilot`
+
+The release command is fail-closed and requires:
+
+- a clean Git worktree;
+- JDK 21;
+- `android/signing.properties` present locally and ignored by Git;
+- the release keystore stored outside the repository;
+- `GARPI_ANDROID_STORE_PASSWORD` and `GARPI_ANDROID_KEY_PASSWORD` supplied only through the process environment;
+- no signing passwords stored in `signing.properties`;
+- the Pilot channel and Android version defined by `mobile/mobile-version.json`;
+- package identity and expected signing certificate defined by `mobile/pilot-release-contract.json`.
+
+A successful Pilot release is written under the Git-ignored `pilot-releases/`
+directory. Each release bundle contains the signed APK and
+`pilot-release-manifest.json`, including source commit/tree, package/version
+identity, signing certificate identity, artifact size, and SHA-256 digest.
+
+Pilot Release IDs are immutable. An existing release directory is never
+overwritten; generating the same Release ID again fails closed.
+
+The manifest provides artifact traceability. GARPI does not claim
+byte-for-byte deterministic APK reproduction across separate builds.
+
+The Android release keystore is operationally critical and must have a secure
+backup outside the repository. Loss of the signing key would break normal
+same-signature Android upgrade continuity.
 
 ## R11-C1 Secure Native Foundation
 

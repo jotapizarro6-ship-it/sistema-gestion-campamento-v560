@@ -8,12 +8,44 @@
   const severity=(level)=>level==='critical'||level==='high'?'CRITICO':level==='medium'?'ATENCION':'INFO';
   const active=x=>!['RESUELTO','CANCELADO'].includes(x.status);
   const overdue=x=>active(x)&&x.due_date&&x.due_date<todayISO();
-  const autoAlerts=()=>{
-    if(!A.data)return[];const an=analytics(A.data),all=[...an.exceptions,...an.anomalies];
-    return all.map((e,i)=>({
-      key:`${e.code||plain(e.title).replace(/[^A-Z0-9]+/g,'_')}:${e.detail?.match(/\d{2}-\d{2}-\d{4}/)?.[0]||an.today}:${i}`,
-      code:e.code||'ANOMALIA',title:e.title,detail:e.detail||'',recommendation:e.action||'Revisar el indicador y documentar la decisión.',severity:severity(e.level),count:Number(e.count||0),related_date:an.today
+  const alertKeyPart=v=>(plain(v).replace(/[^A-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,120)||'ANOMALIA');
+  const alertKey=(e,relatedDate)=>`${alertKeyPart(e.code||e.title)}:${String(relatedDate||'').slice(0,10)}`.slice(0,160);
+  const projectAutoAlerts=an=>{
+    if(!an)return[];
+    const relatedDate=an.today||todayISO(),all=[...(an.exceptions||[]),...(an.anomalies||[])];
+    return all.map(e=>({
+      key:alertKey(e,relatedDate),
+      code:e.code||'ANOMALIA',
+      title:e.title,
+      detail:e.detail||'',
+      recommendation:e.action||'Revisar el indicador y documentar la decisión.',
+      severity:severity(e.level),
+      count:Number(e.count||0),
+      related_date:relatedDate
     })).sort((a,b)=>sevRank[a.severity]-sevRank[b.severity]||b.count-a.count||a.title.localeCompare(b.title,'es'));
+  };
+  const autoAlerts=()=>A.data?projectAutoAlerts(analytics(A.data)):[];
+
+  const legacyAlertBase=alert=>{
+    const code=String(alert?.code||'').trim();
+    return code&&code!=='ANOMALIA'
+      ?code
+      :plain(alert?.title).replace(/[^A-Z0-9]+/g,'_');
+  };
+
+  const actionMatchesAutoAlert=(action,alert)=>{
+    if(!action||!alert||plain(action.source_type)!=='AUTO')return false;
+    const sourceKey=String(action.source_key||'');
+    if(sourceKey===alert.key)return true;
+
+    if(
+      String(action.related_date||'').slice(0,10)!==String(alert.related_date||'').slice(0,10)
+    )return false;
+
+    const parts=sourceKey.split(':');
+    return parts.length>=3
+      &&parts[0]===legacyAlertBase(alert)
+      &&/^\d+$/.test(parts[parts.length-1]);
   };
   const actionCard=a=>{
     const cls=a.severity==='CRITICO'?'critical':a.severity==='ATENCION'?'attention':'info';
@@ -30,7 +62,7 @@
   async function refresh(){await CampOps.loadOpsState();CampOps.renderOpsViews()}
   async function createFromAlert(alert){
     if(!CampOps.canWrite())return showMessage('El perfil Jefatura es de solo lectura.','error');
-    const existing=(A.ops.actions||[]).find(x=>x.source_key===alert.key&&active(x));if(existing){showMessage('Esta alerta ya tiene una acción abierta.','info');return}
+    const existing=(A.ops.actions||[]).find(x=>active(x)&&actionMatchesAutoAlert(x,alert));if(existing){showMessage('Esta alerta ya tiene una acción abierta.','info');return}
     try{await CampOps.controlApi('action_create',{method:'POST',body:{title:alert.title,detail:`${alert.detail}${alert.recommendation?` · Recomendación: ${alert.recommendation}`:''}`,category:'ALERTA AUTOMÁTICA',severity:alert.severity,status:'PENDIENTE',due_date:alert.related_date,related_date:alert.related_date,source_type:'AUTO',source_key:alert.key}});showMessage('Acción creada desde la alerta.');await refresh()}catch(e){showMessage(e.message,'error')}
   }
   async function updateAction(id,status){
@@ -43,7 +75,7 @@
   function render(){
     const view=document.getElementById('view-control-room');if(!view)return;
     if(!A.data){view.innerHTML='<div class="notice info">Cargando Centro de Control…</div>';return}
-    const alerts=autoAlerts(),actions=[...(A.ops.actions||[])],open=actions.filter(active),critical=open.filter(x=>x.severity==='CRITICO'),late=open.filter(overdue),plan=(A.ops.plan_events||[]).filter(x=>!['COMPLETADO','CANCELADO'].includes(x.status)&&x.start_date>=todayISO()).sort((a,b)=>a.start_date.localeCompare(b.start_date)),nextPlan=plan.slice(0,6),existingKeys=new Set(open.map(x=>x.source_key).filter(Boolean));
+    const alerts=autoAlerts(),actions=[...(A.ops.actions||[])],open=actions.filter(active),critical=open.filter(x=>x.severity==='CRITICO'),late=open.filter(overdue),plan=(A.ops.plan_events||[]).filter(x=>!['COMPLETADO','CANCELADO'].includes(x.status)&&x.start_date>=todayISO()).sort((a,b)=>a.start_date.localeCompare(b.start_date)),nextPlan=plan.slice(0,6);
     const openSorted=open.sort((a,b)=>(overdue(b)?1:0)-(overdue(a)?1:0)||sevRank[a.severity]-sevRank[b.severity]||String(a.due_date||'9999').localeCompare(String(b.due_date||'9999')));
     const resolved=actions.filter(x=>x.status==='RESUELTO').slice(0,12);
     const sync=A.opsOffline?'Sin conexión':A.opsLastSync?new Date(A.opsLastSync).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):'Pendiente';
@@ -57,7 +89,7 @@
       </div>
       <div class="ops-grid two">
         <section class="panel ops-panel"><div class="ops-panel-head"><div><h3>Señales automáticas</h3><p>Excepciones y anomalías calculadas con la base vigente.</p></div><span class="ops-tag">AUTO</span></div>
-          <div class="ops-alert-list">${alerts.slice(0,10).map((x,i)=>`<article class="ops-alert ${x.severity.toLowerCase()}"><div><span class="ops-severity ${x.severity.toLowerCase()}">${esc(x.severity)}</span><h4>${esc(x.title)}</h4><p>${esc(x.detail)}</p><small>${esc(x.recommendation)}</small></div><div>${existingKeys.has(x.key)?'<span class="badge green">Acción abierta</span>':`<button class="btn btn-primary small-btn" data-auto-alert="${i}" data-ops-write="OPERATOR">Crear acción</button>`}</div></article>`).join('')||'<div class="notice ok">Sin alertas automáticas relevantes.</div>'}</div>
+          <div class="ops-alert-list">${alerts.slice(0,10).map((x,i)=>`<article class="ops-alert ${x.severity.toLowerCase()}"><div><span class="ops-severity ${x.severity.toLowerCase()}">${esc(x.severity)}</span><h4>${esc(x.title)}</h4><p>${esc(x.detail)}</p><small>${esc(x.recommendation)}</small></div><div>${open.some(a=>actionMatchesAutoAlert(a,x))?'<span class="badge green">Acción abierta</span>':`<button class="btn btn-primary small-btn" data-auto-alert="${i}" data-ops-write="OPERATOR">Crear acción</button>`}</div></article>`).join('')||'<div class="notice ok">Sin alertas automáticas relevantes.</div>'}</div>
         </section>
         <section class="panel ops-panel"><div class="ops-panel-head"><div><h3>Estado de acciones</h3><p>Distribución por estado y criticidad.</p></div><span class="ops-tag">SEGUIMIENTO</span></div><div id="opsActionsChart" class="ops-chart"><div class="ops-chart-fallback">${fmtInt(open.length)} abiertas · ${fmtInt(resolved.length)} resueltas recientes</div></div><div class="ops-sync-note">La resolución de una acción no modifica automáticamente reservas, movimientos ni capacidad.</div></section>
       </div>
@@ -86,6 +118,7 @@
     try{window.CampOpsECharts?.renderActions?.()}catch(_){ }
   }
 
+  CampOps.projectAutoAlerts=projectAutoAlerts;CampOps.actionMatchesAutoAlert=actionMatchesAutoAlert;
   CampOps.autoAlerts=autoAlerts;
   CampOps.registerRenderer(render);
 })();

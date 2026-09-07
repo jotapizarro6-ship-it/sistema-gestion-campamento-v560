@@ -51,6 +51,50 @@
     addQuality('high','RES_NOMBRE_FALTANTE','Reservas sin nombre',missingResName,'Existen reservas sin persona identificada.','Completar el nombre asociado a la reserva.');
     addQuality('high','RES_CAMA_INCOMPLETA','Reservas con cama exacta incompleta',incompleteExactBed,'Existen reservas que indican cama pero no modulo y habitacion completos.','Completar modulo y habitacion o retirar la cama exacta del registro.');
     addQuality('high','RES_CAMA_CANTIDAD','Reservas exactas con cantidad incoherente',badExactBedCount,'Una reserva con modulo, habitacion y cama exacta debe corresponder a una sola cama.','Ajustar la reserva exacta a una cama o retirar la asignacion exacta.');
+    const consistencyBedKey=(m,r,b)=>typeof lkey==='function'?lkey(m,r,b):[plain(m),plain(r),plain(b)].join('|');
+    const qualityInventory=Array.isArray(data.inventory)?data.inventory:[];
+    const qualityBlocks=Array.isArray(data.blocks)?data.blocks:[];
+    const inventoryBedKeys=new Set(qualityInventory.map(x=>consistencyBedKey(x.module,x.room,x.bed)));
+    const activeExactReservations=reservations.filter(r=>{
+      const status=reservationStatus(r),arrival=clean(r.arrival_date),departure=clean(r.departure_date);
+      return ['PENDIENTE','CONFIRMADA'].includes(status)&&validIsoDate(arrival)&&(!departure||validIsoDate(departure))&&(!departure||departure>arrival)&&clean(r.module)&&clean(r.room)&&clean(r.bed)&&Number(r.bed_count)===1;
+    });
+    const resBedOutsideInventory=activeExactReservations.filter(r=>!inventoryBedKeys.has(consistencyBedKey(r.module,r.room,r.bed))).length;
+    const reservationsByBed=new Map();
+    for(const r of activeExactReservations){
+      const k=consistencyBedKey(r.module,r.room,r.bed);
+      if(!reservationsByBed.has(k))reservationsByBed.set(k,[]);
+      reservationsByBed.get(k).push(r);
+    }
+    let reservationOverlapPairs=0;
+    for(const rows of reservationsByBed.values()){
+      rows.sort((a,b)=>clean(a.arrival_date).localeCompare(clean(b.arrival_date)));
+      for(let i=0;i<rows.length;i++){
+        const endA=clean(rows[i].departure_date)||'9999-12-31';
+        for(let j=i+1;j<rows.length;j++){
+          const startB=clean(rows[j].arrival_date);
+          if(startB>=endA)break;
+          const endB=clean(rows[j].departure_date)||'9999-12-31';
+          if(clean(rows[i].arrival_date)<endB)reservationOverlapPairs++;
+        }
+      }
+    }
+    const activeValidBlocks=qualityBlocks.filter(b=>{
+      const start=clean(b.start_date),end=clean(b.end_date);
+      return plain(b.status)==='ACTIVO'&&clean(b.module)&&clean(b.room)&&clean(b.bed)&&validIsoDate(start)&&(!end||validIsoDate(end))&&(!end||end>=start);
+    });
+    let reservationBlockCrosses=0;
+    for(const r of activeExactReservations){
+      const rk=consistencyBedKey(r.module,r.room,r.bed),rStart=clean(r.arrival_date),rEnd=clean(r.departure_date)||'9999-12-31';
+      for(const b of activeValidBlocks){
+        if(consistencyBedKey(b.module,b.room,b.bed)!==rk)continue;
+        const bStart=clean(b.start_date),bEnd=clean(b.end_date);
+        if(bStart<rEnd&&(!bEnd||bEnd>=rStart))reservationBlockCrosses++;
+      }
+    }
+    addQuality('high','RES_CAMA_FUERA_INVENTARIO','Reservas con cama fuera de inventario',resBedOutsideInventory,'Existen reservas activas exactas que apuntan a camas inexistentes en el inventario vigente.','Regularizar la cama de la reserva contra el inventario operacional.');
+    addQuality('critical','RES_SOLAPE_CAMA','Reservas exactas solapadas',reservationOverlapPairs,'Existen pares de reservas activas que se cruzan en fechas sobre una misma cama exacta.','Resolver el cruce antes de confirmar alojamiento o movimientos asociados.');
+    addQuality('critical','RES_BLOQUEO_CRUCE','Reservas cruzadas con bloqueos',reservationBlockCrosses,'Existen reservas activas exactas que se cruzan con periodos de bloqueo activo de la misma cama.','Reasignar la reserva o regularizar el bloqueo antes del periodo afectado.');
     const sev={critical:0,high:1,medium:2,low:3};
     out.sort((a,b)=>(sev[a.level]??9)-(sev[b.level]??9)||Number(b.count||0)-Number(a.count||0)||String(a.title||'').localeCompare(String(b.title||''),'es'));
     return out;

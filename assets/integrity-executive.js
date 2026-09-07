@@ -41,9 +41,9 @@
     controls.push(control('reservation-dates','Fechas de reservas',badResDates?'CRITICO':'OK',badResDates?`${badResDates} reserva(s) tienen salida no posterior a llegada.`:'Intervalos de reservas activos coherentes.',badResDates));
 
     let an=null;try{an=analytics(data)}catch(_){an=null}
-    const cap=Number(an?.effectiveCapacity??0),occupied=Number(an?.occupied??assigned.length);
-    controls.push(control('capacity','Capacidad operacional válida',cap>0?'OK':'CRITICO',cap>0?`Capacidad efectiva actual: ${cap} cama(s).`:'La capacidad efectiva no es válida.',cap>0?0:1));
-    const overNow=cap>0&&occupied>cap?occupied-cap:0;
+    const capacityAvailable=an?.capacityAvailable===true,cap=capacityAvailable?Number(an.effectiveCapacity):null,occupied=Number(an?.occupied??assigned.length);
+    controls.push(control('capacity','Capacidad operacional disponible',capacityAvailable?'OK':'CRITICO',capacityAvailable?`Capacidad efectiva actual: ${cap} cama(s).`:'La capacidad operacional no está disponible para la fecha actual.',capacityAvailable?0:1));
+    const overNow=capacityAvailable&&occupied>cap?occupied-cap:0;
     controls.push(control('physical-over','Ocupación física dentro de capacidad',overNow?'CRITICO':'OK',overNow?`La ocupación física supera la capacidad en ${overNow} cama(s).`:'La ocupación física se mantiene dentro de capacidad.',overNow));
 
     const hasSource=!!norm(data.settings?.source_file),hasUpdate=!!norm(data.settings?.last_update);

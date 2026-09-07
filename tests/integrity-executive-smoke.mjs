@@ -24,8 +24,24 @@ ctx.window.CampOps=ctx.CampOps;
 vm.createContext(ctx);vm.runInContext(code,ctx);
 const api=ctx.window.CampIntegrityExecutive;assert.ok(api,'Debe exponer API de pruebas');
 
-const base={workers:[{rut:'11.111.111-1',modulo:'M1',habitacion:'101',cama:'A'},{rut:'22.222.222-2',modulo:'M1',habitacion:'101',cama:'B'}],inventory:[{module:'M1',room:'101',bed:'A'},{module:'M1',room:'101',bed:'B'}],reservations:[],blocks:[],settings:{source_file:'ASIGNACION.xlsx',last_update:'2026-08-28'},__analytics:{effectiveCapacity:132,occupied:2,free:130,committedPct:1.5,forecast:[{date:'2026-08-28',pct:1.5,over:0}]}};
+const base={workers:[{rut:'11.111.111-1',modulo:'M1',habitacion:'101',cama:'A'},{rut:'22.222.222-2',modulo:'M1',habitacion:'101',cama:'B'}],inventory:[{module:'M1',room:'101',bed:'A'},{module:'M1',room:'101',bed:'B'}],reservations:[],blocks:[],settings:{source_file:'ASIGNACION.xlsx',last_update:'2026-08-28'},__analytics:{capacityAvailable:true,effectiveCapacity:132,occupied:2,free:130,committedPct:1.5,forecast:[{date:'2026-08-28',pct:1.5,over:0}]}};
 let d=api.diagnose(base);assert.equal(d.critical,0);assert.equal(d.attention,0);assert.equal(d.score,100);
+
+const zeroCapacity=structuredClone(base);
+zeroCapacity.__analytics.capacityAvailable=true;
+zeroCapacity.__analytics.effectiveCapacity=0;
+zeroCapacity.__analytics.occupied=0;
+d=api.diagnose(zeroCapacity);
+assert.equal(d.controls.find(x=>x.id==='capacity').status,'OK');
+assert.equal(d.controls.find(x=>x.id==='physical-over').status,'OK');
+
+const unavailableCapacity=structuredClone(base);
+unavailableCapacity.__analytics.capacityAvailable=false;
+unavailableCapacity.__analytics.effectiveCapacity=null;
+unavailableCapacity.__analytics.occupied=0;
+d=api.diagnose(unavailableCapacity);
+assert.equal(d.controls.find(x=>x.id==='capacity').status,'CRITICO');
+assert.equal(d.controls.find(x=>x.id==='physical-over').status,'OK');
 
 const dupRut=structuredClone(base);dupRut.workers[1].rut=dupRut.workers[0].rut;d=api.diagnose(dupRut);assert.ok(d.critical>=1);assert.equal(d.controls.find(x=>x.id==='rut').status,'CRITICO');
 

@@ -28,7 +28,7 @@
     // aunque estén separados por días sin cierre.
     const previousClosed=closedSnapshots(data).filter(s=>clean(s.snapshot_date)<today).slice(-7);
     const histAvg=previousClosed.length?previousClosed.reduce((a,s)=>a+Number(s.committed_occupancy||0),0)/previousClosed.length:null;
-    if(histAvg!=null&&Math.abs(an.committedPct-histAvg)>=15){
+    if(an.capacityAvailable&&an.committedPct!=null&&histAvg!=null&&Math.abs(an.committedPct-histAvg)>=15){
       out.push({level:'medium',title:'Variación inusual de ocupación',detail:`La ocupación comprometida de hoy (${fmt1(an.committedPct)}%) difiere ${fmt1(Math.abs(an.committedPct-histAvg))} puntos del promedio reciente (${fmt1(histAvg)}%).`});
     }
 

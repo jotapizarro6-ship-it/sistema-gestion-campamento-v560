@@ -17,6 +17,23 @@
         action:'Corregir el RUT en la planilla Excel base y volver a cargarla.'
       });
     }
+    const addQuality=(level,code,title,count,detail,action)=>{if(Number(count)>0)out.push({level,code,title,count,detail,action})};
+    const movements=Array.isArray(data.movements)?data.movements:[];
+    const validIsoDate=v=>{
+      const x=clean(v),m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(x);
+      if(!m)return false;
+      const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]),dt=new Date(Date.UTC(y,mo-1,d));
+      return dt.getUTCFullYear()===y&&dt.getUTCMonth()===mo-1&&dt.getUTCDate()===d;
+    };
+    const movementStatus=m=>plain(m?.lifecycle_status||'LEGACY_UNRESOLVED');
+    const badMovementDate=movements.filter(m=>!validIsoDate(m.movement_date)).length;
+    const badMovementType=movements.filter(m=>!['SUBIDA','BAJADA'].includes(plain(m.movement_type))).length;
+    const badMovementCount=movements.filter(m=>{const n=Number(m.people_count);return !Number.isInteger(n)||n<0||n>10000}).length;
+    const badMovementStatus=movements.filter(m=>!['PROGRAMADO','EJECUTADO','CANCELADO','LEGACY_UNRESOLVED'].includes(movementStatus(m))).length;
+    addQuality('high','MOV_FECHA_INVALIDA','Movimientos con fecha invalida',badMovementDate,'Existen movimientos sin una fecha calendario valida en formato YYYY-MM-DD.','Corregir la fecha del registro antes de usarlo en calculos operacionales.');
+    addQuality('high','MOV_TIPO_INVALIDO','Movimientos con tipo invalido',badMovementType,'Existen movimientos cuyo tipo no corresponde a SUBIDA o BAJADA.','Regularizar el tipo del movimiento segun el contrato operacional.');
+    addQuality('high','MOV_CANTIDAD_INVALIDA','Movimientos con cantidad invalida',badMovementCount,'Existen movimientos cuya cantidad no es un entero entre 0 y 10.000.','Corregir la cantidad de personas del movimiento.');
+    addQuality('high','MOV_ESTADO_INVALIDO','Movimientos con estado invalido',badMovementStatus,'Existen movimientos con lifecycle fuera del contrato vigente.','Revisar el origen del registro y regularizar su lifecycle sin reinterpretar movimientos legacy.');
     const sev={critical:0,high:1,medium:2,low:3};
     out.sort((a,b)=>(sev[a.level]??9)-(sev[b.level]??9)||Number(b.count||0)-Number(a.count||0)||String(a.title||'').localeCompare(String(b.title||''),'es'));
     return out;

@@ -18,7 +18,7 @@ assert.match(uiCss,/@media\(max-width:700px\)/,'Debe existir diseño específico
 assert.match(uiCss,/@media print/,'Debe existir una presentación dedicada al PDF/impresión.');
 assert.match(uiCss,/#syncBadge\.status-pill\{display:inline-flex!important/,'El estado actualizado debe permanecer visible en móvil.');
 
-const ctx={console,Date,Map,Set,Number,String,Math,JSON,window:{},A:{ops:{actions:[],plan_events:[]}},CampOps:{registerRenderer(){}},todayISO:()=> '2026-08-28',fmtDate:v=>v,fmt1:v=>Number(v||0).toFixed(1),fmtInt:v=>String(Number(v||0)),esc:v=>String(v??''),analytics:d=>d.__analytics};
+const ctx={console,Date,Map,Set,Number,String,Math,JSON,window:{},A:{ops:{actions:[],plan_events:[]}},CampOps:{registerRenderer(){},projectAutoAlerts(an){return [...(an?.exceptions||[]),...(an?.anomalies||[])].map(e=>({code:e.code||'ANOMALIA',title:e.title||'',detail:e.detail||'',count:Number(e.count||0)}))}},todayISO:()=> '2026-08-28',fmtDate:v=>v,fmt1:v=>Number(v||0).toFixed(1),fmtInt:v=>String(Number(v||0)),esc:v=>String(v??''),analytics:d=>d.__analytics};
 ctx.window.GARPI_ENV=Object.freeze({mode:'production',isStagingLocal:false,productionOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',stagingOrigin:'http://127.0.0.1:54321',supabaseOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co',supabaseHost:'usrstcxiluvsizoxwlxj.supabase.co',functionsOrigin:'https://usrstcxiluvsizoxwlxj.supabase.co/functions/v1',functionUrl(name,query){const base=this.functionsOrigin+'/'+String(name);const q=query==null?'':String(query).trim();return q?base+(q.startsWith('?')?q:'?'+q):base;}});
 ctx.window.CampOps=ctx.CampOps;
 vm.createContext(ctx);vm.runInContext(code,ctx);
@@ -44,6 +44,28 @@ assert.equal(d.controls.find(x=>x.id==='capacity').status,'CRITICO');
 assert.equal(d.controls.find(x=>x.id==='physical-over').status,'OK');
 
 const dupRut=structuredClone(base);dupRut.workers[1].rut=dupRut.workers[0].rut;d=api.diagnose(dupRut);assert.ok(d.critical>=1);assert.equal(d.controls.find(x=>x.id==='rut').status,'CRITICO');
+
+const projectedDup=structuredClone(base);
+projectedDup.__analytics.exceptions=[{level:'high',code:'CAMA_DUP',title:'CAMA_DUP',count:3,detail:'Canonical duplicate-bed signal.'}];
+projectedDup.__analytics.anomalies=[];
+d=api.diagnose(projectedDup);
+assert.equal(d.controls.find(x=>x.id==='double-bed').status,'CRITICO');
+assert.equal(d.controls.find(x=>x.id==='double-bed').count,3);
+assert.equal(d.controls.find(x=>x.id==='double-bed').detail,'Canonical duplicate-bed signal.');
+
+const projectedIncomplete=structuredClone(base);
+projectedIncomplete.__analytics.exceptions=[{level:'medium',code:'SIN_CAMA',title:'SIN_CAMA',count:2,detail:'Canonical incomplete-assignment signal.'}];
+projectedIncomplete.__analytics.anomalies=[];
+d=api.diagnose(projectedIncomplete);
+assert.equal(d.controls.find(x=>x.id==='incomplete').status,'ATENCION');
+assert.equal(d.controls.find(x=>x.id==='incomplete').count,2);
+
+const projectedBlocked=structuredClone(base);
+projectedBlocked.__analytics.exceptions=[{level:'critical',code:'BLOQUEADA_USADA',title:'BLOQUEADA_USADA',count:1,detail:'Canonical blocked-bed signal.'}];
+projectedBlocked.__analytics.anomalies=[];
+d=api.diagnose(projectedBlocked);
+assert.equal(d.controls.find(x=>x.id==='blocked-occupied').status,'CRITICO');
+assert.equal(d.controls.find(x=>x.id==='blocked-occupied').count,1);
 
 const dupBed=structuredClone(base);dupBed.workers[1].cama='A';d=api.diagnose(dupBed);assert.equal(d.controls.find(x=>x.id==='double-bed').status,'CRITICO');
 

@@ -15,11 +15,19 @@
   function diagnose(data){
     data=data||{};const workers=data.workers||[],inventory=data.inventory||[],reservations=data.reservations||[],blocks=data.blocks||[];const today=typeof todayISO==='function'?todayISO():new Date().toISOString().slice(0,10);
     const controls=[];
+    let an=null;try{an=analytics(data)}catch(_){an=null}
+    let qualitySignals=[],hasSharedProjection=false;
+    const canUseSharedProjection=typeof CampOps.projectAutoAlerts==='function'&&!!an&&Array.isArray(an.exceptions)&&Array.isArray(an.anomalies);
+    if(canUseSharedProjection){try{qualitySignals=CampOps.projectAutoAlerts(an)||[];hasSharedProjection=true}catch(_){qualitySignals=[]}}
+    const qualityByCode=new Map(qualitySignals.map(x=>[String(x.code||''),x]));
+    const qualityCount=(code,fallback)=>hasSharedProjection?Number(qualityByCode.get(code)?.count||0):fallback;
+    const qualityDetail=(code,fallback)=>qualityByCode.get(code)?.detail||fallback;
+
     const rutDup=duplicateCount(workers.map(w=>norm(w.rut).replace(/[^0-9K]/g,'')));
     controls.push(control('rut','RUT únicos',rutDup?'CRITICO':'OK',rutDup?`${rutDup} registro(s) duplicado(s) deben revisarse.`:'Sin RUT duplicados en la dotación.',rutDup));
 
     const assigned=workers.filter(w=>norm(w.modulo)&&norm(w.habitacion)&&norm(w.cama));
-    const bedDup=duplicateCount(assigned.map(w=>bedKey(w.modulo,w.habitacion,w.cama)));
+    const bedDupLocal=duplicateCount(assigned.map(w=>bedKey(w.modulo,w.habitacion,w.cama))),bedDup=qualityCount('CAMA_DUP',bedDupLocal); controls.push(control('double-bed','Una persona por cama',bedDup?'CRITICO':'OK',bedDup?qualityDetail('CAMA_DUP',`${bedDup} asignación(es) comparten una cama física.`):'No se detectan camas asignadas a más de un trabajador.',bedDup));
     controls.push(control('double-bed','Una persona por cama',bedDup?'CRITICO':'OK',bedDup?`${bedDup} asignación(es) comparten una cama física.`:'No se detectan camas asignadas a más de un trabajador.',bedDup));
 
     const invKeys=inventory.map(x=>bedKey(x.module,x.room,x.bed));
@@ -29,18 +37,17 @@
     const invSet=new Set(invKeys),missingBed=assigned.filter(w=>!invSet.has(bedKey(w.modulo,w.habitacion,w.cama))).length;
     controls.push(control('assignment-inventory','Asignaciones dentro del inventario',missingBed?'CRITICO':'OK',missingBed?`${missingBed} trabajador(es) apuntan a camas que no existen en inventario.`:'Todas las asignaciones completas existen en el inventario.',missingBed));
 
-    const incomplete=workers.filter(w=>[w.modulo,w.habitacion,w.cama].some(v=>!norm(v))).length;
+    const incompleteLocal=workers.filter(w=>[w.modulo,w.habitacion,w.cama].some(v=>!norm(v))).length,incomplete=qualityCount('SIN_CAMA',incompleteLocal); controls.push(control('incomplete','Asignaciones completas',incomplete?'ATENCION':'OK',incomplete?qualityDetail('SIN_CAMA',`${incomplete} trabajador(es) tienen módulo/habitación/cama incompletos.`):'Todas las asignaciones registradas están completas.',incomplete));
     controls.push(control('incomplete','Asignaciones completas',incomplete?'ATENCION':'OK',incomplete?`${incomplete} trabajador(es) tienen módulo/habitación/cama incompletos.`:'Todas las asignaciones registradas están completas.',incomplete));
 
     const occupiedSet=new Set(assigned.map(w=>bedKey(w.modulo,w.habitacion,w.cama)));
     const blockedNow=blocks.filter(b=>norm(b.status)==='ACTIVO'&&inDateRange(String(b.start_date||''),String(b.end_date||''),today));
-    const blockedOccupied=blockedNow.filter(b=>occupiedSet.has(bedKey(b.module,b.room,b.bed))).length;
+    const blockedOccupiedLocal=blockedNow.filter(b=>occupiedSet.has(bedKey(b.module,b.room,b.bed))).length,blockedOccupied=qualityCount('BLOQUEADA_USADA',blockedOccupiedLocal); controls.push(control('blocked-occupied','Bloqueos vs ocupación',blockedOccupied?'CRITICO':'OK',blockedOccupied?qualityDetail('BLOQUEADA_USADA',`${blockedOccupied} cama(s) bloqueada(s) aparecen ocupadas.`):'No hay cruces entre camas bloqueadas y ocupadas.',blockedOccupied));
     controls.push(control('blocked-occupied','Bloqueos vs ocupación',blockedOccupied?'CRITICO':'OK',blockedOccupied?`${blockedOccupied} cama(s) bloqueada(s) aparecen ocupadas.`:'No hay cruces entre camas bloqueadas y ocupadas.',blockedOccupied));
 
     const badResDates=reservations.filter(r=>isActiveReservation(r)&&r.departure_date&&r.arrival_date&&String(r.departure_date)<=String(r.arrival_date)).length;
     controls.push(control('reservation-dates','Fechas de reservas',badResDates?'CRITICO':'OK',badResDates?`${badResDates} reserva(s) tienen salida no posterior a llegada.`:'Intervalos de reservas activos coherentes.',badResDates));
 
-    let an=null;try{an=analytics(data)}catch(_){an=null}
     const capacityAvailable=an?.capacityAvailable===true,cap=capacityAvailable?Number(an.effectiveCapacity):null,occupied=Number(an?.occupied??assigned.length);
     controls.push(control('capacity','Capacidad operacional disponible',capacityAvailable?'OK':'CRITICO',capacityAvailable?`Capacidad efectiva actual: ${cap} cama(s).`:'La capacidad operacional no está disponible para la fecha actual.',capacityAvailable?0:1));
     const overNow=capacityAvailable&&occupied>cap?occupied-cap:0;
@@ -50,7 +57,7 @@
     controls.push(control('source','Trazabilidad de fuente',hasSource&&hasUpdate?'OK':'ATENCION',hasSource&&hasUpdate?`Fuente vigente: ${data.settings.source_file}.`:'Falta archivo fuente o fecha de actualización.',hasSource&&hasUpdate?0:1));
 
     const critical=controls.filter(x=>x.status==='CRITICO').length,attention=controls.filter(x=>x.status==='ATENCION').length,ok=controls.filter(x=>x.status==='OK').length,total=controls.length;
-    return{controls,critical,attention,ok,total,score:total?Math.round(ok/total*100):0,an};
+    return{controls,critical,attention,ok,total,score:total?Math.round(ok/total*100):0,an,qualitySignals};
   }
 
   function semaphore(data,diag=diagnose(data)){

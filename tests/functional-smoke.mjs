@@ -104,6 +104,9 @@ const closedOffsets=[-29,-25,-20,-16,-12,-8,-4,-2];
 const histData={...data,movements:[],snapshots:closedValues.map((v,i)=>({snapshot_date:f.addDays(today,closedOffsets[i]),closed_at:'cerrado',committed_occupancy:v,occupied:0,companies_json:'[]',shifts_json:'[]',modules_json:'[]'}))};
 assert.equal(f.analytics(histData).histAvg,50,'promedio reciente debe usar los últimos 7 cierres confirmados');
 
+const unavailableAnomalies=f.calcAnomalies(histData,{capacityAvailable:false,committedPct:null,mv:{SUBIDA:0,BAJADA:0}});
+assert.equal(unavailableAnomalies.some(x=>x.title==='Variación inusual de ocupación'),false,'capacidad no disponible no debe fabricar anomalías de ocupación');
+
 // v5.5.8: el promedio de movimientos usa una ventana fija de 30 días e incluye días sin movimiento.
 const moveData={...data,snapshots:[],movements:[
   {movement_date:f.addDays(today,-10),movement_type:'SUBIDA',people_count:30},

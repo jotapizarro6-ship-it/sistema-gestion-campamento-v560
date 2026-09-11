@@ -27,3 +27,12 @@ body[data-camp-profile="JEFATURA"] [data-ops-write],body[data-camp-profile="OPER
     line-height:1.25;
   }
 }
+
+/* UI V1-A2: legibilidad de metadatos operacionales en movil */
+@media(max-width:560px){
+  .ops-action-meta,
+  .ops-sync-note{
+    font-size:10.5px;
+    line-height:1.4;
+  }
+}

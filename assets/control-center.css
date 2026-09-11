@@ -20,7 +20,7 @@
 #view-control .cc-panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
 #view-control .cc-panel-head h3{margin:0;color:#17344a}
 #view-control .cc-panel-head p{margin:4px 0 0;color:#74828c;font-size:9.5px;line-height:1.35}
-#view-control .cc-tag{flex:0 0 auto;padding:4px 7px;border-radius:999px;background:#edf3f6;color:#617582;font-size:8px;font-weight:900;letter-spacing:.4px}
+#view-control .cc-tag{flex:0 0 auto;padding:4px 7px;border-radius:999px;background:#edf3f6;color:#5d717e;font-size:8px;font-weight:900;letter-spacing:.4px}
 #view-control .cc-tag.normal{background:#eaf7ef;color:#28704e}#view-control .cc-tag.attention{background:#fff4dd;color:#976214}#view-control .cc-tag.critical{background:#fbecee;color:#a93645}
 #view-control .cc-chart{width:100%;height:300px;min-height:260px;outline:none}
 #view-control .cc-chart.cc-modules{height:310px}

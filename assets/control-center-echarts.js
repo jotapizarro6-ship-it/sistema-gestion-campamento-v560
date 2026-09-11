@@ -12,17 +12,54 @@
   function dispose(host){const old=host&&EC.getInstanceByDom(host);if(old)try{old.dispose()}catch(_){}}
   function init(host){if(!host)return null;dispose(host);host.innerHTML='';return EC.init(host,null,{renderer:mobile()?'svg':'canvas'})}
 
+  function bindKeyboard(host,c,count,labelAt,activate){
+    if(!host||!c||!count)return;
+    let index=0;
+    const describe=()=>{
+      host.dataset.keyboardIndex=String(index);
+      host.setAttribute(
+        'aria-label',
+        `${labelAt(index)}. Use flechas para cambiar y Enter o Espacio para seleccionar.`
+      );
+    };
+    const preview=()=>{
+      try{
+        c.dispatchAction({type:'downplay',seriesIndex:0});
+        c.dispatchAction({type:'highlight',seriesIndex:0,dataIndex:index});
+        c.dispatchAction({type:'showTip',seriesIndex:0,dataIndex:index});
+      }catch(_){}
+      describe();
+    };
+    host.tabIndex=0;
+    host.setAttribute('role','group');
+    host.setAttribute('aria-roledescription','grafico interactivo');
+    host.onfocus=preview;
+    host.onkeydown=e=>{
+      const key=e.key;
+      if(key==='ArrowRight'||key==='ArrowDown'){e.preventDefault();index=(index+1)%count;preview();return}
+      if(key==='ArrowLeft'||key==='ArrowUp'){e.preventDefault();index=(index-1+count)%count;preview();return}
+      if(key==='Home'){e.preventDefault();index=0;preview();return}
+      if(key==='End'){e.preventDefault();index=count-1;preview();return}
+      if(key==='Enter'||key===' '){e.preventDefault();activate(index)}
+    };
+    describe();
+  }
+
   function mountComposition(data,hm,mod){
     const host=document.querySelector('#controlModuleChart');if(!host)return;const c=init(host);if(!c)return;
     const values=[{name:'Ocupadas',value:Number(mod.occupied||0),status:'occupied',itemStyle:{color:colors.occupied}},{name:'Reservadas',value:Number(mod.reserved||0),status:'reserved',itemStyle:{color:colors.reserved}},{name:'Bloqueadas',value:Number(mod.blocked||0),status:'blocked',itemStyle:{color:colors.blocked}},{name:'Libres',value:Number(mod.free||0),status:'free',itemStyle:{color:colors.free}}],pct=Number(mod.pct||0);
     c.setOption({...base(`Composición de camas del módulo ${mod.label}.`),legend:{type:'scroll',bottom:0,left:'center',itemWidth:10,itemHeight:8,textStyle:{fontSize:mobile()?9:10,color:colors.text}},series:[{name:'Camas',type:'pie',radius:mobile()?['45%','70%']:['50%','74%'],center:['50%',mobile()?'43%':'45%'],avoidLabelOverlap:true,label:{show:false},emphasis:{scale:true,scaleSize:7,label:{show:true,fontSize:12,fontWeight:800,formatter:'{b}\n{c}'}},data:values}],graphic:[{type:'text',left:'center',top:mobile()?'35%':'37%',style:{text:`${pct.toFixed(1)}%\ncomprometido`,textAlign:'center',fill:'#17384d',font:'800 15px system-ui',lineHeight:20}}]});
-    c.on('click',p=>{const item=values[p.dataIndex];if(!item)return;A.controlStatus=item.status;A.controlBedKey='';renderControl()});
+    const activate=index=>{const item=values[index];if(!item)return;A.controlStatus=item.status;A.controlBedKey='';renderControl()};
+    c.on('click',p=>activate(p.dataIndex));
+    bindKeyboard(host,c,values.length,i=>`${values[i].name}: ${fmt(values[i].value)}`,activate);
   }
 
   function mountModules(hm){
     const host=document.querySelector('#controlAvailabilityChart');if(!host)return;const c=init(host);if(!c)return;const rows=[...hm.modules].sort((a,b)=>Number(b.pct||0)-Number(a.pct||0));
     c.setOption({...base('Comparación del porcentaje de capacidad comprometida entre módulos.'),grid:{left:mobile()?92:120,right:mobile()?24:38,top:20,bottom:28},tooltip:{...base().tooltip,trigger:'axis',axisPointer:{type:'shadow'},formatter:ps=>{const i=ps?.[0]?.dataIndex??0,x=rows[i];return `<b>${escHtml(x.label)}</b><br>Comprometido: <b>${Number(x.pct||0).toFixed(1)}%</b><br>Ocupadas: <b>${fmt(x.occupied)}</b><br>Reservadas: <b>${fmt(x.reserved)}</b><br>Bloqueadas: <b>${fmt(x.blocked)}</b><br>Libres: <b>${fmt(x.free)}</b>`}},xAxis:{type:'value',min:0,max:Math.max(100,Math.ceil(Math.max(...rows.map(x=>Number(x.pct||0)),100)/10)*10),axisLabel:{formatter:'{value}%',fontSize:9,color:colors.muted},splitLine:{lineStyle:{color:colors.grid}},axisLine:{show:false}},yAxis:{type:'category',data:rows.map(x=>x.label),axisLabel:{fontSize:mobile()?8:9,color:colors.text,width:mobile()?76:104,overflow:'truncate'},axisLine:{show:false},axisTick:{show:false}},series:[{name:'% comprometido',type:'bar',barMaxWidth:24,data:rows.map(x=>({value:Number(x.pct||0),itemStyle:{color:stateColor(Number(x.pct||0)),borderRadius:[0,5,5,0]}})),label:{show:true,position:'right',formatter:p=>`${Number(p.value).toFixed(0)}%`,fontSize:9,color:'#385161'},markLine:{silent:true,symbol:'none',label:{fontSize:8,color:'#7a8791'},lineStyle:{type:'dashed',width:1},data:[{xAxis:80,label:{formatter:'80%'}},{xAxis:90,label:{formatter:'90%'}}]}}]});
-    c.on('click',p=>{const row=rows[p.dataIndex];if(!row)return;A.mapModule=row.label;A.controlBedKey='';renderControl()});
+    const activate=index=>{const row=rows[index];if(!row)return;A.mapModule=row.label;A.controlBedKey='';renderControl()};
+    c.on('click',p=>activate(p.dataIndex));
+    bindKeyboard(host,c,rows.length,i=>`${rows[i].label}: ${Number(rows[i].pct||0).toFixed(1)}% comprometido`,activate);
   }
 
   window.__mountControlCenterEcharts=function(){

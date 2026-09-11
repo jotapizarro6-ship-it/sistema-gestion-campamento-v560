@@ -100,3 +100,11 @@
     line-height:1.35;
   }
 }
+
+
+/* UI V1-D3: foco visible para graficos interactivos */
+#view-control .cc-chart:focus-visible{
+  outline:3px solid #1769aa;
+  outline-offset:3px;
+  border-radius:10px;
+}

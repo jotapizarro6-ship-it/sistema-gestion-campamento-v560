@@ -68,7 +68,7 @@
   #view-control .cc-kpi{padding:11px 12px}.cc-kpi strong{font-size:22px}
   #view-control .cc-chart{height:285px;min-height:250px}.cc-chart.cc-modules{height:300px}
   #view-control .cc-map-layout{grid-template-columns:1fr}.cc-detail-panel{position:static;order:2}.cc-map-panel{order:1}
-  #view-control .cc-bed-map{grid-template-columns:1fr 1fr}.cc-bed-btn{min-height:48px;font-size:10px}
+  #view-control .cc-bed-map{grid-template-columns:1fr 1fr}#view-control .cc-bed-btn{min-height:48px;font-size:10px}
   #view-control .cc-exception-list{grid-template-columns:1fr}
   #view-control .cc-fallback-donut{grid-template-columns:110px 1fr}.cc-fallback-ring{width:104px;height:104px}.cc-fallback-ring::after{width:64px;height:64px}
 }

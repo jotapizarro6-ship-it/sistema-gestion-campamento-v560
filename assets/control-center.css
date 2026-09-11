@@ -92,3 +92,11 @@
     line-height:1.4;
   }
 }
+
+/* UI V1-B3: jerarquia de titulos de excepcion en movil */
+@media(max-width:560px){
+  #view-control .cc-exception strong{
+    font-size:11.5px;
+    line-height:1.35;
+  }
+}

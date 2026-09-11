@@ -79,3 +79,16 @@
   #view-control .cc-detail-grid{grid-template-columns:1fr 1fr}
   #view-control .cc-fallback-donut{grid-template-columns:1fr;text-align:center}.cc-fallback-ring{margin:0 auto}.cc-fallback-list{text-align:left}
 }
+
+/* UI V1-B1: legibilidad operacional del Centro de Gestion en movil */
+@media(max-width:560px){
+  #view-control .cc-kpi span,
+  #view-control .cc-kpi small,
+  #view-control .cc-panel-head p,
+  #view-control .cc-detail-grid span,
+  #view-control .cc-detail-section p,
+  #view-control .cc-exception span{
+    font-size:10.5px;
+    line-height:1.4;
+  }
+}

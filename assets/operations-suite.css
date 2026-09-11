@@ -36,3 +36,10 @@ body[data-camp-profile="JEFATURA"] [data-ops-write],body[data-camp-profile="OPER
     line-height:1.4;
   }
 }
+
+/* UI V1-A3: mantener KPIs operacionales compactos en movil estrecho */
+@media(max-width:340px){
+  .ops-kpi-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}

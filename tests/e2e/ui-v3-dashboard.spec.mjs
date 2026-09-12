@@ -372,6 +372,19 @@ async function installBackend(page,state){
       });
     }
 
+    if(
+      service==='campamento-recovery-api' &&
+      action==='status' &&
+      method==='GET'
+    ){
+      return fulfillJson(route,{
+        ok:true,
+        data:{
+          tests:[]
+        }
+      });
+    }
+
     unexpected.push({
       service,
       action,
@@ -1920,6 +1933,209 @@ test(
         ()=>window.A?.controlBedKey||''
       )
     ).toBe(bedKey);
+
+    expect(pageErrors).toEqual([]);
+    expect(backend.unexpected).toEqual([]);
+  }
+);
+
+
+
+test(
+  'UI V3 A3.4 organiza advanced historial costos y reportes sin duplicar analytics',
+  async({page})=>{
+    const pageErrors=[];
+
+    page.on(
+      'pageerror',
+      error=>pageErrors.push(
+        String(error?.message||error)
+      )
+    );
+
+    const state=
+      dailyCapacityFixture();
+
+    const backend=
+      await login(
+        page,
+        state
+      );
+
+    await openView(
+      page,
+      'management'
+    );
+
+    const management=
+      page.locator(
+        '#view-management'
+      );
+
+    const dashboard=
+      management.locator(
+        '.v3-management'
+      );
+
+    await expect(
+      dashboard
+    ).toBeVisible();
+
+    await expect(
+      dashboard.locator(
+        '.v3-kpi'
+      )
+    ).toHaveCount(8);
+
+    const advanced=
+      dashboard.locator(
+        '[data-v3-advanced]'
+      );
+
+    await expect(
+      advanced
+    ).toBeVisible();
+
+    await expect(
+      advanced
+    ).toContainText(
+      'Advanced'
+    );
+
+    await expect(
+      advanced
+    ).toContainText(
+      /Costos y camas-d[i\u00ed]a/i
+    );
+
+    await expect(
+      advanced
+    ).toContainText(
+      /Hist[o\u00f3]rico/i
+    );
+
+    await expect(
+      advanced
+    ).toContainText(
+      'Reportes / respaldo'
+    );
+
+    const legacy=
+      management.locator(
+        ':scope > details.dc-legacy-details'
+      );
+
+    await expect(
+      legacy
+    ).toHaveCount(1);
+
+    expect(
+      await legacy.evaluate(
+        node=>node.open
+      )
+    ).toBe(false);
+
+    await advanced
+      .locator(
+        '[data-v3-open-advanced="analysis"]'
+      )
+      .click();
+
+    await expect.poll(
+      ()=>legacy.evaluate(
+        node=>node.open
+      )
+    ).toBe(true);
+
+    await expect(
+      legacy.locator(
+        '.dc-legacy-slot'
+      )
+    ).toBeVisible();
+
+    await advanced
+      .locator(
+        '[data-v3-open-advanced="cost"]'
+      )
+      .click();
+
+    await expect.poll(
+      ()=>legacy.evaluate(
+        node=>node.open
+      )
+    ).toBe(true);
+
+    await expect(
+      legacy.locator(
+        '#costForm'
+      )
+    ).toBeVisible();
+
+    await advanced
+      .locator(
+        '[data-v3-goto="history"]'
+      )
+      .click();
+
+    await expect.poll(
+      ()=>page.evaluate(
+        ()=>window.A?.currentView||''
+      )
+    ).toBe('history');
+
+    await expect(
+      page.locator(
+        '#view-history'
+      )
+    ).toBeVisible();
+
+    await expect(
+      page.locator(
+        '#view-history'
+      )
+    ).toContainText(
+      /Hist[o\u00f3]rico completo/i
+    );
+
+    await openView(
+      page,
+      'management'
+    );
+
+    const advancedAgain=
+      page.locator(
+        '#view-management [data-v3-advanced]'
+      );
+
+    await expect(
+      advancedAgain
+    ).toBeVisible();
+
+    await advancedAgain
+      .locator(
+        '[data-v3-goto="exports"]'
+      )
+      .click();
+
+    await expect.poll(
+      ()=>page.evaluate(
+        ()=>window.A?.currentView||''
+      )
+    ).toBe('exports');
+
+    await expect(
+      page.locator(
+        '#view-exports'
+      )
+    ).toBeVisible();
+
+    await expect(
+      page.locator(
+        '#view-exports'
+      )
+    ).toContainText(
+      /Reportes y respaldos/i
+    );
 
     expect(pageErrors).toEqual([]);
     expect(backend.unexpected).toEqual([]);

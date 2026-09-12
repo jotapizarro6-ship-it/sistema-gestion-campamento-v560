@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260912-v3a9';
+  const VERSION = '20260912-v3a10';
 
   const clean = value =>
     String(value == null ? '' : value).trim();
@@ -1938,6 +1938,211 @@
     `;
   }
 
+  function v3AdvancedCard(model) {
+    const costConfigured =
+      number(model?.an?.cost) > 0;
+
+    return `
+      <section
+        class="v3-card v3-advanced-card"
+        data-v3-advanced
+      >
+        <div class="v3-card-head">
+          <div>
+            <h3>Advanced</h3>
+            <p>
+              Historial, costos, benchmark, drillthrough
+              y reportes quedan en segundo nivel para
+              mantener limpio el dashboard principal.
+            </p>
+          </div>
+
+          <span class="v3-tag">
+            SEGUNDO NIVEL
+          </span>
+        </div>
+
+        <div class="v3-advanced-grid">
+          <button
+            type="button"
+            class="v3-advanced-action"
+            data-v3-open-advanced="analysis"
+          >
+            <span class="v3-advanced-icon" aria-hidden="true">
+              A
+            </span>
+
+            <span class="v3-advanced-copy">
+              <strong>An\u00e1lisis avanzado</strong>
+              <small>
+                Benchmark, dimensiones, drillthrough
+                y herramientas gerenciales existentes.
+              </small>
+            </span>
+
+            <span aria-hidden="true">\u2192</span>
+          </button>
+
+          <button
+            type="button"
+            class="v3-advanced-action"
+            data-v3-open-advanced="cost"
+          >
+            <span class="v3-advanced-icon" aria-hidden="true">
+              $
+            </span>
+
+            <span class="v3-advanced-copy">
+              <strong>Costos y camas-d\u00eda</strong>
+              <small>
+                ${
+                  costConfigured
+                    ? 'Usa la tarifa y proyecciones can\u00f3nicas ya configuradas.'
+                    : 'Abre la herramienta can\u00f3nica de tarifa y camas-d\u00eda.'
+                }
+              </small>
+            </span>
+
+            <span aria-hidden="true">\u2192</span>
+          </button>
+
+          <button
+            type="button"
+            class="v3-advanced-action"
+            data-v3-goto="history"
+          >
+            <span class="v3-advanced-icon" aria-hidden="true">
+              H
+            </span>
+
+            <span class="v3-advanced-copy">
+              <strong>Hist\u00f3rico / cierre</strong>
+              <small>
+                Fotograf\u00edas, tendencia y cierre diario
+                en la vista can\u00f3nica existente.
+              </small>
+            </span>
+
+            <span aria-hidden="true">\u2192</span>
+          </button>
+
+          <button
+            type="button"
+            class="v3-advanced-action"
+            data-v3-goto="exports"
+          >
+            <span class="v3-advanced-icon" aria-hidden="true">
+              R
+            </span>
+
+            <span class="v3-advanced-copy">
+              <strong>Reportes / respaldo</strong>
+              <small>
+                CSV, respaldo y herramientas de reporte
+                sin duplicar la l\u00f3gica de exportaci\u00f3n.
+              </small>
+            </span>
+
+            <span aria-hidden="true">\u2192</span>
+          </button>
+        </div>
+
+        <div class="v3-advanced-note">
+          <strong>Fuente \u00fanica:</strong>
+          estas acciones reutilizan las vistas y c\u00e1lculos
+          existentes; V3 no crea un segundo motor anal\u00edtico.
+        </div>
+      </section>
+    `;
+  }
+
+  function v3OpenLegacyAdvanced(
+    root,
+    target
+  ) {
+    const view =
+      root.closest('#view-management') ||
+      document.getElementById(
+        'view-management'
+      );
+
+    const details =
+      view?.querySelector(
+        ':scope > details.dc-legacy-details'
+      );
+
+    if (!details) {
+      return false;
+    }
+
+    details.open = true;
+
+    details.classList.add(
+      'is-open'
+    );
+
+    const targetNode =
+      target === 'cost'
+        ? (
+            details.querySelector(
+              '#costForm'
+            ) ||
+            details.querySelector(
+              '.dc-legacy-slot'
+            )
+          )
+        : (
+            details.querySelector(
+              '.dc-legacy-toolbar'
+            ) ||
+            details.querySelector(
+              '.dc-legacy-slot'
+            )
+          );
+
+    requestAnimationFrame(
+      () => {
+        targetNode
+          ?.scrollIntoView?.({
+            behavior: 'smooth',
+            block: 'start'
+          });
+
+        const focusTarget =
+          target === 'cost'
+            ? (
+                details.querySelector(
+                  '#costForm input, #costForm button, #costForm select'
+                ) ||
+                details.querySelector(
+                  '[data-dc-close-legacy]'
+                ) ||
+                details.querySelector(
+                  'summary'
+                )
+              )
+            : (
+                details.querySelector(
+                  '[data-dc-close-legacy]'
+                ) ||
+                details.querySelector(
+                  'summary'
+                )
+              );
+
+        try {
+          focusTarget?.focus?.({
+            preventScroll: true
+          });
+        } catch (_) {
+          focusTarget?.focus?.();
+        }
+      }
+    );
+
+    return true;
+  }
+
   function dashboardHTML(model) {
     const an = model.an;
 
@@ -2089,6 +2294,7 @@
           ${v3WorkforceCard(model)}
           ${forecastCard(model)}
           ${traceCard()}
+          ${v3AdvancedCard(model)}
         </div>
       </div>
     `;
@@ -2503,6 +2709,24 @@
                 rows
               );
             }
+          }
+        );
+      });
+
+    root
+      .querySelectorAll(
+        '[data-v3-open-advanced]'
+      )
+      .forEach(button => {
+        button.addEventListener(
+          'click',
+          () => {
+            v3OpenLegacyAdvanced(
+              root,
+              clean(
+                button.dataset.v3OpenAdvanced
+              )
+            );
           }
         );
       });

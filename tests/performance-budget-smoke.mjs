@@ -144,10 +144,43 @@ assert.ok(
   `JS/CSS total-size budget breach: ${totalAssetBytes}`
 );
 
-assert.ok(
-  largestAssetBytes <=
-    contract.static_payload.largest_js_css_asset_max_bytes,
-  `Largest JS/CSS asset budget breach: ${largestAssetBytes}`
+const perAssetOverrides =
+  contract.static_payload.js_css_asset_max_bytes_overrides ?? {};
+
+const assetBudgetBreaches = assetFiles
+  .map(file => {
+    const relativePath = path
+      .relative(root, file)
+      .split(path.sep)
+      .join('/');
+
+    const size = fs.statSync(file).size;
+
+    const maxBytes =
+      perAssetOverrides[relativePath] ??
+      contract.static_payload.largest_js_css_asset_max_bytes;
+
+    return {
+      relativePath,
+      size,
+      maxBytes
+    };
+  })
+  .filter(
+    item => item.size > item.maxBytes
+  );
+
+assert.equal(
+  assetBudgetBreaches.length,
+  0,
+  `JS/CSS per-asset budget breach: ${
+    assetBudgetBreaches
+      .map(
+        item =>
+          `${item.relativePath}=${item.size}/${item.maxBytes}`
+      )
+      .join(', ')
+  }`
 );
 
 // ------------------------------------------------------------

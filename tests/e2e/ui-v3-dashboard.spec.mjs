@@ -1454,6 +1454,293 @@ test(
 );
 
 
+
+test(
+  'UI V3 A3.2 presion por modulo y MOD MOI global usan el alcance gerencial',
+  async({page})=>{
+    const pageErrors=[];
+
+    page.on(
+      'pageerror',
+      error=>pageErrors.push(
+        String(error?.message||error)
+      )
+    );
+
+    const state=dailyCapacityFixture();
+
+    const bruno=
+      state.workers.find(
+        worker=>
+          worker.nombre==='BRUNO CAPACIDAD'
+      );
+
+    expect(bruno).toBeTruthy();
+
+    bruno.empresa='EMPRESA B';
+    bruno.turno='B';
+    bruno.modulo='M2';
+    bruno.habitacion='201';
+    bruno.cama='A';
+
+    const brunoBed=
+      state.inventory.find(
+        bed=>
+          bed.module==='M1' &&
+          bed.room==='101' &&
+          bed.bed==='B'
+      );
+
+    expect(brunoBed).toBeTruthy();
+
+    brunoBed.module='M2';
+    brunoBed.room='201';
+    brunoBed.bed='A';
+
+    const backend=await login(
+      page,
+      state
+    );
+
+    await openView(
+      page,
+      'management'
+    );
+
+    const dashboard=
+      page.locator(
+        '#view-management .v3-management'
+      );
+
+    await expect(
+      dashboard
+    ).toBeVisible();
+
+    // --------------------------------------------------------
+    // MODULE PRESSURE
+    // --------------------------------------------------------
+
+    const pressure=
+      dashboard.locator(
+        '[data-v3-pressure-card]'
+      );
+
+    await expect(pressure).toBeVisible();
+
+    await expect(
+      pressure
+    ).toContainText(
+      /Presi[o\u00f3]n de capacidad por m[o\u00f3]dulo/i
+    );
+
+    await expect(
+      pressure.locator(
+        '[data-v3-pressure-module]'
+      ).first()
+    ).toBeVisible();
+
+    const pressureCount=
+      await pressure
+        .locator(
+          '[data-v3-pressure-module]'
+        )
+        .count();
+
+    expect(
+      pressureCount
+    ).toBeGreaterThan(0);
+
+    const toggle=
+      pressure.locator(
+        '[data-v3-toggle-modules]'
+      );
+
+    if(await toggle.count()){
+      const before=
+        await pressure
+          .locator(
+            '[data-v3-pressure-module]'
+          )
+          .count();
+
+      await toggle.click();
+
+      await expect(
+        dashboard.locator(
+          '[data-v3-toggle-modules]'
+        )
+      ).toHaveAttribute(
+        'aria-expanded',
+        'true'
+      );
+
+      const after=
+        await dashboard
+          .locator(
+            '[data-v3-pressure-module]'
+          )
+          .count();
+
+      expect(after).toBeGreaterThanOrEqual(
+        before
+      );
+    }
+
+    // --------------------------------------------------------
+    // PERSONNEL MODULE CARD NO LONGER OWNS PRESSURE SEMANTICS
+    // --------------------------------------------------------
+
+    const lodgingModuleCard=
+      dashboard
+        .locator('.v3-card')
+        .filter({
+          hasText:/Personal alojado por m[o\u00f3]dulo/i
+        })
+        .first();
+
+    await expect(
+      lodgingModuleCard
+    ).toBeVisible();
+
+    const lodgingModuleRow=
+      lodgingModuleCard
+        .locator('.v3-module-row')
+        .first();
+
+    await expect(
+      lodgingModuleRow
+    ).toBeVisible();
+
+    const personnelMeter=
+      lodgingModuleRow.locator(
+        '.v3-personnel-meter'
+      );
+
+    await expect(
+      personnelMeter
+    ).toHaveAttribute(
+      'aria-hidden',
+      'true'
+    );
+
+    await expect(
+      lodgingModuleRow
+    ).toContainText('%');
+
+    // --------------------------------------------------------
+    // GLOBAL MOD/MOI TABS
+    // --------------------------------------------------------
+
+    const workforce=
+      dashboard.locator(
+        '[data-v3-workforce-card]'
+      );
+
+    await expect(workforce).toBeVisible();
+
+    await expect(
+      workforce
+    ).toContainText('MOD');
+
+    await expect(
+      workforce
+    ).toContainText('MOI');
+
+    await expect(
+      workforce.locator(
+        '[data-v3-workforce-dim]'
+      )
+    ).toHaveCount(3);
+
+    await expect(
+      workforce.locator(
+        '[data-v3-workforce-dim="company"]'
+      )
+    ).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+
+    await expect(
+      workforce.locator(
+        '[data-v3-workforce-row]'
+      )
+    ).toHaveCount(2);
+
+    await workforce
+      .locator(
+        '[data-v3-workforce-dim="shift"]'
+      )
+      .click();
+
+    await expect(
+      dashboard.locator(
+        '[data-v3-workforce-dim="shift"]'
+      )
+    ).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+
+    await expect(
+      dashboard.locator(
+        '[data-v3-workforce-card] [data-v3-workforce-row]'
+      )
+    ).toHaveCount(2);
+
+    await dashboard
+      .locator(
+        '[data-v3-workforce-dim="module"]'
+      )
+      .click();
+
+    await expect(
+      dashboard.locator(
+        '[data-v3-workforce-dim="module"]'
+      )
+    ).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+
+    await expect(
+      dashboard.locator(
+        '[data-v3-workforce-card] [data-v3-workforce-row]'
+      )
+    ).toHaveCount(2);
+
+    // --------------------------------------------------------
+    // A3.1 FILTER MUST SCOPE MOD/MOI DETAIL
+    // --------------------------------------------------------
+
+    await dashboard
+      .locator('#v3FilterCompany')
+      .selectOption('EMPRESA A');
+
+    await expect(
+      dashboard.locator(
+        '[data-v3-scope]'
+      )
+    ).toContainText('1');
+
+    await expect(
+      dashboard.locator(
+        '[data-v3-workforce-card] [data-v3-workforce-row]'
+      )
+    ).toHaveCount(1);
+
+    await expect(
+      dashboard.locator(
+        '[data-v3-workforce-card]'
+      )
+    ).toContainText('1 PERSONAS');
+
+    expect(pageErrors).toEqual([]);
+    expect(backend.unexpected).toEqual([]);
+  }
+);
+
+
 test(
   'UI V3 conserva experiencia movil real',
   async({page},testInfo)=>{

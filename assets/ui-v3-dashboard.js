@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260912-v3a7';
+  const VERSION = '20260912-v3a8';
 
   const clean = value =>
     String(value == null ? '' : value).trim();
@@ -401,6 +401,11 @@
     module: ''
   };
 
+  const v3InsightState = {
+    workforceDimension: 'company',
+    showAllModules: false
+  };
+
   function v3UniqueValues(rows, key) {
     return [
       ...new Set(
@@ -626,6 +631,463 @@
               Abrir mapa de camas
             </button>
           </div>
+        </div>
+      </section>
+    `;
+  }
+
+  function v3ModulePressureRows(model) {
+    let rows =
+      (model.an?.hm?.modules || [])
+        .map(row => ({
+          label:
+            clean(row?.label) ||
+            'SIN MODULO',
+          capacity:
+            number(row?.capacity),
+          occupied:
+            number(row?.occupied),
+          reserved:
+            number(row?.reserved),
+          blocked:
+            number(row?.blocked),
+          free:
+            number(row?.free),
+          pressure:
+            number(row?.pct)
+        }))
+        .sort(
+          (a, b) =>
+            b.pressure - a.pressure ||
+            (
+              b.occupied +
+              b.reserved
+            ) -
+            (
+              a.occupied +
+              a.reserved
+            ) ||
+            a.label.localeCompare(
+              b.label,
+              'es'
+            )
+        );
+
+    if (v3FilterState.module) {
+      rows =
+        rows.filter(
+          row =>
+            norm(row.label) ===
+            norm(v3FilterState.module)
+        );
+    }
+
+    return rows;
+  }
+
+  function v3ModulePressureCard(model) {
+    const all =
+      v3ModulePressureRows(model);
+
+    const nonZero =
+      all.filter(
+        row =>
+          row.pressure > 0 ||
+          row.occupied > 0 ||
+          row.reserved > 0 ||
+          row.blocked > 0
+      );
+
+    const priority =
+      (
+        nonZero.length
+          ? nonZero
+          : all
+      ).slice(0, 5);
+
+    const rows =
+      v3InsightState.showAllModules
+        ? all
+        : priority;
+
+    const canToggle =
+      all.length > priority.length;
+
+    return `
+      <section
+        class="v3-card v3-pressure-card"
+        data-v3-pressure-card
+      >
+        <div class="v3-card-head">
+          <div>
+            <h3>Presi\u00f3n de capacidad por m\u00f3dulo</h3>
+            <p>
+              Prioriza m\u00f3dulos con uso o compromiso.
+              Empresa y turno no alteran esta presi\u00f3n
+              f\u00edsica global.
+            </p>
+          </div>
+
+          <span class="v3-tag">
+            ${int(all.length)} M\u00d3DULOS
+          </span>
+        </div>
+
+        <div class="v3-pressure-list">
+          ${
+            rows.length
+              ? rows.map(row => {
+                  const tone =
+                    row.pressure >= 100
+                      ? 'critical'
+                      : row.pressure >= 90
+                        ? 'critical'
+                        : row.pressure >= 80
+                          ? 'attention'
+                          : 'normal';
+
+                  return `
+                    <button
+                      type="button"
+                      class="v3-pressure-row ${tone}"
+                      data-v3-pressure-module="${esc(row.label)}"
+                      data-v3-module="${esc(row.label)}"
+                    >
+                      <div class="v3-pressure-main">
+                        <strong>${esc(row.label)}</strong>
+                        <small>
+                          ${int(row.occupied)} ocupadas
+                          \u00b7 ${int(row.reserved)} reservadas
+                          \u00b7 ${int(row.blocked)} fuera servicio
+                          \u00b7 ${int(row.free)} libres
+                        </small>
+                      </div>
+
+                      <div class="v3-pressure-meter">
+                        <i
+                          class="${tone}"
+                          style="width:${Math.min(Math.max(row.pressure, 0), 100)}%"
+                        ></i>
+                      </div>
+
+                      <b>${pct(row.pressure)}</b>
+                    </button>
+                  `;
+                }).join('')
+              : `
+                <div class="v3-empty">
+                  Sin informaci\u00f3n de presi\u00f3n por m\u00f3dulo.
+                </div>
+              `
+          }
+        </div>
+
+        ${
+          canToggle
+            ? `
+              <div class="v3-card-actions">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-v3-toggle-modules
+                  aria-expanded="${
+                    v3InsightState.showAllModules
+                      ? 'true'
+                      : 'false'
+                  }"
+                >
+                  ${
+                    v3InsightState.showAllModules
+                      ? 'Ver prioritarios'
+                      : `Ver todos (${int(all.length)})`
+                  }
+                </button>
+              </div>
+            `
+            : ''
+        }
+      </section>
+    `;
+  }
+
+  function v3WorkforceDimensionKey(
+    worker,
+    dimension
+  ) {
+    if (dimension === 'shift') {
+      return (
+        clean(worker.turno) ||
+        'SIN TURNO'
+      );
+    }
+
+    if (dimension === 'module') {
+      return (
+        clean(worker.modulo) ||
+        'SIN MODULO'
+      );
+    }
+
+    return (
+      clean(worker.empresa) ||
+      'SIN EMPRESA'
+    );
+  }
+
+  function v3WorkforceDimensionRows(
+    model,
+    dimension
+  ) {
+    const workers =
+      v3ScopedOccupied(model);
+
+    const grouped =
+      new Map();
+
+    for (const worker of workers) {
+      const label =
+        v3WorkforceDimensionKey(
+          worker,
+          dimension
+        );
+
+      if (!grouped.has(label)) {
+        grouped.set(label, []);
+      }
+
+      grouped
+        .get(label)
+        .push(worker);
+    }
+
+    return [...grouped.entries()]
+      .map(([label, rows]) => {
+        const totals =
+          workforceTotals(rows);
+
+        return {
+          label,
+          workers: rows,
+          total:
+            number(totals.total),
+          direct:
+            number(totals.direct),
+          indirect:
+            number(totals.indirect),
+          undefined:
+            number(totals.undefined)
+        };
+      })
+      .sort(
+        (a, b) =>
+          b.total - a.total ||
+          a.label.localeCompare(
+            b.label,
+            'es'
+          )
+      );
+  }
+
+  function v3WorkforceCard(model) {
+    const dimension =
+      v3InsightState.workforceDimension;
+
+    const scopedWorkers =
+      v3ScopedOccupied(model);
+
+    const totals =
+      workforceTotals(scopedWorkers);
+
+    const rows =
+      v3WorkforceDimensionRows(
+        model,
+        dimension
+      );
+
+    const total =
+      Math.max(
+        number(totals.total),
+        1
+      );
+
+    const dimensionLabel =
+      dimension === 'shift'
+        ? 'Turno'
+        : dimension === 'module'
+          ? 'M\u00f3dulo'
+          : 'Empresa';
+
+    return `
+      <section
+        class="v3-card v3-workforce-card"
+        data-v3-workforce-card
+      >
+        <div class="v3-card-head">
+          <div>
+            <h3>Composici\u00f3n MOD / MOI</h3>
+            <p>
+              Personal alojando dentro del enfoque actual,
+              clasificado con CampWorkforceMODMOI.
+            </p>
+          </div>
+
+          <span class="v3-tag">
+            ${int(totals.total)} PERSONAS
+          </span>
+        </div>
+
+        <div
+          class="v3-workforce-tabs"
+          role="tablist"
+          aria-label="Agrupar composici\u00f3n MOD MOI"
+        >
+          ${[
+            ['company', 'Empresa'],
+            ['shift', 'Turno'],
+            ['module', 'M\u00f3dulo']
+          ].map(([key, label]) => `
+            <button
+              type="button"
+              role="tab"
+              class="v3-workforce-tab ${
+                dimension === key
+                  ? 'active'
+                  : ''
+              }"
+              data-v3-workforce-dim="${key}"
+              aria-selected="${
+                dimension === key
+                  ? 'true'
+                  : 'false'
+              }"
+            >
+              ${label}
+            </button>
+          `).join('')}
+        </div>
+
+        <div class="v3-workforce-summary">
+          <div class="direct">
+            <span>MOD</span>
+            <strong>${int(totals.direct)}</strong>
+            <small>
+              ${pct(
+                number(totals.direct) /
+                total *
+                100
+              )}
+            </small>
+          </div>
+
+          <div class="indirect">
+            <span>MOI</span>
+            <strong>${int(totals.indirect)}</strong>
+            <small>
+              ${pct(
+                number(totals.indirect) /
+                total *
+                100
+              )}
+            </small>
+          </div>
+
+          <div class="undefined">
+            <span>Por definir</span>
+            <strong>${int(totals.undefined)}</strong>
+            <small>
+              ${pct(
+                number(totals.undefined) /
+                total *
+                100
+              )}
+            </small>
+          </div>
+        </div>
+
+        <div class="v3-workforce-list">
+          ${
+            rows.length
+              ? rows.map(row => {
+                  const rowTotal =
+                    Math.max(
+                      row.total,
+                      1
+                    );
+
+                  const directPct =
+                    row.direct /
+                    rowTotal *
+                    100;
+
+                  const indirectPct =
+                    row.indirect /
+                    rowTotal *
+                    100;
+
+                  const undefinedPct =
+                    row.undefined /
+                    rowTotal *
+                    100;
+
+                  return `
+                    <button
+                      type="button"
+                      class="v3-workforce-row"
+                      data-v3-workforce-row="${esc(row.label)}"
+                      data-v3-workforce-row-dim="${dimension}"
+                    >
+                      <div class="v3-workforce-row-head">
+                        <strong>${esc(row.label)}</strong>
+                        <span>
+                          ${int(row.total)}
+                          persona(s)
+                        </span>
+                      </div>
+
+                      <div
+                        class="v3-workforce-stack"
+                        aria-label="${esc(
+                          `${dimensionLabel} ${row.label}: MOD ${row.direct}, MOI ${row.indirect}, por definir ${row.undefined}`
+                        )}"
+                      >
+                        <i
+                          class="direct"
+                          style="width:${directPct}%"
+                        ></i>
+                        <i
+                          class="indirect"
+                          style="width:${indirectPct}%"
+                        ></i>
+                        <i
+                          class="undefined"
+                          style="width:${undefinedPct}%"
+                        ></i>
+                      </div>
+
+                      <small>
+                        MOD ${int(row.direct)}
+                        \u00b7 MOI ${int(row.indirect)}
+                        ${
+                          row.undefined
+                            ? `\u00b7 Por definir ${int(row.undefined)}`
+                            : ''
+                        }
+                      </small>
+                    </button>
+                  `;
+                }).join('')
+              : `
+                <div class="v3-empty">
+                  Sin personal alojando dentro del enfoque actual.
+                </div>
+              `
+          }
+        </div>
+
+        <div class="v3-legend">
+          <span><i class="direct"></i> MOD</span>
+          <span><i class="indirect"></i> MOI</span>
+          <span><i class="undefined"></i> Por definir</span>
         </div>
       </section>
     `;
@@ -1071,12 +1533,23 @@
         1
       );
 
+    const max =
+      Math.max(
+        ...rows.map(
+          row => row.count
+        ),
+        1
+      );
+
     return `
       <section class="v3-card">
         <div class="v3-card-head">
           <div>
-            <h3>Personal alojado por módulo</h3>
-            <p>Cantidad, participacion y presion operacional.</p>
+            <h3>Personal alojado por m\u00f3dulo</h3>
+            <p>
+              Cantidad y participaci\u00f3n del personal
+              alojando dentro del enfoque actual.
+            </p>
           </div>
           <span class="v3-tag">ALOJAMIENTO</span>
         </div>
@@ -1093,29 +1566,40 @@
                   <div>
                     <strong>${esc(row.label)}</strong>
                     <small>
-                      ${int(row.count)} persona(s) ? ${pct(row.count / total * 100)} del personal alojando
+                      ${int(row.count)} persona(s)
+                      \u00b7 ${pct(
+                        row.count /
+                        total *
+                        100
+                      )} del personal alojando
                     </small>
                   </div>
 
-                  <div class="v3-module-meter">
+                  <div
+                    class="v3-personnel-meter"
+                    aria-hidden="true"
+                  >
                     <i
-                      class="${
-                        row.pressure >= 90
-                          ? 'critical'
-                          : row.pressure >= 80
-                            ? 'attention'
-                            : 'normal'
-                      }"
-                      style="width:${Math.min(row.pressure, 100)}%"
+                      style="width:${
+                        row.count /
+                        max *
+                        100
+                      }%"
                     ></i>
                   </div>
 
-                  <b>${pct(row.pressure)}</b>
+                  <b>
+                    ${pct(
+                      row.count /
+                      total *
+                      100
+                    )}
+                  </b>
                 </button>
               `).join('')
               : `
                 <div class="v3-empty">
-                  Sin módulos ocupados actualmente.
+                  Sin m\u00f3dulos ocupados actualmente.
                 </div>
               `
           }
@@ -1430,7 +1914,9 @@
           ${executiveSummary(model)}
           ${focusCard(model)}
           ${companyCard(scoped)}
+          ${v3ModulePressureCard(model)}
           ${moduleCard(scoped)}
+          ${v3WorkforceCard(model)}
           ${forecastCard(model)}
           ${traceCard()}
         </div>
@@ -1635,6 +2121,97 @@
               'function'
             ) {
               switchView('control');
+            }
+          }
+        );
+      });
+
+    root
+      .querySelectorAll(
+        '[data-v3-workforce-dim]'
+      )
+      .forEach(button => {
+        button.addEventListener(
+          'click',
+          () => {
+            const next =
+              clean(
+                button.dataset.v3WorkforceDim
+              );
+
+            if (
+              ![
+                'company',
+                'shift',
+                'module'
+              ].includes(next)
+            ) {
+              return;
+            }
+
+            v3InsightState.workforceDimension =
+              next;
+
+            render();
+          }
+        );
+      });
+
+    root
+      .querySelector(
+        '[data-v3-toggle-modules]'
+      )
+      ?.addEventListener(
+        'click',
+        () => {
+          v3InsightState.showAllModules =
+            !v3InsightState.showAllModules;
+
+          render();
+        }
+      );
+
+    root
+      .querySelectorAll(
+        '[data-v3-workforce-row]'
+      )
+      .forEach(button => {
+        button.addEventListener(
+          'click',
+          () => {
+            const dimension =
+              clean(
+                button.dataset.v3WorkforceRowDim
+              );
+
+            const label =
+              clean(
+                button.dataset.v3WorkforceRow
+              );
+
+            const rows =
+              v3ScopedOccupied(model)
+                .filter(worker =>
+                  norm(
+                    v3WorkforceDimensionKey(
+                      worker,
+                      dimension
+                    )
+                  ) ===
+                  norm(label)
+                );
+
+            if (rows.length) {
+              openWorkers(
+                `${
+                  dimension === 'shift'
+                    ? 'Turno'
+                    : dimension === 'module'
+                      ? 'M\u00f3dulo'
+                      : 'Empresa'
+                } \u00b7 ${label}`,
+                rows
+              );
             }
           }
         );

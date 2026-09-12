@@ -84,6 +84,76 @@
     if(A.controlBedKey){const item=hm.items.find(x=>lkey(x.module,x.room,x.bed)===A.controlBedKey);if(item&&visibleItems.some(x=>lkey(x.module,x.room,x.bed)===A.controlBedKey)){const panel=document.querySelector('#controlDetailPanel');if(panel)panel.innerHTML=detailHTML(item)}else A.controlBedKey=''}
   }
 
+  function mapSnapshot(moduleName){
+    const d=A.data;
+
+    if(
+      !d ||
+      typeof analytics!=='function'
+    ){
+      return null;
+    }
+
+    const hm=analytics(d).hm;
+
+    if(!hm){
+      return null;
+    }
+
+    const requested=
+      String(moduleName??'').trim();
+
+    const current=
+      hm.moduleNames.find(
+        name=>norm(name)===norm(requested)
+      ) ||
+      hm.moduleNames.find(
+        name=>norm(name)===norm(A.mapModule)
+      ) ||
+      hm.moduleNames[0] ||
+      '';
+
+    if(!current){
+      return {
+        moduleName:'',
+        module:null,
+        moduleNames:[],
+        items:[]
+      };
+    }
+
+    const mod=
+      hm.modules.find(
+        row=>norm(row.label)===norm(current)
+      ) ||
+      null;
+
+    const items=
+      hm.items.filter(
+        item=>norm(item.module)===norm(current)
+      );
+
+    return {
+      moduleName:current,
+      module:mod,
+      moduleNames:[...hm.moduleNames],
+      items
+    };
+  }
+
+  window.GarpiControlCenterMap=
+    Object.freeze({
+      snapshot:mapSnapshot,
+      bedMap,
+      detailHTML,
+      bedKey:item=>
+        lkey(
+          item?.module,
+          item?.room,
+          item?.bed
+        )
+    });
+
   renderControl=function(){
     try{
       const d=A.data;if(!d)return baseRenderControl();const an=analytics(d),hm=an.hm,{companies,shifts}=ensureState(d,hm),mod=hm.modules.find(x=>norm(x.label)===norm(A.mapModule))||hm.modules[0];if(!mod)return baseRenderControl();A.mapModule=mod.label;

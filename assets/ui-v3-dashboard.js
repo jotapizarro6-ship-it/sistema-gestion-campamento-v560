@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260912-v3a8';
+  const VERSION = '20260912-v3a9';
 
   const clean = value =>
     String(value == null ? '' : value).trim();
@@ -1093,6 +1093,175 @@
     `;
   }
 
+  function v3HotelMapCard(model) {
+    const api=
+      window.GarpiControlCenterMap;
+
+    if(
+      !api?.snapshot ||
+      !api?.bedMap ||
+      !api?.detailHTML
+    ) {
+      return `
+        <section
+          class="v3-card v3-hotel-card"
+          data-v3-hotel-map
+        >
+          <div class="v3-card-head">
+            <div>
+              <h3>Mapa hotel de camas</h3>
+              <p>
+                El mapa compartido del Centro de Gesti\u00f3n
+                no est\u00e1 disponible en este contexto.
+              </p>
+            </div>
+          </div>
+
+          <div class="v3-card-actions">
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-v3-open-map
+            >
+              Abrir mapa completo
+            </button>
+          </div>
+        </section>
+      `;
+    }
+
+    const state=
+      appState();
+
+    const requestedModule =
+      v3FilterState.module ||
+      clean(state?.mapModule) ||
+      clean(
+        model.an?.hm?.moduleNames?.[0]
+      );
+
+    const snapshot=
+      api.snapshot(
+        requestedModule
+      );
+
+    if(
+      !snapshot ||
+      !snapshot.moduleName
+    ) {
+      return `
+        <section
+          class="v3-card v3-hotel-card"
+          data-v3-hotel-map
+        >
+          <div class="v3-card-head">
+            <div>
+              <h3>Mapa hotel de camas</h3>
+              <p>
+                No existe inventario de camas disponible.
+              </p>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    const mod=
+      snapshot.module || {};
+
+    return `
+      <section
+        class="v3-card v3-hotel-card"
+        data-v3-hotel-map
+      >
+        <div class="v3-card-head">
+          <div>
+            <h3>Mapa hotel de camas</h3>
+            <p>
+              M\u00f3dulo \u2192 habitaci\u00f3n \u2192 cama.
+              Estados y detalle provienen del Centro de Gesti\u00f3n.
+            </p>
+          </div>
+
+          <span class="v3-tag">
+            ${int(snapshot.items.length)} CAMAS
+          </span>
+        </div>
+
+        <div class="v3-hotel-toolbar">
+          <label>
+            <span>M\u00f3dulo</span>
+
+            <select
+              id="v3HotelModule"
+              aria-label="M\u00f3dulo del mapa hotel"
+            >
+              ${snapshot.moduleNames
+                .map(name => `
+                  <option
+                    value="${esc(name)}"
+                    ${
+                      norm(name) ===
+                      norm(snapshot.moduleName)
+                        ? 'selected'
+                        : ''
+                    }
+                  >
+                    ${esc(name)}
+                  </option>
+                `)
+                .join('')}
+            </select>
+          </label>
+
+          <div class="v3-hotel-status">
+            <span class="occupied">
+              Ocupadas ${int(mod.occupied)}
+            </span>
+            <span class="reserved">
+              Reservadas ${int(mod.reserved)}
+            </span>
+            <span class="blocked">
+              Bloqueadas ${int(mod.blocked)}
+            </span>
+            <span class="free">
+              Libres ${int(mod.free)}
+            </span>
+          </div>
+        </div>
+
+        <div class="v3-hotel-layout">
+          <div class="v3-hotel-map-body">
+            ${api.bedMap(snapshot.items)}
+          </div>
+
+          <aside
+            class="v3-hotel-detail"
+            id="v3HotelDetail"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            ${api.detailHTML(null)}
+          </aside>
+        </div>
+
+        <div class="v3-card-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-v3-open-map
+            data-v3-map-module="${esc(
+              snapshot.moduleName
+            )}"
+          >
+            Abrir mapa completo
+          </button>
+        </div>
+      </section>
+    `;
+  }
+
   function v3CapacityCard(model) {
     const an = model.an;
 
@@ -1915,6 +2084,7 @@
           ${focusCard(model)}
           ${companyCard(scoped)}
           ${v3ModulePressureCard(model)}
+          ${v3HotelMapCard(model)}
           ${moduleCard(scoped)}
           ${v3WorkforceCard(model)}
           ${forecastCard(model)}
@@ -2092,6 +2262,122 @@
         }
       );
 
+    const hotelModule=
+      root.querySelector(
+        '#v3HotelModule'
+      );
+
+    hotelModule?.addEventListener(
+      'change',
+      event => {
+        const state=
+          appState();
+
+        if(!state){
+          return;
+        }
+
+        state.mapModule=
+          clean(event.target.value);
+
+        state.controlBedKey='';
+
+        render();
+      }
+    );
+
+    root
+      .querySelectorAll(
+        '[data-v3-hotel-map] [data-cc-bed]'
+      )
+      .forEach(button => {
+        button.addEventListener(
+          'click',
+          () => {
+            const api=
+              window.GarpiControlCenterMap;
+
+            const state=
+              appState();
+
+            if(
+              !api?.snapshot ||
+              !api?.detailHTML ||
+              !api?.bedKey ||
+              !state
+            ){
+              return;
+            }
+
+            const moduleName=
+              clean(
+                root.querySelector(
+                  '#v3HotelModule'
+                )?.value
+              ) ||
+              clean(state.mapModule);
+
+            const snapshot=
+              api.snapshot(
+                moduleName
+              );
+
+            const key=
+              clean(
+                button.dataset.ccBed
+              );
+
+            const item=
+              snapshot?.items?.find(
+                row=>
+                  api.bedKey(row)===key
+              );
+
+            if(!item){
+              return;
+            }
+
+            state.mapModule=
+              snapshot.moduleName;
+
+            state.controlBedKey=
+              key;
+
+            root
+              .querySelectorAll(
+                '[data-v3-hotel-map] [data-cc-bed]'
+              )
+              .forEach(node => {
+                const active=
+                  node.dataset.ccBed ===
+                  key;
+
+                node.classList.toggle(
+                  'selected',
+                  active
+                );
+
+                node.setAttribute(
+                  'aria-pressed',
+                  active
+                    ? 'true'
+                    : 'false'
+                );
+              });
+
+            const detail=
+              root.querySelector(
+                '#v3HotelDetail'
+              );
+
+            if(detail){
+              detail.innerHTML=
+                api.detailHTML(item);
+            }
+          }
+        );
+      });
+
     root
       .querySelectorAll(
         '[data-v3-open-map]'
@@ -2104,7 +2390,11 @@
               appState();
 
             const targetModule =
+              clean(
+                button.dataset.v3MapModule
+              ) ||
               v3FilterState.module ||
+              clean(state?.mapModule) ||
               model.modules?.[0]?.label ||
               '';
 

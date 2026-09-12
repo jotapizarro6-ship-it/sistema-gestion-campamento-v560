@@ -1741,6 +1741,192 @@ test(
 );
 
 
+
+test(
+  'UI V3 A3.3 integra mapa hotel compartido y conserva estado del Centro de Gestion',
+  async({page})=>{
+    const pageErrors=[];
+
+    page.on(
+      'pageerror',
+      error=>pageErrors.push(
+        String(error?.message||error)
+      )
+    );
+
+    const state=dailyCapacityFixture();
+
+    const bruno=
+      state.workers.find(
+        worker=>
+          worker.nombre==='BRUNO CAPACIDAD'
+      );
+
+    expect(bruno).toBeTruthy();
+
+    bruno.modulo='M2';
+    bruno.habitacion='201';
+    bruno.cama='A';
+
+    const brunoBed=
+      state.inventory.find(
+        bed=>
+          bed.module==='M1' &&
+          bed.room==='101' &&
+          bed.bed==='B'
+      );
+
+    expect(brunoBed).toBeTruthy();
+
+    brunoBed.module='M2';
+    brunoBed.room='201';
+    brunoBed.bed='A';
+
+    const backend=await login(
+      page,
+      state
+    );
+
+    await openView(
+      page,
+      'management'
+    );
+
+    const dashboard=
+      page.locator(
+        '#view-management .v3-management'
+      );
+
+    await expect(
+      dashboard
+    ).toBeVisible();
+
+    const hotel=
+      dashboard.locator(
+        '[data-v3-hotel-map]'
+      );
+
+    await expect(hotel).toBeVisible();
+
+    await expect(
+      hotel
+    ).toContainText(
+      'Mapa hotel de camas'
+    );
+
+    expect(
+      await page.evaluate(
+        ()=>Boolean(
+          window.GarpiControlCenterMap?.snapshot &&
+          window.GarpiControlCenterMap?.bedMap &&
+          window.GarpiControlCenterMap?.detailHTML &&
+          window.GarpiControlCenterMap?.bedKey
+        )
+      )
+    ).toBe(true);
+
+    const moduleSelect=
+      hotel.locator(
+        '#v3HotelModule'
+      );
+
+    await expect(
+      moduleSelect
+    ).toBeVisible();
+
+    await moduleSelect.selectOption('M2');
+
+    await expect.poll(
+      ()=>page.evaluate(
+        ()=>window.A?.mapModule||''
+      )
+    ).toBe('M2');
+
+    const refreshedHotel=
+      dashboard.locator(
+        '[data-v3-hotel-map]'
+      );
+
+    await expect(
+      refreshedHotel.locator(
+        '#v3HotelModule'
+      )
+    ).toHaveValue('M2');
+
+    const beds=
+      refreshedHotel.locator(
+        '[data-cc-bed]'
+      );
+
+    expect(
+      await beds.count()
+    ).toBeGreaterThan(0);
+
+    const bed=
+      beds.first();
+
+    await expect(bed).toBeVisible();
+
+    const bedKey=
+      await bed.getAttribute(
+        'data-cc-bed'
+      );
+
+    expect(bedKey).toBeTruthy();
+
+    await bed.click();
+
+    await expect(
+      refreshedHotel.locator(
+        '#v3HotelDetail'
+      )
+    ).toContainText('M2');
+
+    await expect.poll(
+      ()=>page.evaluate(
+        ()=>window.A?.controlBedKey||''
+      )
+    ).toBe(bedKey);
+
+    await expect(
+      bed
+    ).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+
+    await refreshedHotel
+      .locator(
+        '[data-v3-open-map]'
+      )
+      .click();
+
+    await expect.poll(
+      ()=>page.evaluate(
+        ()=>window.A?.currentView||''
+      )
+    ).toBe('control');
+
+    await expect(
+      page.locator('#view-control')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('#ccModule')
+    ).toHaveValue('M2');
+
+    await expect.poll(
+      ()=>page.evaluate(
+        ()=>window.A?.controlBedKey||''
+      )
+    ).toBe(bedKey);
+
+    expect(pageErrors).toEqual([]);
+    expect(backend.unexpected).toEqual([]);
+  }
+);
+
+
 test(
   'UI V3 conserva experiencia movil real',
   async({page},testInfo)=>{

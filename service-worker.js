@@ -1,5 +1,5 @@
 'use strict';
-const CACHE_VERSION='campamento-shell-5.6.1-modern.12-r5-operational-v1-public-clean2-ui-v3-a8';
+const CACHE_VERSION='campamento-shell-5.6.1-modern.12-r5-operational-v1-public-clean2-ui-v3-a9';
 const SHELL=[
   './','./index.html','./admin.html','./manifest.webmanifest',
   './assets/styles.css','./assets/garpi-tech-blue.css','./assets/garpi-tech-blue-c2.css','./assets/garpi-runtime-env.js','./assets/garpi-observability.js','./assets/app-1.js','./assets/app-2a.js','./assets/app-2b.js','./assets/app-3a.js','./assets/app-3b.js','./assets/app-4.js',

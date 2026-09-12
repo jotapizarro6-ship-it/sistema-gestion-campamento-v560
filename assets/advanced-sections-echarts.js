@@ -44,6 +44,7 @@
     host.setAttribute('role','group');
     host.setAttribute('aria-roledescription','grafico interactivo');
     host.onfocus=preview;
+    if(typeof c.on==='function')c.on('finished',()=>{if(document.activeElement===host)describe()});
     host.onkeydown=e=>{
       const key=e.key;
       if(key==='ArrowRight'||key==='ArrowDown'){e.preventDefault();index=(index+1)%count;preview();return}

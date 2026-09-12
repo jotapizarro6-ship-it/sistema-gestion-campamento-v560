@@ -14,3 +14,32 @@ body[data-camp-profile="JEFATURA"] [data-ops-write],body[data-camp-profile="OPER
 @media(max-width:760px){.ops-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-grid.two{grid-template-columns:1fr}.ops-panel-head{flex-direction:column;gap:8px}.ops-alert{grid-template-columns:1fr}.ops-milestone{grid-template-columns:72px minmax(0,1fr)}.ops-milestone .badge{grid-column:2}.ops-whatif-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-inline-form{grid-template-columns:1fr}.ops-inline-form .span2{grid-column:auto}.ops-assumption{grid-template-columns:1fr auto}.ops-assumption>*:nth-child(3),.ops-assumption>*:nth-child(4){grid-column:1}.ops-scenario-bar{grid-template-columns:1fr}.ops-scenario-bar>*{width:100%}.ops-plan-event{grid-template-columns:1fr}.ops-plan-body{flex-direction:column}.ops-plan-actions{justify-content:flex-start}.ops-chart{height:260px}.ops-chart.tall{height:300px}.ops-chart.gantt{height:320px}.ops-permission-grid,.ops-resilience-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-security-list>div{grid-template-columns:1fr}.ops-profile-badge{max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 @media(max-width:430px){.ops-kpi-grid,.ops-whatif-kpis,.ops-permission-grid,.ops-resilience-metrics{grid-template-columns:1fr 1fr}.ops-kpi{padding:12px}.ops-kpi strong{font-size:22px}.ops-whatif-kpis strong{font-size:18px}.ops-chart{height:240px}.ops-chart.tall{height:270px}.ops-chart.gantt{height:300px}.ops-action-buttons .btn,.ops-plan-actions .btn{flex:1;min-height:44px}.ops-alert .btn{width:100%;min-height:44px}.ops-resilience-banner{align-items:flex-start;flex-direction:column}}
 @media(max-width:340px){.ops-kpi-grid,.ops-whatif-kpis,.ops-permission-grid,.ops-resilience-metrics{grid-template-columns:1fr}}
+
+/* UI V1-A: legibilidad operacional en movil */
+@media(max-width:560px){
+  .ops-severity{
+    font-size:10.5px;
+    line-height:1.25;
+  }
+
+  .ops-action-status{
+    font-size:10.5px;
+    line-height:1.25;
+  }
+}
+
+/* UI V1-A2: legibilidad de metadatos operacionales en movil */
+@media(max-width:560px){
+  .ops-action-meta,
+  .ops-sync-note{
+    font-size:10.5px;
+    line-height:1.4;
+  }
+}
+
+/* UI V1-A3: mantener KPIs operacionales compactos en movil estrecho */
+@media(max-width:340px){
+  .ops-kpi-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}

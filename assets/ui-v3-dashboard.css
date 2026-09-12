@@ -1,0 +1,701 @@
+/* GARPI UI V3-A1 - consolidated management dashboard */
+
+#view-management .v3-shell{
+  min-width:0;
+}
+
+#view-management .v3-management{
+  display:grid;
+  gap:12px;
+  min-width:0;
+}
+
+#view-management .v3-hero{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  padding:16px 18px;
+  border:1px solid #d8e6eb;
+  border-radius:14px;
+  background:
+    linear-gradient(135deg,#f7fbfd 0%,#fff 64%);
+  box-shadow:0 8px 24px rgba(24,62,83,.06);
+}
+
+#view-management .v3-eyebrow{
+  display:block;
+  margin-bottom:4px;
+  color:#3b7899;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.9px;
+}
+
+#view-management .v3-hero h2{
+  margin:0;
+  color:#173a4f;
+  font-size:24px;
+  line-height:1.08;
+}
+
+#view-management .v3-hero p{
+  margin:7px 0 0;
+  max-width:760px;
+  color:#5b7280;
+  font-size:11px;
+  line-height:1.5;
+}
+
+#view-management .v3-hero-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+#view-management .v3-kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:9px;
+}
+
+#view-management .v3-kpi{
+  min-width:0;
+  padding:12px 13px;
+  border:1px solid #dce7ec;
+  border-radius:12px;
+  background:#fff;
+}
+
+#view-management .v3-kpi>span{
+  display:block;
+  color:#617784;
+  font-size:9px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.48px;
+}
+
+#view-management .v3-kpi>strong{
+  display:block;
+  margin-top:5px;
+  color:#183f55;
+  font-size:24px;
+  line-height:1.05;
+}
+
+#view-management .v3-kpi>small{
+  display:block;
+  margin-top:5px;
+  color:#6b7f8b;
+  font-size:9px;
+  line-height:1.35;
+}
+
+#view-management .v3-kpi.attention{
+  border-color:#e9cf9c;
+  background:#fffaf1;
+}
+
+#view-management .v3-kpi.critical{
+  border-color:#efb8b4;
+  background:#fff6f5;
+}
+
+#view-management .v3-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  min-width:0;
+}
+
+#view-management .v3-card{
+  min-width:0;
+  padding:14px;
+  border:1px solid #dbe7ec;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 6px 20px rgba(24,62,83,.045);
+}
+
+#view-management .v3-span-2{
+  grid-column:1/-1;
+}
+
+#view-management .v3-card-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+#view-management .v3-card-head h3{
+  margin:0;
+  color:#1a4055;
+  font-size:15px;
+}
+
+#view-management .v3-card-head p{
+  margin:4px 0 0;
+  color:#667d89;
+  font-size:10px;
+  line-height:1.4;
+}
+
+#view-management .v3-tag{
+  flex:0 0 auto;
+  padding:5px 8px;
+  border-radius:999px;
+  background:#eaf4f8;
+  color:#2c6e8f;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.45px;
+}
+
+#view-management .v3-tag.good{
+  background:#eaf7f0;
+  color:#2c7657;
+}
+
+#view-management .v3-tag.attention{
+  background:#fff3dc;
+  color:#956018;
+}
+
+#view-management .v3-tag.critical{
+  background:#fee8e6;
+  color:#a84844;
+}
+
+#view-management .v3-summary p{
+  margin:0;
+  color:#415c6b;
+  font-size:11px;
+  line-height:1.65;
+}
+
+#view-management .v3-alerts{
+  display:grid;
+  gap:7px;
+}
+
+#view-management .v3-alert{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:9px;
+  padding:9px 10px;
+  border:1px solid #e2e9ed;
+  border-radius:10px;
+  background:#fafcfd;
+}
+
+#view-management .v3-alert>i{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:#65a37f;
+}
+
+#view-management .v3-alert.medium>i,
+#view-management .v3-alert.high>i{
+  background:#d69b38;
+}
+
+#view-management .v3-alert.critical>i{
+  background:#d25855;
+}
+
+#view-management .v3-alert strong{
+  display:block;
+  color:#27495b;
+  font-size:10px;
+}
+
+#view-management .v3-alert small{
+  display:block;
+  margin-top:2px;
+  color:#6b7d87;
+  font-size:9px;
+  line-height:1.35;
+}
+
+#view-management .v3-alert>b{
+  color:#536c79;
+  font-size:9px;
+}
+
+#view-management .v3-empty,
+#view-management .v3-empty-good{
+  padding:12px;
+  border-radius:10px;
+  background:#f4f8fa;
+  color:#607784;
+  font-size:10px;
+}
+
+#view-management .v3-empty-good{
+  background:#eef8f3;
+  color:#2f7156;
+}
+
+#view-management .v3-company-list{
+  display:grid;
+  gap:5px;
+}
+
+#view-management .v3-company-row{
+  display:grid;
+  grid-template-columns:minmax(140px,1.25fr) minmax(160px,2fr) minmax(125px,1fr);
+  align-items:center;
+  gap:12px;
+  width:100%;
+  padding:9px 8px;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  text-align:left;
+  cursor:pointer;
+}
+
+#view-management .v3-company-row:hover{
+  background:#f5f9fb;
+}
+
+#view-management .v3-company-row:focus-visible,
+#view-management .v3-module-row:focus-visible,
+#view-management .v3-day:focus-visible{
+  outline:3px solid #1769aa;
+  outline-offset:2px;
+}
+
+#view-management .v3-company-name{
+  min-width:0;
+}
+
+#view-management .v3-company-name strong{
+  display:block;
+  overflow:hidden;
+  color:#244759;
+  font-size:10px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+#view-management .v3-company-name small{
+  display:block;
+  margin-top:3px;
+  color:#71838d;
+  font-size:9px;
+}
+
+#view-management .v3-company-track{
+  height:13px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#e8f0f4;
+}
+
+#view-management .v3-company-bar{
+  display:flex;
+  height:100%;
+  min-width:3px;
+  overflow:hidden;
+  border-radius:inherit;
+}
+
+#view-management .v3-company-bar i{
+  display:block;
+  height:100%;
+}
+
+#view-management .direct{
+  background:#2f8c69;
+}
+
+#view-management .indirect{
+  background:#438eb4;
+}
+
+#view-management .undefined{
+  background:#b7c4cb;
+}
+
+#view-management .v3-company-meta{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+  color:#536c79;
+  font-size:9px;
+  font-weight:800;
+}
+
+#view-management .v3-legend{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-top:10px;
+  color:#657b87;
+  font-size:9px;
+}
+
+#view-management .v3-legend span{
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+
+#view-management .v3-legend i{
+  width:10px;
+  height:10px;
+  border-radius:3px;
+}
+
+#view-management .v3-module-list{
+  display:grid;
+  gap:6px;
+}
+
+#view-management .v3-module-row{
+  display:grid;
+  grid-template-columns:minmax(100px,1.4fr) minmax(100px,1fr) auto;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  padding:8px;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  text-align:left;
+  cursor:pointer;
+}
+
+#view-management .v3-module-row:hover{
+  background:#f5f9fb;
+}
+
+#view-management .v3-module-row strong{
+  display:block;
+  color:#28495b;
+  font-size:10px;
+}
+
+#view-management .v3-module-row small{
+  display:block;
+  margin-top:2px;
+  color:#71838d;
+  font-size:9px;
+}
+
+#view-management .v3-module-meter{
+  height:9px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#e8eff2;
+}
+
+#view-management .v3-module-meter i{
+  display:block;
+  height:100%;
+  border-radius:inherit;
+}
+
+#view-management .v3-module-meter i.normal{
+  background:#5ca77f;
+}
+
+#view-management .v3-module-meter i.attention{
+  background:#d9a247;
+}
+
+#view-management .v3-module-meter i.critical{
+  background:#d35c58;
+}
+
+#view-management .v3-module-row>b{
+  color:#365568;
+  font-size:10px;
+}
+
+#view-management .v3-forecast-scroll{
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding-bottom:3px;
+  scrollbar-width:thin;
+}
+
+#view-management .v3-forecast{
+  display:grid;
+  grid-template-columns:repeat(30,minmax(15px,1fr));
+  align-items:end;
+  gap:4px;
+  min-width:660px;
+  height:145px;
+  padding:8px 0 18px;
+  background:
+    linear-gradient(
+      to top,
+      transparent 0,
+      transparent 79%,
+      rgba(215,155,54,.08) 79%,
+      rgba(215,155,54,.08) 80%,
+      transparent 80%,
+      transparent 89%,
+      rgba(211,92,88,.08) 89%,
+      rgba(211,92,88,.08) 90%,
+      transparent 90%
+    );
+}
+
+#view-management .v3-day{
+  position:relative;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  height:120px;
+  padding:0;
+  border:0;
+  background:transparent;
+  cursor:pointer;
+}
+
+#view-management .v3-day i{
+  display:block;
+  width:100%;
+  min-height:5px;
+  border-radius:4px 4px 2px 2px;
+  background:#68a6c5;
+}
+
+#view-management .v3-day.attention i{
+  background:#dda845;
+}
+
+#view-management .v3-day.critical i{
+  background:#d25c58;
+}
+
+#view-management .v3-day span{
+  position:absolute;
+  bottom:-15px;
+  color:#667b87;
+  font-size:8px;
+}
+
+#view-management .v3-forecast-stats{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin-top:10px;
+}
+
+#view-management .v3-forecast-stats>div{
+  padding:8px 9px;
+  border:1px solid #e0e9ed;
+  border-radius:9px;
+  background:#fafcfd;
+}
+
+#view-management .v3-forecast-stats span{
+  display:block;
+  color:#687d88;
+  font-size:8px;
+  font-weight:800;
+  text-transform:uppercase;
+}
+
+#view-management .v3-forecast-stats strong{
+  display:block;
+  margin-top:3px;
+  color:#274b5e;
+  font-size:16px;
+}
+
+#view-management .v3-search{
+  display:grid;
+  gap:5px;
+}
+
+#view-management .v3-search>span{
+  color:#536d7b;
+  font-size:9px;
+  font-weight:900;
+}
+
+#view-management .v3-search input{
+  width:100%;
+  min-height:42px;
+  padding:9px 11px;
+  border:1px solid #cbdbe3;
+  border-radius:10px;
+  color:#173c50;
+  background:#fff;
+  font:600 12px system-ui;
+}
+
+#view-management .v3-search input:focus-visible{
+  outline:3px solid #1769aa;
+  outline-offset:2px;
+}
+
+#view-management .v3-trace-results{
+  display:grid;
+  gap:7px;
+  margin-top:10px;
+}
+
+#view-management .v3-trace-card{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 11px;
+  border:1px solid #e0e8ec;
+  border-radius:10px;
+  background:#fafcfd;
+}
+
+#view-management .v3-trace-card strong{
+  display:block;
+  color:#23475a;
+  font-size:10px;
+}
+
+#view-management .v3-trace-card small{
+  display:block;
+  margin-top:3px;
+  color:#70828d;
+  font-size:9px;
+}
+
+#view-management .v3-trace-bed{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  color:#54707e;
+  font-size:9px;
+}
+
+#view-management .v3-trace-bed strong{
+  color:#173f56;
+}
+
+.v3-dialog-table-wrap{
+  max-height:60vh;
+  overflow:auto;
+}
+
+@media(max-width:900px){
+  #view-management .v3-kpi-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  #view-management .v3-grid{
+    grid-template-columns:1fr;
+  }
+
+  #view-management .v3-span-2{
+    grid-column:auto;
+  }
+
+  #view-management .v3-company-row{
+    grid-template-columns:minmax(120px,1fr) minmax(140px,1.5fr);
+  }
+
+  #view-management .v3-company-meta{
+    grid-column:1/-1;
+    justify-content:flex-start;
+    padding-left:2px;
+  }
+}
+
+@media(max-width:600px){
+  #view-management .v3-hero{
+    flex-direction:column;
+    padding:13px;
+  }
+
+  #view-management .v3-hero h2{
+    font-size:20px;
+  }
+
+  #view-management .v3-hero-actions{
+    width:100%;
+    justify-content:stretch;
+  }
+
+  #view-management .v3-hero-actions .btn{
+    flex:1;
+  }
+
+  #view-management .v3-kpi{
+    padding:10px;
+  }
+
+  #view-management .v3-kpi>strong{
+    font-size:20px;
+  }
+
+  #view-management .v3-company-row{
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:7px;
+    padding:9px 4px;
+  }
+
+  #view-management .v3-company-track{
+    grid-column:1/-1;
+  }
+
+  #view-management .v3-company-meta{
+    grid-column:1/-1;
+  }
+
+  #view-management .v3-module-row{
+    grid-template-columns:minmax(0,1fr) auto;
+  }
+
+  #view-management .v3-module-meter{
+    grid-column:1/-1;
+    order:3;
+  }
+
+  #view-management .v3-trace-card{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  #view-management .v3-trace-bed{
+    justify-content:flex-start;
+  }
+}
+
+@media(max-width:340px){
+  #view-management .v3-kpi-grid{
+    gap:7px;
+  }
+
+  #view-management .v3-kpi{
+    padding:9px 8px;
+  }
+
+  #view-management .v3-kpi>strong{
+    font-size:18px;
+  }
+
+  #view-management .v3-card{
+    padding:11px;
+  }
+
+  #view-management .v3-card-head{
+    flex-direction:column;
+  }
+
+  #view-management .v3-forecast{
+    min-width:620px;
+  }
+}

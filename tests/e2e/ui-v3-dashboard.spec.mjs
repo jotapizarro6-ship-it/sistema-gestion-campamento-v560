@@ -1144,6 +1144,316 @@ test(
 );
 
 
+
+test(
+  'UI V3 A3.1 filtros capacidad movimientos y puente al mapa conservan contratos',
+  async({page})=>{
+    const pageErrors=[];
+
+    page.on(
+      'pageerror',
+      error=>pageErrors.push(
+        String(error?.message||error)
+      )
+    );
+
+    const state=dailyCapacityFixture();
+
+    // --------------------------------------------------------
+    // Test-only dimensional split.
+    // Keeps total occupied/capacity unchanged while providing
+    // two companies, shifts and modules for real filter checks.
+    // --------------------------------------------------------
+
+    const bruno=
+      state.workers.find(
+        worker=>
+          worker.nombre==='BRUNO CAPACIDAD'
+      );
+
+    expect(bruno).toBeTruthy();
+
+    bruno.empresa='EMPRESA B';
+    bruno.turno='B';
+    bruno.modulo='M2';
+    bruno.habitacion='201';
+    bruno.cama='A';
+
+    const brunoBed=
+      state.inventory.find(
+        bed=>
+          bed.module==='M1' &&
+          bed.room==='101' &&
+          bed.bed==='B'
+      );
+
+    expect(brunoBed).toBeTruthy();
+
+    brunoBed.module='M2';
+    brunoBed.room='201';
+    brunoBed.bed='A';
+
+    const backend=await login(
+      page,
+      state
+    );
+
+    await openView(
+      page,
+      'management'
+    );
+
+    const view=
+      page.locator('#view-management');
+
+    const dashboard=
+      view.locator('.v3-management');
+
+    await expect(
+      dashboard
+    ).toBeVisible();
+
+    // --------------------------------------------------------
+    // FILTER BAR / DATE
+    // --------------------------------------------------------
+
+    const date=
+      dashboard.locator('#v3FilterDate');
+
+    const company=
+      dashboard.locator('#v3FilterCompany');
+
+    const shift=
+      dashboard.locator('#v3FilterShift');
+
+    const module=
+      dashboard.locator('#v3FilterModule');
+
+    const reset=
+      dashboard.locator(
+        '[data-v3-reset-filters]'
+      );
+
+    const scope=
+      dashboard.locator(
+        '[data-v3-scope]'
+      );
+
+    await expect(date).toBeVisible();
+    await expect(company).toBeVisible();
+    await expect(shift).toBeVisible();
+    await expect(module).toBeVisible();
+
+    await expect(
+      date
+    ).toHaveAttribute(
+      'readonly',
+      ''
+    );
+
+    await expect(
+      date
+    ).toHaveValue(
+      chileToday()
+    );
+
+    await expect(scope).toContainText('2');
+
+    // --------------------------------------------------------
+    // GLOBAL KPI MUST NOT CHANGE WITH EXPLORATION FILTERS
+    // --------------------------------------------------------
+
+    const initialKpis=
+      await dashboard
+        .locator('.v3-kpi')
+        .allInnerTexts();
+
+    expect(initialKpis).toHaveLength(8);
+
+    // --------------------------------------------------------
+    // COMPANY FILTER
+    // --------------------------------------------------------
+
+    await company.selectOption('EMPRESA A');
+
+    await expect(scope).toContainText('1');
+
+    await expect(
+      dashboard.locator('.v3-company-row')
+    ).toHaveCount(1);
+
+    await expect(
+      dashboard.locator('.v3-company-row').first()
+    ).toContainText('EMPRESA A');
+
+    expect(
+      await dashboard
+        .locator('.v3-kpi')
+        .allInnerTexts()
+    ).toEqual(initialKpis);
+
+    await reset.click();
+
+    await expect(scope).toContainText('2');
+
+    // --------------------------------------------------------
+    // SHIFT FILTER
+    // --------------------------------------------------------
+
+    await shift.selectOption('B');
+
+    await expect(scope).toContainText('1');
+
+    expect(
+      await dashboard
+        .locator('.v3-kpi')
+        .allInnerTexts()
+    ).toEqual(initialKpis);
+
+    await reset.click();
+
+    await expect(scope).toContainText('2');
+
+    // --------------------------------------------------------
+    // MODULE FILTER
+    // --------------------------------------------------------
+
+    await module.selectOption('M2');
+
+    await expect(scope).toContainText('1');
+
+    await expect(
+      dashboard.locator('.v3-module-row')
+    ).toHaveCount(1);
+
+    await expect(
+      dashboard.locator('.v3-module-row').first()
+    ).toContainText('M2');
+
+    expect(
+      await dashboard
+        .locator('.v3-kpi')
+        .allInnerTexts()
+    ).toEqual(initialKpis);
+
+    // --------------------------------------------------------
+    // CAPACITY V1 COMPACT CARD
+    // --------------------------------------------------------
+
+    const capacityCard=
+      dashboard
+        .locator('.v3-ops-card')
+        .filter({
+          hasText:/Capacidad y ocupaci[o\u00f3]n/i
+        })
+        .first();
+
+    await expect(capacityCard).toBeVisible();
+
+    await expect(
+      capacityCard
+    ).toContainText('Capacidad efectiva');
+
+    await expect(
+      capacityCard
+    ).toContainText('5');
+
+    await expect(
+      capacityCard
+    ).toContainText('Ocupadas');
+
+    await expect(
+      capacityCard
+    ).toContainText('2');
+
+    await expect(
+      capacityCard
+    ).toContainText('Reservadas');
+
+    await expect(
+      capacityCard
+    ).toContainText('1');
+
+    await expect(
+      capacityCard
+    ).toContainText('Fuera servicio');
+
+    await expect(
+      capacityCard
+    ).toContainText('Libres reales');
+
+    await expect(
+      capacityCard
+    ).toContainText(/40,0%|40\.0%/);
+
+    // --------------------------------------------------------
+    // MOVEMENTS TODAY
+    // --------------------------------------------------------
+
+    const movementsCard=
+      dashboard
+        .locator('.v3-ops-card')
+        .filter({
+          hasText:'Movimientos hoy'
+        })
+        .first();
+
+    await expect(movementsCard).toBeVisible();
+
+    await expect(
+      movementsCard
+    ).toContainText('Subidas');
+
+    await expect(
+      movementsCard
+    ).toContainText('Bajadas');
+
+    // Fixture has no canonical movements today.
+    await expect(
+      movementsCard
+        .locator('.v3-movement-grid .up strong')
+    ).toHaveText('0');
+
+    await expect(
+      movementsCard
+        .locator('.v3-movement-grid .down strong')
+    ).toHaveText('0');
+
+    // --------------------------------------------------------
+    // MAP BRIDGE MUST PRESERVE SELECTED MODULE
+    // --------------------------------------------------------
+
+    await dashboard
+      .locator('[data-v3-open-map]')
+      .first()
+      .click();
+
+    await expect.poll(
+      ()=>page.evaluate(
+        ()=>window.A?.currentView||''
+      )
+    ).toBe('control');
+
+    await expect.poll(
+      ()=>page.evaluate(
+        ()=>window.A?.mapModule||''
+      )
+    ).toBe('M2');
+
+    await expect(
+      page.locator('#view-control')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('#view-control')
+    ).toContainText('M2');
+
+    expect(pageErrors).toEqual([]);
+    expect(backend.unexpected).toEqual([]);
+  }
+);
+
+
 test(
   'UI V3 conserva experiencia movil real',
   async({page},testInfo)=>{

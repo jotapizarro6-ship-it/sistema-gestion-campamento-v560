@@ -699,3 +699,218 @@
     min-width:620px;
   }
 }
+
+
+/* UI V3 A3.1 OPERATIONAL FOCUS */
+
+.v3-filterbar {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 18px;
+  padding: 16px;
+  border: 1px solid var(--border, #dbe3ee);
+  border-radius: 16px;
+  background: var(--surface, #fff);
+}
+
+.v3-filterbar-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.v3-filterbar-head > div {
+  display: grid;
+  gap: 4px;
+}
+
+.v3-filterbar-head strong {
+  color: var(--text, #162033);
+  font-size: 0.98rem;
+}
+
+.v3-filterbar-head small {
+  color: var(--muted, #64748b);
+  line-height: 1.45;
+}
+
+.v3-filter-scope {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #204c94;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.v3-filter-controls {
+  display: grid;
+  grid-template-columns:
+    minmax(140px, 0.8fr)
+    minmax(140px, 1fr)
+    minmax(180px, 1.25fr)
+    minmax(160px, 1fr)
+    auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.v3-filter-controls label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.v3-filter-controls label > span {
+  color: var(--muted, #64748b);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.v3-filter-controls select,
+.v3-filter-controls input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+}
+
+.v3-filter-controls input[readonly] {
+  background: #f8fafc;
+  color: #475569;
+  cursor: default;
+}
+
+.v3-filter-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.v3-filter-actions .btn {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.v3-ops-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.35fr)
+    minmax(0, 0.65fr);
+  gap: 16px;
+  margin: 0 0 18px;
+}
+
+.v3-ops-card {
+  min-width: 0;
+}
+
+.v3-ops-metrics {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.v3-ops-metrics > div,
+.v3-movement-grid > div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.v3-ops-metrics span,
+.v3-movement-grid span {
+  color: var(--muted, #64748b);
+  font-size: 0.74rem;
+}
+
+.v3-ops-metrics strong,
+.v3-movement-grid strong {
+  color: var(--text, #162033);
+  font-size: 1.14rem;
+}
+
+.v3-movement-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.v3-movement-grid .up {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.v3-movement-grid .down {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.v3-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 1050px) {
+  .v3-filter-controls {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .v3-filter-actions {
+    justify-content: flex-start;
+  }
+
+  .v3-ops-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .v3-filterbar {
+    padding: 13px;
+  }
+
+  .v3-filterbar-head {
+    display: grid;
+  }
+
+  .v3-filter-scope {
+    width: fit-content;
+  }
+
+  .v3-filter-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .v3-filter-actions {
+    display: grid;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .v3-filter-actions .btn {
+    width: 100%;
+  }
+
+  .v3-ops-metrics {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 360px) {
+  .v3-filter-actions,
+  .v3-ops-metrics,
+  .v3-movement-grid {
+    grid-template-columns: 1fr;
+  }
+}

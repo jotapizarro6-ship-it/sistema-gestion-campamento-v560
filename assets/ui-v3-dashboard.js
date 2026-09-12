@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260912-v3a6';
+  const VERSION = '20260912-v3a7';
 
   const clean = value =>
     String(value == null ? '' : value).trim();
@@ -393,6 +393,387 @@
           an?.anomalies || []
       })
     };
+  }
+
+  const v3FilterState = {
+    company: '',
+    shift: '',
+    module: ''
+  };
+
+  function v3UniqueValues(rows, key) {
+    return [
+      ...new Set(
+        (rows || [])
+          .map(row => clean(row?.[key]))
+          .filter(Boolean)
+      )
+    ].sort(
+      (a, b) =>
+        a.localeCompare(
+          b,
+          'es',
+          {
+            sensitivity: 'base'
+          }
+        )
+    );
+  }
+
+  function v3OptionHTML(
+    values,
+    selected,
+    emptyLabel
+  ) {
+    return [
+      `<option value="">${esc(emptyLabel)}</option>`,
+      ...values.map(value => `
+        <option
+          value="${esc(value)}"
+          ${
+            norm(value) === norm(selected)
+              ? 'selected'
+              : ''
+          }
+        >
+          ${esc(value)}
+        </option>
+      `)
+    ].join('');
+  }
+
+  function v3ScopedOccupied(model) {
+    return (model.occupied || [])
+      .filter(worker => {
+        if (
+          v3FilterState.company &&
+          norm(worker.empresa) !==
+            norm(v3FilterState.company)
+        ) {
+          return false;
+        }
+
+        if (
+          v3FilterState.shift &&
+          norm(worker.turno) !==
+            norm(v3FilterState.shift)
+        ) {
+          return false;
+        }
+
+        if (
+          v3FilterState.module &&
+          norm(worker.modulo) !==
+            norm(v3FilterState.module)
+        ) {
+          return false;
+        }
+
+        return true;
+      });
+  }
+
+  function v3ScopedModel(model) {
+    const occupied =
+      v3ScopedOccupied(model);
+
+    const companies =
+      companyRows(
+        model.data,
+        occupied
+      );
+
+    const modules =
+      moduleRows(
+        model.data,
+        occupied,
+        model.an
+      );
+
+    return {
+      ...model,
+      occupied,
+      companies,
+      validCompanies:
+        companies.filter(
+          row =>
+            norm(row.label) !==
+            'SIN EMPRESA'
+        ),
+      modules,
+      totalPeople: occupied.length
+    };
+  }
+
+  function v3FilterBar(model) {
+    const companies =
+      v3UniqueValues(
+        model.occupied,
+        'empresa'
+      ).filter(
+        value =>
+          norm(value) !==
+          'SIN EMPRESA'
+      );
+
+    const shifts =
+      v3UniqueValues(
+        model.occupied,
+        'turno'
+      );
+
+    const modules =
+      v3UniqueValues(
+        model.occupied,
+        'modulo'
+      );
+
+    const scoped =
+      v3ScopedOccupied(model);
+
+    const active =
+      Boolean(
+        v3FilterState.company ||
+        v3FilterState.shift ||
+        v3FilterState.module
+      );
+
+    return `
+      <section
+        class="v3-filterbar"
+        aria-label="Filtros de exploracion"
+      >
+        <div class="v3-filterbar-head">
+          <div>
+            <strong>Enfoque de exploraci\u00f3n</strong>
+            <small>
+              Los 8 KPI mantienen el total campamento.
+              Los filtros ajustan empresas, m\u00f3dulos,
+              trazabilidad y drill-down.
+            </small>
+          </div>
+
+          <span
+            class="v3-filter-scope"
+            data-v3-scope
+          >
+            ${int(scoped.length)}
+            persona(s) en foco
+          </span>
+        </div>
+
+        <div class="v3-filter-controls">
+          <label>
+            <span>Fecha</span>
+            <input
+              id="v3FilterDate"
+              type="date"
+              value="${esc(todayISO())}"
+              readonly
+              aria-readonly="true"
+              title="Fecha operativa actual"
+            >
+          </label>
+
+          <label>
+            <span>Turno</span>
+            <select id="v3FilterShift">
+              ${v3OptionHTML(
+                shifts,
+                v3FilterState.shift,
+                'Todos los turnos'
+              )}
+            </select>
+          </label>
+
+          <label>
+            <span>Empresa</span>
+            <select id="v3FilterCompany">
+              ${v3OptionHTML(
+                companies,
+                v3FilterState.company,
+                'Todas las empresas'
+              )}
+            </select>
+          </label>
+
+          <label>
+            <span>M\u00f3dulo</span>
+            <select id="v3FilterModule">
+              ${v3OptionHTML(
+                modules,
+                v3FilterState.module,
+                'Todos los m\u00f3dulos'
+              )}
+            </select>
+          </label>
+
+          <div class="v3-filter-actions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-v3-reset-filters
+              ${active ? '' : 'disabled'}
+            >
+              Limpiar
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-v3-open-map
+            >
+              Abrir mapa de camas
+            </button>
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  function v3CapacityCard(model) {
+    const an = model.an;
+
+    const available =
+      an.capacityAvailable !== false &&
+      an.status !== 'unavailable';
+
+    return `
+      <section class="v3-card v3-ops-card">
+        <div class="v3-card-head">
+          <div>
+            <h3>Capacidad y ocupaci\u00f3n</h3>
+            <p>
+              Lectura compacta del contrato Capacity V1.
+            </p>
+          </div>
+
+          <span
+            class="v3-tag ${
+              available
+                ? ''
+                : 'attention'
+            }"
+          >
+            ${
+              available
+                ? 'OPERATIVA'
+                : 'NO DISPONIBLE'
+            }
+          </span>
+        </div>
+
+        ${
+          available
+            ? `
+              <div class="v3-ops-metrics">
+                <div>
+                  <span>Capacidad efectiva</span>
+                  <strong>
+                    ${int(an.effectiveCapacity)}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Ocupadas</span>
+                  <strong>
+                    ${int(an.occupied)}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Reservadas</span>
+                  <strong>
+                    ${int(an.reservedToday)}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Fuera servicio</span>
+                  <strong>
+                    ${int(an.blockedToday)}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Libres reales</span>
+                  <strong>
+                    ${int(an.free)}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Ocupaci\u00f3n f\u00edsica</span>
+                  <strong>
+                    ${pct(an.occupancyPct)}
+                  </strong>
+                </div>
+              </div>
+            `
+            : `
+              <div class="v3-empty">
+                Capacidad no disponible.
+                GARPI mantiene fail-closed:
+                no fabrica camas libres ni porcentajes.
+              </div>
+            `
+        }
+      </section>
+    `;
+  }
+
+  function v3MovementsCard(model) {
+    return `
+      <section class="v3-card v3-ops-card">
+        <div class="v3-card-head">
+          <div>
+            <h3>Movimientos hoy</h3>
+            <p>
+              Fuente can\u00f3nica:
+              movimientos operativos de la fecha.
+            </p>
+          </div>
+
+          <span class="v3-tag">
+            ${int(model.movements)} TOTAL
+          </span>
+        </div>
+
+        <div class="v3-movement-grid">
+          <div class="up">
+            <span>Subidas</span>
+            <strong>
+              ${int(model.movementUp)}
+            </strong>
+          </div>
+
+          <div class="down">
+            <span>Bajadas</span>
+            <strong>
+              ${int(model.movementDown)}
+            </strong>
+          </div>
+        </div>
+
+        <div class="v3-card-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-v3-goto="movements"
+          >
+            Ver movimientos
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-v3-open-map
+          >
+            Ver mapa de alojamiento
+          </button>
+        </div>
+      </section>
+    `;
   }
 
   function kpi(
@@ -935,6 +1316,9 @@
         ? '-'
         : int(an.blockedToday);
 
+    const scoped =
+      v3ScopedModel(model);
+
     return `
       <div class="v3-management">
         <section class="v3-hero">
@@ -964,6 +1348,8 @@
             </button>
           </div>
         </section>
+
+        ${v3FilterBar(model)}
 
         <section
           class="v3-kpi-grid"
@@ -1035,11 +1421,16 @@
           )}
         </section>
 
+        <div class="v3-ops-grid">
+          ${v3CapacityCard(model)}
+          ${v3MovementsCard(model)}
+        </div>
+
         <div class="v3-grid">
           ${executiveSummary(model)}
           ${focusCard(model)}
-          ${companyCard(model)}
-          ${moduleCard(model)}
+          ${companyCard(scoped)}
+          ${moduleCard(scoped)}
           ${forecastCard(model)}
           ${traceCard()}
         </div>
@@ -1155,6 +1546,100 @@
   }
 
   function bind(root, model) {
+    const companyFilter =
+      root.querySelector(
+        '#v3FilterCompany'
+      );
+
+    const shiftFilter =
+      root.querySelector(
+        '#v3FilterShift'
+      );
+
+    const moduleFilter =
+      root.querySelector(
+        '#v3FilterModule'
+      );
+
+    companyFilter?.addEventListener(
+      'change',
+      event => {
+        v3FilterState.company =
+          clean(event.target.value);
+
+        render();
+      }
+    );
+
+    shiftFilter?.addEventListener(
+      'change',
+      event => {
+        v3FilterState.shift =
+          clean(event.target.value);
+
+        render();
+      }
+    );
+
+    moduleFilter?.addEventListener(
+      'change',
+      event => {
+        v3FilterState.module =
+          clean(event.target.value);
+
+        render();
+      }
+    );
+
+    root
+      .querySelector(
+        '[data-v3-reset-filters]'
+      )
+      ?.addEventListener(
+        'click',
+        () => {
+          v3FilterState.company = '';
+          v3FilterState.shift = '';
+          v3FilterState.module = '';
+
+          render();
+        }
+      );
+
+    root
+      .querySelectorAll(
+        '[data-v3-open-map]'
+      )
+      .forEach(button => {
+        button.addEventListener(
+          'click',
+          () => {
+            const state =
+              appState();
+
+            const targetModule =
+              v3FilterState.module ||
+              model.modules?.[0]?.label ||
+              '';
+
+            if (
+              state &&
+              targetModule
+            ) {
+              state.mapModule =
+                targetModule;
+            }
+
+            if (
+              typeof switchView ===
+              'function'
+            ) {
+              switchView('control');
+            }
+          }
+        );
+      });
+
     root
       .querySelectorAll('[data-v3-goto]')
       .forEach(button => {
@@ -1179,8 +1664,11 @@
         button.addEventListener(
           'click',
           () => {
+            const scoped =
+              v3ScopedModel(model);
+
             const row =
-              model.companies.find(
+              scoped.companies.find(
                 item =>
                   norm(item.label) ===
                   norm(
@@ -1204,8 +1692,11 @@
         button.addEventListener(
           'click',
           () => {
+            const scoped =
+              v3ScopedModel(model);
+
             const row =
-              model.modules.find(
+              scoped.modules.find(
                 item =>
                   norm(item.label) ===
                   norm(
@@ -1293,7 +1784,7 @@
           () => {
             renderTrace(
               root,
-              model,
+              v3ScopedModel(model),
               event.target.value
             );
           },

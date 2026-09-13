@@ -1105,12 +1105,15 @@ test(
         'details.dc-legacy-details'
       );
 
-    await expect(legacy).toBeVisible();
+    // V3.1: el dashboard heredado no debe reaparecer
+    // debajo del dashboard principal.
+    await expect(legacy).toBeHidden();
 
-    await legacy.locator('summary').click();
-
-    await expect(legacy)
-      .toHaveAttribute('open','');
+    expect(
+      await legacy.evaluate(
+        node=>node.open
+      )
+    ).toBe(false);
 
     // --------------------------------------------------------
     // NAVEGACION HACIA ALOJAMIENTO
@@ -1999,7 +2002,7 @@ test(
     await expect(
       advanced
     ).toContainText(
-      'Advanced'
+      'Herramientas especializadas'
     );
 
     await expect(
@@ -2035,6 +2038,12 @@ test(
       )
     ).toBe(false);
 
+    // V3.1: segundo nivel oculto mientras no exista
+    // una acción explícita del usuario.
+    await expect(
+      legacy
+    ).toBeHidden();
+
     await advanced
       .locator(
         '[data-v3-open-advanced="analysis"]'
@@ -2047,11 +2056,47 @@ test(
       )
     ).toBe(true);
 
+    // V3.1: sólo después del clic explícito puede
+    // aparecer como modal de segundo nivel.
+    await expect(
+      legacy
+    ).toHaveClass(
+      /v31-modal-open/
+    );
+
+    await expect(
+      legacy
+    ).toBeVisible();
+
     await expect(
       legacy.locator(
         '.dc-legacy-slot'
       )
     ).toBeVisible();
+
+    const closeAdvanced=
+      legacy.locator(
+        '[data-v31-close-advanced]'
+      );
+
+    await expect(
+      closeAdvanced
+    ).toBeVisible();
+
+    // V3.1 modal contract:
+    // a second tool is selected only after closing
+    // the currently open advanced modal.
+    await closeAdvanced.click();
+
+    await expect(
+      legacy
+    ).toBeHidden();
+
+    expect(
+      await legacy.evaluate(
+        node=>node.open
+      )
+    ).toBe(false);
 
     await advanced
       .locator(
@@ -2070,6 +2115,28 @@ test(
         '#costForm'
       )
     ).toBeVisible();
+
+    await expect(
+      legacy
+    ).toHaveClass(
+      /v31-modal-open/
+    );
+
+    await legacy
+      .locator(
+        '[data-v31-close-advanced]'
+      )
+      .click();
+
+    await expect(
+      legacy
+    ).toBeHidden();
+
+    expect(
+      await legacy.evaluate(
+        node=>node.open
+      )
+    ).toBe(false);
 
     await advanced
       .locator(

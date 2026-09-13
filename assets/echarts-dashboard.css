@@ -1,5 +1,6 @@
 /* ECharts 6.1 · mejora visual progresiva. Si ECharts no carga, la ETAPA 1 permanece intacta. */
 #view-overview .ec-chart{width:100%;height:330px;min-height:280px;outline:none}
+#view-overview .ec-chart[data-keyboard-chart="1"]:focus-visible{outline:3px solid #1769aa;outline-offset:3px}
 #view-overview .ec-chart.ec-heat{height:300px}
 #view-overview .ec-chart.ec-moves{height:320px}
 #view-overview .ec-chart.ec-shifts{height:315px}

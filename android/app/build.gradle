@@ -1,0 +1,201 @@
+import groovy.json.JsonSlurper
+
+apply plugin: 'com.android.application'
+
+def mobileVersionFile =
+    rootProject.file('../mobile/mobile-version.json')
+
+if (!mobileVersionFile.exists()) {
+    throw new GradleException(
+        "GARPI_MOBILE_VERSION_FILE_MISSING: ${mobileVersionFile}"
+    )
+}
+
+def mobileVersion =
+    new JsonSlurper().parse(mobileVersionFile)
+
+def garpiVersionName =
+    String.valueOf(
+        mobileVersion.versionName ?: ''
+    ).trim()
+
+def garpiVersionCode =
+    mobileVersion.versionCode instanceof Number
+        ? mobileVersion.versionCode.intValue()
+        : -1
+
+if (!garpiVersionName) {
+    throw new GradleException(
+        'GARPI_MOBILE_VERSION_NAME_INVALID'
+    )
+}
+
+if (garpiVersionCode < 1) {
+    throw new GradleException(
+        'GARPI_MOBILE_VERSION_CODE_INVALID'
+    )
+}
+
+def signingPropertiesFile =
+    rootProject.file('signing.properties')
+
+def signingProperties =
+    new Properties()
+
+if (signingPropertiesFile.exists()) {
+    signingPropertiesFile.withInputStream {
+        signingProperties.load(it)
+    }
+}
+
+def releaseRequested =
+    gradle.startParameter.taskNames.any {
+        String.valueOf(it)
+            .toLowerCase()
+            .contains('release')
+    }
+
+def requiredSigningKeys = [
+    'storeFile',
+    'keyAlias'
+]
+
+def missingSigningKeys =
+    requiredSigningKeys.findAll {
+        def value =
+            signingProperties.getProperty(it)
+
+        value == null ||
+            value.length() == 0
+    }
+
+def signingStoreFile =
+    signingProperties.getProperty('storeFile')
+        ? rootProject.file(
+            signingProperties.getProperty('storeFile')
+          )
+        : null
+
+def signingKeyAlias =
+    signingProperties.getProperty('keyAlias')
+
+def signingStorePassword =
+    System.getenv(
+        'GARPI_ANDROID_STORE_PASSWORD'
+    )
+
+def signingKeyPassword =
+    System.getenv(
+        'GARPI_ANDROID_KEY_PASSWORD'
+    )
+
+def missingSigningEnvironment = [
+    'GARPI_ANDROID_STORE_PASSWORD':
+        signingStorePassword,
+    'GARPI_ANDROID_KEY_PASSWORD':
+        signingKeyPassword
+].findAll {
+    entry ->
+        entry.value == null ||
+        entry.value.length() == 0
+}.keySet()
+
+if (releaseRequested) {
+    if (!signingPropertiesFile.exists()) {
+        throw new GradleException(
+            'GARPI_RELEASE_SIGNING_PROPERTIES_MISSING'
+        )
+    }
+
+    if (!missingSigningKeys.isEmpty()) {
+        throw new GradleException(
+            'GARPI_RELEASE_SIGNING_PROPERTIES_INCOMPLETE'
+        )
+    }
+
+    if (!missingSigningEnvironment.isEmpty()) {
+        throw new GradleException(
+            'GARPI_RELEASE_SIGNING_ENV_MISSING'
+        )
+    }
+
+    if (
+        signingStoreFile == null ||
+        !signingStoreFile.exists()
+    ) {
+        throw new GradleException(
+            'GARPI_RELEASE_KEYSTORE_MISSING'
+        )
+    }
+}
+android {
+    namespace = "cl.garpi.campamento.admin"
+    compileSdk = rootProject.ext.compileSdkVersion
+
+    signingConfigs {
+        release {
+            if (
+                signingStoreFile != null &&
+                signingKeyAlias &&
+                signingStorePassword &&
+                signingKeyPassword
+            ) {
+                storeFile signingStoreFile
+                storePassword signingStorePassword
+                keyAlias signingKeyAlias
+                keyPassword signingKeyPassword
+            }
+        }
+    }
+
+    defaultConfig {
+        applicationId "cl.garpi.campamento.admin"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode garpiVersionCode
+        versionName garpiVersionName
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    buildTypes {
+        release {
+            debuggable false
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

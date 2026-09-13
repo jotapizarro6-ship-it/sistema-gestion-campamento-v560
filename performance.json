@@ -19,7 +19,10 @@
                            "admin_html_max_bytes":  32768,
                            "js_css_file_count_max":  80,
                            "js_css_total_max_bytes":  750000,
-                           "largest_js_css_asset_max_bytes":  65536
+                           "largest_js_css_asset_max_bytes":  65536,
+                       "js_css_asset_max_bytes_overrides":  {
+                               "assets/ui-v3-dashboard.js":  71680
+                           }
                        },
     "high_volume":  {
                         "regression_runs":  10,

@@ -34,6 +34,15 @@ function loadAllRefreshBusy(
     Boolean(busy);
 
   if(busy){
+    if(!button.dataset.idleLabel){
+      button.dataset.idleLabel=
+        button.textContent||
+        'Actualizar';
+    }
+
+    button.textContent=
+      'Actualizando...';
+
     button.setAttribute(
       'aria-busy',
       'true'
@@ -44,6 +53,14 @@ function loadAllRefreshBusy(
       'true'
     );
   }else{
+    button.textContent=
+      button.dataset.idleLabel||
+      'Actualizar';
+
+    button.removeAttribute(
+      'data-idle-label'
+    );
+
     button.removeAttribute(
       'aria-busy'
     );

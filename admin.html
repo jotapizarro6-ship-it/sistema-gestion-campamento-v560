@@ -80,6 +80,7 @@
       #view-workers .worker-match-assignment>div:first-child{grid-column:1/-1}
     }
   </style>
+  <link rel="stylesheet" href="assets/ui-v3-dashboard.css?v=20260912-v3a10">
 </head>
 <body class="admin-page">
   <div id="adminLoginScreen" class="login-screen" role="main">
@@ -103,7 +104,7 @@
         <div class="subtitle">Cloud v5.6.0 · Jefatura / Gerencia</div>
       </div>
       <nav class="nav-list" id="adminNav">
-        <button data-view="overview" class="nav-btn active">Resumen operativo</button>
+        <button data-view="overview" class="nav-btn active" aria-current="page">Resumen operativo</button>
         <button data-view="control" class="nav-btn">Centro de Gestión</button>
         <button data-view="planning" class="nav-btn">Planificación 30 días</button>
         <button data-view="management" class="nav-btn">Dashboard gerencial</button>
@@ -124,7 +125,7 @@
     <div class="main-shell">
       <header class="topbar admin-topbar">
         <div class="topbar-inner topbar-admin">
-          <button id="menuBtn" class="icon-btn mobile-only" aria-label="Abrir menú">☰</button>
+          <button id="menuBtn" class="icon-btn mobile-only" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false">☰</button>
           <div>
             <div id="pageTitle" class="brand">Resumen operativo</div>
             <div id="systemMeta" class="subtitle">Base central Supabase · cargando…</div>
@@ -167,6 +168,7 @@
   <script src="assets/app-3a.js"></script>
   <script src="assets/app-3b.js"></script>
   <script src="assets/app-4.js"></script>
+  <script src="assets/ui-v3-dashboard.js?v=20260912-v3a10"></script>
   <script>
     (()=>{
       const fold=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim().replace(/\s+/g,' ');

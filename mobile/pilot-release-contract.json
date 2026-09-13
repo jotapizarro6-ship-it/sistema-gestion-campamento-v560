@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "packageId": "cl.garpi.campamento.admin",
+  "requiredChannel": "pilot",
+  "minimumVersionCode": 2,
+  "expectedSignerDn": "CN=GARPI Android Release, OU=Mobile, O=GARPI, C=CL",
+  "expectedCertificateSha256": "917e5c7dc6e43e127c3b52bf7a8c87908668367a64cc2e5900f25270b7819608",
+  "artifactRoot": "pilot-releases"
+}

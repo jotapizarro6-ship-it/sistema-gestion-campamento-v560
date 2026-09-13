@@ -63,7 +63,7 @@
   function bedMap(items){
     const rooms=new Map();for(const b of items){if(!rooms.has(String(b.room)))rooms.set(String(b.room),[]);rooms.get(String(b.room)).push(b)}
     if(!rooms.size)return '<div class="empty">No hay camas que coincidan con los filtros seleccionados.</div>';
-    return `<div class="cc-bed-map">${[...rooms.entries()].sort((a,b)=>Number(a[0])-Number(b[0])||a[0].localeCompare(b[0])).map(([room,beds])=>`<article class="cc-room-card"><div class="cc-room-title"><span>Habitación ${escText(room)}</span><small>${beds.length} visible(s)</small></div><div class="cc-beds">${beds.sort((a,b)=>String(a.bed).localeCompare(String(b.bed))).map(b=>{const key=lkey(b.module,b.room,b.bed),selected=key===A.controlBedKey?' selected':'';return `<button type="button" class="cc-bed-btn ${b.status}${selected}" data-cc-bed="${escText(key)}" title="${escText(b.detail||statusLabel[b.status]||'')}">Cama ${escText(b.bed)}</button>`}).join('')}</div></article>`).join('')}</div>`;
+    return `<div class="cc-bed-map">${[...rooms.entries()].sort((a,b)=>Number(a[0])-Number(b[0])||a[0].localeCompare(b[0])).map(([room,beds])=>`<article class="cc-room-card"><div class="cc-room-title"><span>Habitación ${escText(room)}</span><small>${beds.length} visible(s)</small></div><div class="cc-beds">${beds.sort((a,b)=>String(a.bed).localeCompare(String(b.bed))).map(b=>{const key=lkey(b.module,b.room,b.bed),selected=key===A.controlBedKey?' selected':'';return `<button type="button" class="cc-bed-btn ${b.status}${selected}" data-cc-bed="${escText(key)}" aria-pressed="${selected ? 'true' : 'false'}" title="${escText(b.detail||statusLabel[b.status]||'')}">Cama ${escText(b.bed)}</button>`}).join('')}</div></article>`).join('')}</div>`;
   }
 
   function detailHTML(b){
@@ -80,9 +80,79 @@
     shift?.addEventListener('change',()=>{A.controlShift=shift.value;A.controlBedKey='';renderControl()});
     reset?.addEventListener('click',()=>{A.controlStatus='';A.controlCompany='';A.controlShift='';A.controlBedKey='';renderControl()});
     document.querySelectorAll('#view-control [data-cc-module]').forEach(btn=>btn.addEventListener('click',()=>{A.mapModule=btn.dataset.ccModule||A.mapModule;A.controlBedKey='';renderControl()}));
-    document.querySelectorAll('#view-control [data-cc-bed]').forEach(btn=>btn.addEventListener('click',()=>{A.controlBedKey=btn.dataset.ccBed||'';document.querySelectorAll('#view-control .cc-bed-btn').forEach(x=>x.classList.toggle('selected',x.dataset.ccBed===A.controlBedKey));const item=hm.items.find(x=>lkey(x.module,x.room,x.bed)===A.controlBedKey);const panel=document.querySelector('#controlDetailPanel');if(panel)panel.innerHTML=detailHTML(item);if(window.innerWidth<=760)panel?.scrollIntoView({behavior:'smooth',block:'start'})}));
+    document.querySelectorAll('#view-control [data-cc-bed]').forEach(btn=>btn.addEventListener('click',()=>{A.controlBedKey=btn.dataset.ccBed||'';document.querySelectorAll('#view-control .cc-bed-btn').forEach(x=>{const active=x.dataset.ccBed===A.controlBedKey;x.classList.toggle('selected',active);x.setAttribute('aria-pressed',active?'true':'false')});const item=hm.items.find(x=>lkey(x.module,x.room,x.bed)===A.controlBedKey);const panel=document.querySelector('#controlDetailPanel');if(panel)panel.innerHTML=detailHTML(item);if(window.innerWidth<=760)panel?.scrollIntoView({behavior:'smooth',block:'start'})}));
     if(A.controlBedKey){const item=hm.items.find(x=>lkey(x.module,x.room,x.bed)===A.controlBedKey);if(item&&visibleItems.some(x=>lkey(x.module,x.room,x.bed)===A.controlBedKey)){const panel=document.querySelector('#controlDetailPanel');if(panel)panel.innerHTML=detailHTML(item)}else A.controlBedKey=''}
   }
+
+  function mapSnapshot(moduleName){
+    const d=A.data;
+
+    if(
+      !d ||
+      typeof analytics!=='function'
+    ){
+      return null;
+    }
+
+    const hm=analytics(d).hm;
+
+    if(!hm){
+      return null;
+    }
+
+    const requested=
+      String(moduleName??'').trim();
+
+    const current=
+      hm.moduleNames.find(
+        name=>norm(name)===norm(requested)
+      ) ||
+      hm.moduleNames.find(
+        name=>norm(name)===norm(A.mapModule)
+      ) ||
+      hm.moduleNames[0] ||
+      '';
+
+    if(!current){
+      return {
+        moduleName:'',
+        module:null,
+        moduleNames:[],
+        items:[]
+      };
+    }
+
+    const mod=
+      hm.modules.find(
+        row=>norm(row.label)===norm(current)
+      ) ||
+      null;
+
+    const items=
+      hm.items.filter(
+        item=>norm(item.module)===norm(current)
+      );
+
+    return {
+      moduleName:current,
+      module:mod,
+      moduleNames:[...hm.moduleNames],
+      items
+    };
+  }
+
+  window.GarpiControlCenterMap=
+    Object.freeze({
+      snapshot:mapSnapshot,
+      bedMap,
+      detailHTML,
+      bedKey:item=>
+        lkey(
+          item?.module,
+          item?.room,
+          item?.bed
+        )
+    });
 
   renderControl=function(){
     try{
@@ -94,7 +164,7 @@
       <section class="cc-filterbar"><label><span>Módulo</span><select id="ccModule">${hm.moduleNames.map(m=>`<option ${m===A.mapModule?'selected':''}>${escText(m)}</option>`).join('')}</select></label><label><span>Estado de cama</span><select id="ccStatus"><option value="">Todos los estados</option>${statusOrder.map(s=>`<option value="${s}" ${s===A.controlStatus?'selected':''}>${statusLabel[s]}</option>`).join('')}</select></label><label><span>Empresa</span><select id="ccCompany">${companyOpts}</select></label><label><span>Turno</span><select id="ccShift">${shiftOpts}</select></label><button id="ccReset" class="btn btn-secondary" type="button">Limpiar filtros</button><div class="cc-filter-note"><strong>Nota:</strong> Empresa y Turno filtran camas ocupadas con trabajador identificado; no se asignan esos atributos a camas libres, reservadas o bloqueadas.</div></section>
       <div class="cc-kpi-grid"><div class="cc-kpi navy"><span>Camas módulo</span><strong>${fmt(mod.capacity)}</strong><small>inventario físico</small></div><div class="cc-kpi blue"><span>Ocupadas</span><strong>${fmt(mod.occupied)}</strong><small>ocupación física</small></div><div class="cc-kpi purple"><span>Reservadas</span><strong>${fmt(mod.reserved)}</strong><small>vigentes no materializadas</small></div><div class="cc-kpi red"><span>Bloqueadas</span><strong>${fmt(mod.blocked)}</strong><small>fuera de servicio</small></div><div class="cc-kpi green"><span>Libres</span><strong>${fmt(mod.free)}</strong><small>disponibles</small></div><div class="cc-kpi ${state.key==='normal'?'green':state.key==='attention'?'amber':'red'}"><span>% comprometido</span><strong>${fmt1(mod.pct)}%</strong><small>${state.label}</small></div></div>
       <div class="cc-analytics-grid"><section class="panel"><div class="cc-panel-head"><div><h3>Estado y composición del módulo</h3><p>Ocupadas, reservadas, bloqueadas y libres.</p></div><span class="cc-tag ${state.key}">${state.label}</span></div><div id="controlModuleChart" class="cc-chart">${fallbackComposition(mod)}</div><div class="cc-chart-hint">Toca un segmento para filtrar el mapa por estado.</div></section><section class="panel"><div class="cc-panel-head"><div><h3>Presión de capacidad por módulo</h3><p>Comparación del porcentaje comprometido entre módulos.</p></div><span class="cc-tag">INTERACTIVO</span></div><div id="controlAvailabilityChart" class="cc-chart cc-modules">${fallbackModules(hm.modules)}</div><div class="cc-chart-hint">Toca un módulo para abrirlo en el mapa de alojamiento.</div></section></div>
-      <div class="cc-map-layout"><section class="panel cc-map-panel"><div class="cc-panel-head"><div><h3>Mapa de camas · ${escText(mod.label)}</h3><p>Vista táctil por habitación y cama.</p></div><span class="cc-tag">${fmt(items.length)} visibles</span></div><div class="cc-map-meta"><span>🟦 Ocupada</span><span>🟪 Reservada</span><span>🟥 Bloqueada</span><span>🟩 Libre</span></div>${bedMap(items)}</section><aside class="panel cc-detail-panel" id="controlDetailPanel">${detailHTML(selected)}</aside></div>
+      <div class="cc-map-layout"><section class="panel cc-map-panel"><div class="cc-panel-head"><div><h3>Mapa de camas · ${escText(mod.label)}</h3><p>Vista táctil por habitación y cama.</p></div><span class="cc-tag">${fmt(items.length)} visibles</span></div><div class="cc-map-meta"><span>🟦 Ocupada</span><span>🟪 Reservada</span><span>🟥 Bloqueada</span><span>🟩 Libre</span></div>${bedMap(items)}</section><aside class="panel cc-detail-panel" id="controlDetailPanel" role="status" aria-live="polite" aria-atomic="true">${detailHTML(selected)}</aside></div>
       <section class="panel cc-exceptions"><div class="cc-panel-head"><div><h3>Excepciones del módulo</h3><p>Controles que requieren atención operacional.</p></div><span class="cc-tag ${exceptions.some(x=>x.level==='critical')?'critical':exceptions.length?'attention':'normal'}">${exceptions.length?`${exceptions.length} alerta(s)`:'SIN ALERTAS'}</span></div><div class="cc-exception-list">${exceptions.length?exceptions.map(x=>`<div class="cc-exception ${x.level}"><strong>${escText(x.title)}</strong><span>${escText(x.detail)}</span></div>`).join(''):'<div class="notice ok">No se detectan excepciones críticas en el módulo seleccionado.</div>'}</div></section>`;
       bindControl(hm,items);
       if(typeof window.__mountControlCenterEcharts==='function')setTimeout(()=>window.__mountControlCenterEcharts(),0);

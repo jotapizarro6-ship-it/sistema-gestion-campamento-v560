@@ -657,7 +657,7 @@ test(
 
           const companies=[
             ...view.querySelectorAll(
-              '.v3-company-row'
+              '[data-v3-workforce-card] [data-v3-workforce-row][data-v3-workforce-row-dim="company"]'
             )
           ];
 
@@ -702,7 +702,7 @@ test(
                     )
               ),
 
-            hasCompanyPanel:
+            hasWorkforcePanel:
               [...view.querySelectorAll(
                 '.v3-card h3'
               )].some(
@@ -710,7 +710,7 @@ test(
                   x.textContent
                     .toLowerCase()
                     .includes(
-                      'empresas en campamento'
+                      'distribución del personal alojado'
                     )
               ),
 
@@ -828,7 +828,7 @@ test(
 
       expect(report.hasSummary).toBe(true);
       expect(report.hasFocus).toBe(true);
-      expect(report.hasCompanyPanel).toBe(true);
+      expect(report.hasWorkforcePanel).toBe(true);
       expect(report.hasModulePanel).toBe(true);
       expect(report.hasForecast).toBe(true);
       expect(report.hasTrace).toBe(true);
@@ -899,81 +899,23 @@ test(
     ).toHaveCount(8);
 
     // --------------------------------------------------------
-    // EMPRESA
-    // --------------------------------------------------------
+    // KEYBOARD BASELINES BEFORE STATEFUL COMPANY CROSSFILTER
 
-    const company=
-      dashboard
-        .locator('.v3-company-row')
-        .first();
-
-    await expect(company).toBeVisible();
-
-    const companyText=
-      await company.innerText();
-
-    expect(companyText)
-      .toContain('alojando');
-
-    expect(companyText)
-      .toContain('MOD');
-
-    expect(companyText)
-      .toContain('MOI');
-
-    // Debe informar la proporcion de su dotacion.
-    expect(
-      companyText
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g,'')
-        .includes(
-          'dotacion registrada'
-        ) ||
-      companyText
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g,'')
-        .includes(
-          'proporcion no disponible'
-        )
-    ).toBe(true);
-
-    // Boton nativo = acceso teclado.
-    await company.focus();
-
-    await expect(company)
-      .toBeFocused();
-
-    await page.keyboard.press('Enter');
-
-    await expect(
-      page.locator('#detailDialog')
-    ).toBeVisible();
-
-    await expect(
-      page.locator('#detailDialog')
-    ).toContainText('Empresa');
-
-    await closeDetailDialog(page);
-
-    // --------------------------------------------------------
-    // MODULO
-    // --------------------------------------------------------
-
-    const module=
+    // Módulo: native button keyboard activation.
+    const moduleKeyboardBaseline=
       dashboard
         .locator('.v3-module-row')
         .first();
 
-    await expect(module).toBeVisible();
+    await expect(
+      moduleKeyboardBaseline
+    ).toBeVisible();
 
-    const moduleText=
-      await module.innerText();
+    await moduleKeyboardBaseline.focus();
 
-    expect(moduleText)
-      .toContain('persona');
-
-    await module.focus();
-    await expect(module).toBeFocused();
+    await expect(
+      moduleKeyboardBaseline
+    ).toBeFocused();
 
     await page.keyboard.press('Enter');
 
@@ -983,23 +925,26 @@ test(
 
     await expect(
       page.locator('#detailDialog')
-    ).toContainText(/M[o\u00f3]dulo/i);
+    ).toContainText('Modulo');
 
     await closeDetailDialog(page);
 
-    // --------------------------------------------------------
-    // FORECAST
-    // --------------------------------------------------------
 
-    const day=
+    // Forecast: native day button keyboard activation.
+    const dayKeyboardBaseline=
       dashboard
         .locator('.v3-day')
         .first();
 
-    await expect(day).toBeVisible();
+    await expect(
+      dayKeyboardBaseline
+    ).toBeVisible();
 
-    await day.focus();
-    await expect(day).toBeFocused();
+    await dayKeyboardBaseline.focus();
+
+    await expect(
+      dayKeyboardBaseline
+    ).toBeFocused();
 
     await page.keyboard.press('Enter');
 
@@ -1013,7 +958,8 @@ test(
 
     await closeDetailDialog(page);
 
-    // --------------------------------------------------------
+    // TRACE BLOCK MOVED BEFORE STATEFUL COMPANY CROSSFILTER
+
     // TRAZABILIDAD TRABAJADOR -> CAMA
     // --------------------------------------------------------
 
@@ -1094,6 +1040,134 @@ test(
       ).first()
     ).toContainText(
       worker.nombre
+    );
+
+    // --------------------------------------------------------
+
+    // EMPRESA
+    // --------------------------------------------------------
+
+    const company=
+      dashboard
+        .locator('[data-v3-workforce-card] [data-v3-workforce-row][data-v3-workforce-row-dim="company"]')
+        .first();
+
+    await expect(company).toBeVisible();
+
+    const companyText=
+      await company.innerText();
+
+    expect(companyText)
+      .toContain('persona(s)');
+
+    expect(companyText)
+      .toContain('MOD');
+
+    expect(companyText)
+      .toContain('MOI');
+
+    // V3.2: porcentaje = empresa alojada / total alojado campamento.
+    expect(companyText).toContain('%');
+
+    // Botón nativo = acceso teclado + cross-filter V3.2.
+    const companyName=
+      await company.getAttribute(
+        'data-v3-workforce-row'
+      );
+
+    expect(companyName).toBeTruthy();
+
+    await company.focus();
+
+    await expect(company)
+      .toBeFocused();
+
+    await page.keyboard.press('Enter');
+
+    await expect(
+      dashboard.locator('#v3FilterCompany')
+    ).toHaveValue(companyName);
+
+    await expect(
+      dashboard.locator('[data-v32-role-card]')
+    ).toContainText(companyName);
+
+    await expect(
+      dashboard.locator('[data-v32-role-card]')
+    ).toContainText(/Cargo|Especialidad/);
+
+    // COMPANY CROSSFILTER MUST NOT OPEN LEGACY DETAIL
+    await expect(
+      page.locator('#detailDialog')
+    ).toBeHidden();
+
+
+    // --------------------------------------------------------
+    // MODULO
+    // --------------------------------------------------------
+
+    const module=
+      dashboard
+        .locator('.v3-module-row')
+        .first();
+
+    await expect(module).toBeVisible();
+
+    const moduleText=
+      await module.innerText();
+
+    expect(moduleText)
+      .toContain('persona');
+
+    // V3.2: la fila Empresa aplica cross-filter real.
+    // Restaurar alcance neutro antes del contrato independiente de Módulo.
+    const companyFilterAfterCross=
+      dashboard.locator('#v3FilterCompany');
+
+    await companyFilterAfterCross
+      .selectOption('');
+
+    await expect(
+      companyFilterAfterCross
+    ).toHaveValue('');
+
+    await expect(
+      dashboard.locator(
+        '[data-v3-workforce-card]'
+      )
+    ).toContainText('2 PERSONAS');
+
+    await expect(
+      module
+    ).toBeVisible();
+
+    await expect(
+      module
+    ).toHaveAttribute(
+      'type',
+      'button'
+    );
+
+    // --------------------------------------------------------
+    // FORECAST
+    // --------------------------------------------------------
+
+    const day=
+      dashboard
+        .locator('.v3-day')
+        .first();
+
+    await expect(day).toBeVisible();
+
+    await expect(
+      day
+    ).toBeVisible();
+
+    await expect(
+      day
+    ).toHaveAttribute(
+      'type',
+      'button'
     );
 
     // --------------------------------------------------------
@@ -1295,11 +1369,11 @@ test(
     await expect(scope).toContainText('1');
 
     await expect(
-      dashboard.locator('.v3-company-row')
+      dashboard.locator('[data-v3-workforce-card] [data-v3-workforce-row][data-v3-workforce-row-dim="company"]')
     ).toHaveCount(1);
 
     await expect(
-      dashboard.locator('.v3-company-row').first()
+      dashboard.locator('[data-v3-workforce-card] [data-v3-workforce-row][data-v3-workforce-row-dim="company"]').first()
     ).toContainText('EMPRESA A');
 
     expect(
@@ -1308,7 +1382,18 @@ test(
         .allInnerTexts()
     ).toEqual(initialKpis);
 
-    await reset.click();
+    await reset.evaluate(
+      element=>
+        element.scrollIntoView({
+          block:'center',
+          inline:'nearest'
+        })
+    );
+
+    await expect(reset)
+      .toBeVisible();
+
+    await reset.press('Enter');
 
     await expect(scope).toContainText('2');
 
@@ -1326,7 +1411,19 @@ test(
         .allInnerTexts()
     ).toEqual(initialKpis);
 
-    await reset.click();
+    await reset.evaluate(
+      element =>
+        element.scrollIntoView({
+          block:'center',
+          inline:'nearest'
+        })
+    );
+
+    await expect(
+      reset
+    ).toBeVisible();
+
+    await reset.press('Enter');
 
     await expect(scope).toContainText('2');
 
@@ -2589,5 +2686,1568 @@ test(
 
     expect(pageErrors).toEqual([]);
     expect(backend.unexpected).toEqual([]);
+  }
+);
+
+// ============================================================
+// GARPI V3.2 A1 FINAL SPECIFIC CONTRACT
+// ============================================================
+
+test(
+  'UI V3.2 A1 workforce analytics cumple responsive semantica y cross-filter',
+  async({page})=>{
+
+    test.setTimeout(60000);
+
+    const pageErrors=[];
+
+    page.on(
+      'pageerror',
+      error=>
+        pageErrors.push(
+          String(
+            error?.message ||
+            error
+          )
+        )
+    );
+
+    await login(
+      page,
+      dailyCapacityFixture()
+    );
+
+    await openView(
+      page,
+      'management'
+    );
+
+    const view=
+      page.locator(
+        '#view-management'
+      );
+
+    const dashboard=
+      view.locator(
+        '.v3-management'
+      );
+
+    await expect(
+      dashboard
+    ).toBeVisible();
+
+    const viewports=[
+      {
+        name:'phone-320',
+        width:320,
+        height:720
+      },
+      {
+        name:'phone-375',
+        width:375,
+        height:812
+      },
+      {
+        name:'phone-390',
+        width:390,
+        height:844
+      },
+      {
+        name:'phone-412',
+        width:412,
+        height:915
+      },
+      {
+        name:'tablet-768',
+        width:768,
+        height:1024
+      },
+      {
+        name:'tablet-1024',
+        width:1024,
+        height:768
+      },
+      {
+        name:'desktop-1440',
+        width:1440,
+        height:900
+      }
+    ];
+
+    for(
+      const viewport of viewports
+    ){
+
+      await page.setViewportSize({
+        width:viewport.width,
+        height:viewport.height
+      });
+
+      await expect(
+        dashboard
+      ).toBeVisible();
+
+      await expect(
+        dashboard.locator(
+          '.v3-kpi'
+        )
+      ).toHaveCount(8);
+
+      const compositionTitle=
+        dashboard.getByText(
+          'Composición del personal alojado',
+          {
+            exact:true
+          }
+        );
+
+      await expect(
+        compositionTitle
+      ).toHaveCount(1);
+
+      await expect(
+        compositionTitle
+      ).toBeVisible();
+
+      const exportButton=
+        dashboard.locator(
+          '[data-v32-export-xlsx]'
+        );
+
+      await expect(
+        exportButton
+      ).toBeVisible();
+
+      await expect(
+        exportButton
+      ).toHaveText(
+        'Descargar Excel'
+      );
+
+      const touchBox=
+        await exportButton.boundingBox();
+
+      expect(
+        touchBox
+      ).not.toBeNull();
+
+      expect(
+        touchBox.height
+      ).toBeGreaterThanOrEqual(44);
+
+      expect(
+        touchBox.width
+      ).toBeGreaterThanOrEqual(44);
+
+      await expect(
+        dashboard.locator(
+          '[data-v3-workforce-card]'
+        )
+      ).toBeVisible();
+
+      await expect(
+        dashboard.locator(
+          '[data-v32-role-card]'
+        )
+      ).toBeVisible();
+
+      const overflow=
+        await page.evaluate(()=>{
+
+          const root=
+            document.querySelector(
+              '#view-management .v3-management'
+            );
+
+          const documentWidth=
+            Math.max(
+              document.documentElement.scrollWidth,
+              document.body?.scrollWidth || 0
+            );
+
+          const documentClient=
+            document.documentElement.clientWidth;
+
+          return {
+            documentOverflow:
+              Math.max(
+                0,
+                documentWidth-documentClient
+              ),
+
+            viewOverflow:
+              root
+                ? Math.max(
+                    0,
+                    root.scrollWidth-root.clientWidth
+                  )
+                : 999
+          };
+        });
+
+      console.log(
+        'UI V3.2 VIEWPORT',
+        viewport.name,
+        JSON.stringify(
+          overflow
+        )
+      );
+
+      expect(
+        overflow.documentOverflow
+      ).toBe(0);
+
+      expect(
+        overflow.viewOverflow
+      ).toBe(0);
+    }
+
+
+    // --------------------------------------------------------
+    // Desktop semantic / ordering checks.
+    // --------------------------------------------------------
+
+    await page.setViewportSize({
+      width:1440,
+      height:900
+    });
+
+    const focus=
+      dashboard
+        .getByText(
+          /Foco Ejecutivo/i
+        )
+        .first();
+
+    const composition=
+      dashboard
+        .getByText(
+          'Composición del personal alojado',
+          {
+            exact:true
+          }
+        )
+        .first();
+
+    const workforce=
+      dashboard
+        .locator(
+          '[data-v3-workforce-card]'
+        )
+        .first();
+
+    await expect(
+      focus
+    ).toBeVisible();
+
+    await expect(
+      composition
+    ).toBeVisible();
+
+    await expect(
+      workforce
+    ).toBeVisible();
+
+    const focusBox=
+      await focus.boundingBox();
+
+    const compositionBox=
+      await composition.boundingBox();
+
+    const workforceBox=
+      await workforce.boundingBox();
+
+    expect(
+      focusBox
+    ).not.toBeNull();
+
+    expect(
+      compositionBox
+    ).not.toBeNull();
+
+    expect(
+      workforceBox
+    ).not.toBeNull();
+
+    expect(
+      compositionBox.y
+    ).toBeGreaterThan(
+      focusBox.y
+    );
+
+    expect(
+      workforceBox.y
+    ).toBeGreaterThan(
+      compositionBox.y
+    );
+
+
+    // --------------------------------------------------------
+    // Company graph = count + % + MOD / MOI.
+    // --------------------------------------------------------
+
+    const companyRows=
+      dashboard.locator(
+        '[data-v3-workforce-card] ' +
+        '[data-v3-workforce-row]' +
+        '[data-v3-workforce-row-dim="company"]'
+      );
+
+    const companyCount=
+      await companyRows.count();
+
+    expect(
+      companyCount
+    ).toBeGreaterThan(0);
+
+    const company=
+      companyRows.first();
+
+    await expect(
+      company
+    ).toBeVisible();
+
+    await expect(
+      company
+    ).toContainText(
+      /\d[\d.]*\s+persona\(s\)\s+·\s+\d+(?:[.,]\d+)?%/
+    );
+
+    await expect(
+      company.locator(
+        '.v3-workforce-stack'
+      )
+    ).toHaveAttribute(
+      'aria-label',
+      /MOD\s+\d+.*MOI\s+\d+/i
+    );
+
+    const companyName=
+      await company.getAttribute(
+        'data-v3-workforce-row'
+      );
+
+    expect(
+      companyName
+    ).toBeTruthy();
+
+
+    // --------------------------------------------------------
+    // Determine expected cargo/specialty semantics from actual
+    // fixture data; never invent a cargo.
+    // --------------------------------------------------------
+
+    const sampleWorker=
+      await page.evaluate(
+        company=>{
+
+          const clean=
+            value=>
+              String(
+                value ?? ''
+              ).trim();
+
+          const norm=
+            value=>
+              clean(value)
+                .normalize('NFD')
+                .replace(
+                  /[̀-ͯ]/g,
+                  ''
+                )
+                .toUpperCase();
+
+          const rows=
+            (
+              typeof A!=='undefined' &&
+              A.data?.workers
+            )
+              ? A.data.workers
+              : [];
+
+          const occupied=
+            rows.filter(
+              row=>
+                clean(row.rut) &&
+                clean(row.modulo) &&
+                clean(row.habitacion) &&
+                clean(row.cama)
+            );
+
+          const selected=
+            occupied.find(
+              row=>
+                norm(
+                  clean(row.empresa) ||
+                  'SIN EMPRESA'
+                )===
+                norm(company)
+            );
+
+          if(!selected){
+            return null;
+          }
+
+          const cargo=
+            clean(
+              selected.cargo
+            );
+
+          const especialidad=
+            clean(
+              selected.especialidad
+            );
+
+          const categoria=
+            clean(
+              selected.categoria
+            );
+
+          return {
+            label:
+              cargo ||
+              especialidad ||
+              'SIN CARGO / ESPECIALIDAD REGISTRADA',
+
+            source:
+              cargo
+                ? 'Cargo'
+                : especialidad
+                  ? 'Especialidad'
+                  : 'Sin dato',
+
+            category:
+              categoria ||
+              'SIN CATEGORÍA REGISTRADA'
+          };
+        },
+        companyName
+      );
+
+    expect(
+      sampleWorker
+    ).not.toBeNull();
+
+
+    // --------------------------------------------------------
+    // Company row = cross-filter only.
+    // --------------------------------------------------------
+
+    await company.press(
+      'Enter'
+    );
+
+    await expect(
+      dashboard.locator(
+        '#v3FilterCompany'
+      )
+    ).toHaveValue(
+      companyName
+    );
+
+    await expect(
+      page.locator(
+        '#detailDialog'
+      )
+    ).toBeHidden();
+
+    const roleCard=
+      dashboard.locator(
+        '[data-v32-role-card]'
+      );
+
+    await expect(
+      roleCard
+    ).toContainText(
+      companyName
+    );
+
+    await expect(
+      roleCard
+    ).toContainText(
+      /Cargo|Especialidad/
+    );
+
+    await expect(
+      roleCard
+    ).toContainText(
+      sampleWorker.label
+    );
+
+    await expect(
+      roleCard
+    ).toContainText(
+      sampleWorker.source
+    );
+
+    await expect(
+      roleCard
+    ).toContainText(
+      sampleWorker.category
+    );
+
+    await expect(
+      roleCard
+    ).toContainText(
+      /No se infieren cargos/i
+    );
+
+
+    // --------------------------------------------------------
+    // Return to neutral scope.
+    // --------------------------------------------------------
+
+    await dashboard
+      .locator(
+        '#v3FilterCompany'
+      )
+      .selectOption('');
+
+    await expect(
+      dashboard.locator(
+        '#v3FilterCompany'
+      )
+    ).toHaveValue('');
+
+
+    // --------------------------------------------------------
+    // Explicit V3.2 empty-state contract.
+    // This exercises only the V3.2 scoped analytics enhancer;
+    // it does not mutate application/backend data.
+    // --------------------------------------------------------
+
+    await page.evaluate(()=>{
+
+      const select=
+        document.querySelector(
+          '#view-management #v3FilterCompany'
+        );
+
+      if(!select){
+        throw new Error(
+          'company filter unavailable'
+        );
+      }
+
+      const option=
+        document.createElement(
+          'option'
+        );
+
+      option.value=
+        '__V32_NO_MATCH__';
+
+      option.textContent=
+        '__V32_NO_MATCH__';
+
+      option.dataset.v32Test=
+        'empty-state';
+
+      select.append(
+        option
+      );
+
+      select.value=
+        option.value;
+
+      window.GarpiUIV32A1
+        ?.enhance
+        ?.();
+    });
+
+    await expect(
+      roleCard
+    ).toContainText(
+      'Sin personal alojado para este contexto.'
+    );
+
+    await page.evaluate(()=>{
+
+      const select=
+        document.querySelector(
+          '#view-management #v3FilterCompany'
+        );
+
+      if(!select){
+        return;
+      }
+
+      select.value='';
+
+      select
+        .querySelector(
+          '[data-v32-test="empty-state"]'
+        )
+        ?.remove();
+
+      window.GarpiUIV32A1
+        ?.enhance
+        ?.();
+    });
+
+    await expect(
+      roleCard
+    ).not.toContainText(
+      'Sin personal alojado para este contexto.'
+    );
+
+    expect(
+      pageErrors
+    ).toEqual([]);
+  }
+);
+
+
+test(
+  'UI V3.2 A1 descarga XLSX real con cinco hojas y denominadores correctos',
+  async({page})=>{
+
+    test.setTimeout(60000);
+
+
+    // --------------------------------------------------------
+    // Deterministic browser XLSX adapter.
+    //
+    // The application still exercises its real workbook
+    // construction path. This adapter replaces only the remote
+    // SheetJS transport and serializes the resulting workbook
+    // into a valid uncompressed OOXML ZIP package.
+    // --------------------------------------------------------
+
+    await page.addInitScript(()=>{
+
+      const encoder=
+        new TextEncoder();
+
+      const xml=
+        value=>
+          String(
+            value ?? ''
+          )
+            .replace(
+              /&/g,
+              '&amp;'
+            )
+            .replace(
+              /</g,
+              '&lt;'
+            )
+            .replace(
+              />/g,
+              '&gt;'
+            )
+            .replace(
+              /"/g,
+              '&quot;'
+            )
+            .replace(
+              /'/g,
+              '&apos;'
+            );
+
+      const concat=
+        parts=>{
+
+          const length=
+            parts.reduce(
+              (sum,part)=>
+                sum+part.length,
+              0
+            );
+
+          const out=
+            new Uint8Array(
+              length
+            );
+
+          let offset=0;
+
+          for(
+            const part of parts
+          ){
+            out.set(
+              part,
+              offset
+            );
+
+            offset+=
+              part.length;
+          }
+
+          return out;
+        };
+
+      const u16=
+        value=>
+          new Uint8Array([
+            value & 255,
+            value >>> 8 & 255
+          ]);
+
+      const u32=
+        value=>
+          new Uint8Array([
+            value & 255,
+            value >>> 8 & 255,
+            value >>> 16 & 255,
+            value >>> 24 & 255
+          ]);
+
+      const crc32=
+        bytes=>{
+
+          let crc=
+            0xffffffff;
+
+          for(
+            const byte of bytes
+          ){
+
+            crc^=
+              byte;
+
+            for(
+              let bit=0;
+              bit<8;
+              bit++
+            ){
+
+              crc=
+                (
+                  crc & 1
+                )
+                  ? (
+                      crc >>> 1
+                    ) ^ 0xedb88320
+                  : crc >>> 1;
+            }
+          }
+
+          return (
+            crc ^ 0xffffffff
+          ) >>> 0;
+        };
+
+      const zip=
+        entries=>{
+
+          const locals=[];
+          const centrals=[];
+
+          let offset=0;
+
+          for(
+            const entry of entries
+          ){
+
+            const name=
+              encoder.encode(
+                entry.name
+              );
+
+            const data=
+              encoder.encode(
+                entry.text
+              );
+
+            const crc=
+              crc32(
+                data
+              );
+
+            const local=
+              concat([
+                u32(0x04034b50),
+                u16(20),
+                u16(0x0800),
+                u16(0),
+                u16(0),
+                u16(0x0021),
+                u32(crc),
+                u32(data.length),
+                u32(data.length),
+                u16(name.length),
+                u16(0),
+                name,
+                data
+              ]);
+
+            locals.push(
+              local
+            );
+
+            centrals.push(
+              concat([
+                u32(0x02014b50),
+                u16(20),
+                u16(20),
+                u16(0x0800),
+                u16(0),
+                u16(0),
+                u16(0x0021),
+                u32(crc),
+                u32(data.length),
+                u32(data.length),
+                u16(name.length),
+                u16(0),
+                u16(0),
+                u16(0),
+                u16(0),
+                u32(0),
+                u32(offset),
+                name
+              ])
+            );
+
+            offset+=
+              local.length;
+          }
+
+          const central=
+            concat(
+              centrals
+            );
+
+          const end=
+            concat([
+              u32(0x06054b50),
+              u16(0),
+              u16(0),
+              u16(entries.length),
+              u16(entries.length),
+              u32(central.length),
+              u32(offset),
+              u16(0)
+            ]);
+
+          return concat([
+            ...locals,
+            central,
+            end
+          ]);
+        };
+
+      const columnName=
+        number=>{
+
+          let value=
+            number;
+
+          let out='';
+
+          while(
+            value>0
+          ){
+
+            value--;
+
+            out=
+              String.fromCharCode(
+                65 + value % 26
+              ) +
+              out;
+
+            value=
+              Math.floor(
+                value / 26
+              );
+          }
+
+          return out;
+        };
+
+      const worksheetXml=
+        rows=>{
+
+          const rowXml=
+            rows.map(
+              (
+                row,
+                rowIndex
+              )=>{
+
+                const cells=
+                  (
+                    Array.isArray(row)
+                      ? row
+                      : []
+                  )
+                    .map(
+                      (
+                        value,
+                        columnIndex
+                      )=>{
+
+                        if(
+                          value===null ||
+                          typeof value==='undefined'
+                        ){
+                          return '';
+                        }
+
+                        const ref=
+                          columnName(
+                            columnIndex+1
+                          ) +
+                          (
+                            rowIndex+1
+                          );
+
+                        if(
+                          typeof value==='number' &&
+                          Number.isFinite(value)
+                        ){
+                          return (
+                            '<c r="' +
+                            ref +
+                            '"><v>' +
+                            value +
+                            '</v></c>'
+                          );
+                        }
+
+                        return (
+                          '<c r="' +
+                          ref +
+                          '" t="inlineStr">' +
+                          '<is><t xml:space="preserve">' +
+                          xml(value) +
+                          '</t></is></c>'
+                        );
+                      }
+                    )
+                    .join('');
+
+                return (
+                  '<row r="' +
+                  (
+                    rowIndex+1
+                  ) +
+                  '">' +
+                  cells +
+                  '</row>'
+                );
+              }
+            )
+            .join('');
+
+          return (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+            '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+            '<sheetData>' +
+            rowXml +
+            '</sheetData>' +
+            '</worksheet>'
+          );
+        };
+
+      const book_new=
+        ()=>({
+          SheetNames:[],
+          Sheets:{}
+        });
+
+      const aoa_to_sheet=
+        rows=>({
+          __aoa:
+            (
+              Array.isArray(rows)
+                ? rows
+                : []
+            )
+              .map(
+                row=>
+                  Array.isArray(row)
+                    ? [...row]
+                    : []
+              )
+        });
+
+      const book_append_sheet=
+        (
+          workbook,
+          sheet,
+          name
+        )=>{
+
+          workbook
+            .SheetNames
+            .push(name);
+
+          workbook
+            .Sheets[name]=
+              sheet;
+        };
+
+      const writeFile=
+        (
+          workbook,
+          filename
+        )=>{
+
+          const names=[
+            ...workbook.SheetNames
+          ];
+
+          const snapshot={
+            name:filename,
+            SheetNames:names,
+            Sheets:{}
+          };
+
+          for(
+            const name of names
+          ){
+
+            snapshot
+              .Sheets[name]=
+                (
+                  workbook
+                    .Sheets[name]
+                    ?.__aoa ||
+                  []
+                )
+                  .map(
+                    row=>[
+                      ...row
+                    ]
+                  );
+          }
+
+          window.__GARPI_XLSX_SNAPSHOT__=
+            snapshot;
+
+          const overrides=
+            names
+              .map(
+                (
+                  name,
+                  index
+                )=>
+                  '<Override PartName="/xl/worksheets/sheet' +
+                  (
+                    index+1
+                  ) +
+                  '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+              )
+              .join('');
+
+          const contentTypes=
+            '<?xml version="1.0" encoding="UTF-8"?>' +
+            '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+            '<Default Extension="xml" ContentType="application/xml"/>' +
+            '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+            overrides +
+            '</Types>';
+
+          const rootRels=
+            '<?xml version="1.0" encoding="UTF-8"?>' +
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+            '</Relationships>';
+
+          const sheetsXml=
+            names
+              .map(
+                (
+                  name,
+                  index
+                )=>
+                  '<sheet name="' +
+                  xml(name) +
+                  '" sheetId="' +
+                  (
+                    index+1
+                  ) +
+                  '" r:id="rId' +
+                  (
+                    index+1
+                  ) +
+                  '"/>'
+              )
+              .join('');
+
+          const workbookXml=
+            '<?xml version="1.0" encoding="UTF-8"?>' +
+            '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' +
+            'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+            '<sheets>' +
+            sheetsXml +
+            '</sheets>' +
+            '</workbook>';
+
+          const workbookRels=
+            '<?xml version="1.0" encoding="UTF-8"?>' +
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+            names
+              .map(
+                (
+                  name,
+                  index
+                )=>
+                  '<Relationship Id="rId' +
+                  (
+                    index+1
+                  ) +
+                  '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" ' +
+                  'Target="worksheets/sheet' +
+                  (
+                    index+1
+                  ) +
+                  '.xml"/>'
+              )
+              .join('') +
+            '</Relationships>';
+
+          const files=[
+            {
+              name:'[Content_Types].xml',
+              text:contentTypes
+            },
+            {
+              name:'_rels/.rels',
+              text:rootRels
+            },
+            {
+              name:'xl/workbook.xml',
+              text:workbookXml
+            },
+            {
+              name:'xl/_rels/workbook.xml.rels',
+              text:workbookRels
+            }
+          ];
+
+          names.forEach(
+            (
+              name,
+              index
+            )=>{
+
+              files.push({
+                name:
+                  'xl/worksheets/sheet' +
+                  (
+                    index+1
+                  ) +
+                  '.xml',
+
+                text:
+                  worksheetXml(
+                    snapshot
+                      .Sheets[name]
+                  )
+              });
+            }
+          );
+
+          const bytes=
+            zip(
+              files
+            );
+
+          const blob=
+            new Blob(
+              [bytes],
+              {
+                type:
+                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+              }
+            );
+
+          const url=
+            URL.createObjectURL(
+              blob
+            );
+
+          const anchor=
+            document.createElement(
+              'a'
+            );
+
+          anchor.href=
+            url;
+
+          anchor.download=
+            filename;
+
+          anchor.style.display=
+            'none';
+
+          document.body.append(
+            anchor
+          );
+
+          anchor.click();
+          anchor.remove();
+
+          setTimeout(
+            ()=>
+              URL.revokeObjectURL(
+                url
+              ),
+            1000
+          );
+        };
+
+      window.XLSX={
+        utils:{
+          book_new,
+          aoa_to_sheet,
+          book_append_sheet
+        },
+        writeFile
+      };
+    });
+
+
+    await login(
+      page,
+      dailyCapacityFixture()
+    );
+
+    await openView(
+      page,
+      'management'
+    );
+
+    const dashboard=
+      page.locator(
+        '#view-management .v3-management'
+      );
+
+    await expect(
+      dashboard
+    ).toBeVisible();
+
+    const exportButton=
+      dashboard.locator(
+        '[data-v32-export-xlsx]'
+      );
+
+    await expect(
+      exportButton
+    ).toBeVisible();
+
+    await expect(
+      exportButton
+    ).toBeEnabled();
+
+
+    // --------------------------------------------------------
+    // Obtain visible authoritative lodged-person KPI.
+    // --------------------------------------------------------
+
+    const personalKpi=
+      dashboard
+        .locator(
+          '.v3-kpi'
+        )
+        .filter({
+          hasText:
+            'Personal alojando'
+        })
+        .first();
+
+    await expect(
+      personalKpi
+    ).toBeVisible();
+
+    const personalText=
+      await personalKpi.innerText();
+
+    const personalMatch=
+      personalText.match(
+        /([\d.]+)/
+      );
+
+    expect(
+      personalMatch
+    ).not.toBeNull();
+
+    const visibleOccupied=
+      Number(
+        personalMatch[1]
+          .replace(
+            /\./g,
+            ''
+          )
+      );
+
+    expect(
+      visibleOccupied
+    ).toBeGreaterThan(0);
+
+
+    // --------------------------------------------------------
+    // Real .xlsx download.
+    // --------------------------------------------------------
+
+    const downloadPromise=
+      page.waitForEvent(
+        'download'
+      );
+
+    await exportButton.press(
+      'Enter'
+    );
+
+    const download=
+      await downloadPromise;
+
+    expect(
+      await download.failure()
+    ).toBeNull();
+
+    expect(
+      download.suggestedFilename()
+    ).toMatch(
+      /^GARPI_resumen_gerencial_\d{4}-\d{2}-\d{2}\.xlsx$/
+    );
+
+    const stream=
+      await download.createReadStream();
+
+    expect(
+      stream
+    ).not.toBeNull();
+
+    const chunks=[];
+
+    for await(
+      const chunk of stream
+    ){
+      chunks.push(
+        Buffer.from(chunk)
+      );
+    }
+
+    const binary=
+      Buffer.concat(
+        chunks
+      );
+
+    expect(
+      binary.length
+    ).toBeGreaterThan(1000);
+
+    expect(
+      Array.from(
+        binary.subarray(
+          0,
+          4
+        )
+      )
+    ).toEqual([
+      0x50,
+      0x4b,
+      0x03,
+      0x04
+    ]);
+
+    const zipText=
+      binary.toString(
+        'utf8'
+      );
+
+    expect(
+      zipText
+    ).toContain(
+      'xl/workbook.xml'
+    );
+
+    expect(
+      zipText
+    ).toContain(
+      'xl/worksheets/sheet1.xml'
+    );
+
+    expect(
+      zipText
+    ).toContain(
+      'Resumen Ejecutivo'
+    );
+
+    expect(
+      zipText
+    ).toContain(
+      'Alojamiento Empresas'
+    );
+
+
+    // --------------------------------------------------------
+    // Validate workbook model passed by GARPI to the XLSX layer.
+    // --------------------------------------------------------
+
+    const workbook=
+      await page.evaluate(
+        ()=>
+          window
+            .__GARPI_XLSX_SNAPSHOT__
+      );
+
+    expect(
+      workbook
+    ).toBeTruthy();
+
+    expect(
+      workbook.SheetNames
+    ).toEqual([
+      'Resumen Ejecutivo',
+      'Alojamiento Empresas',
+      'MOD-MOI y Cargos',
+      'Datos Grafico',
+      'Contexto'
+    ]);
+
+    const summary=
+      workbook
+        .Sheets[
+          'Resumen Ejecutivo'
+        ];
+
+    const companies=
+      workbook
+        .Sheets[
+          'Alojamiento Empresas'
+        ];
+
+    const roles=
+      workbook
+        .Sheets[
+          'MOD-MOI y Cargos'
+        ];
+
+    const chart=
+      workbook
+        .Sheets[
+          'Datos Grafico'
+        ];
+
+    const context=
+      workbook
+        .Sheets[
+          'Contexto'
+        ];
+
+    const rowValue=
+      (
+        rows,
+        label
+      )=>{
+
+        const row=
+          rows.find(
+            item=>
+              String(
+                item?.[0] ?? ''
+              )===label
+          );
+
+        return row?.[1];
+      };
+
+    expect(
+      Number(
+        rowValue(
+          summary,
+          'Personal alojando en campamento'
+        )
+      )
+    ).toBe(
+      visibleOccupied
+    );
+
+    expect(
+      companies[0]
+    ).toEqual(
+      expect.arrayContaining([
+        'Empresa',
+        'Personal alojado',
+        '% personal alojado campamento',
+        'MOD',
+        'MOI',
+        'Por definir',
+        'Dotación registrada en GARPI'
+      ])
+    );
+
+    const exportedOccupied=
+      companies
+        .slice(1)
+        .reduce(
+          (
+            total,
+            row
+          )=>
+            total +
+            Number(
+              row?.[1] || 0
+            ),
+          0
+        );
+
+    expect(
+      exportedOccupied
+    ).toBe(
+      visibleOccupied
+    );
+
+    expect(
+      roles[0]
+    ).toEqual(
+      expect.arrayContaining([
+        'Empresa',
+        'Cargo / especialidad',
+        'Fuente',
+        'Categoría registrada',
+        'MOD',
+        'MOI',
+        'Por definir',
+        'Total',
+        '% empresa'
+      ])
+    );
+
+    expect(
+      chart[0]
+    ).toEqual(
+      expect.arrayContaining([
+        'Empresa',
+        'Personal alojado',
+        'MOD',
+        'MOI',
+        'Por definir',
+        '% personal alojado campamento'
+      ])
+    );
+
+    expect(
+      rowValue(
+        context,
+        'Denominador % empresa'
+      )
+    ).toBe(
+      'Total de personal alojando en campamento'
+    );
+
+    expect(
+      rowValue(
+        context,
+        'Denominador alternativo'
+      )
+    ).toBe(
+      'Dotación registrada en GARPI'
+    );
+
+    expect(
+      rowValue(
+        context,
+        'Cargo'
+      )
+    ).toContain(
+      'Cargo real si existe'
+    );
   }
 );

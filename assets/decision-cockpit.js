@@ -81,7 +81,7 @@
       <div class="dc-card-head"><div><h3>${dim==='module'?'Presión operacional':'Composición de dotación'}</h3><p>${dim==='module'?'Porcentaje comprometido por módulo.':'Una visualización reutilizable para evitar gráficos repetidos.'}</p></div>
       <div class="dc-actions"><button class="dc-dim ${dim==='module'?'active':''}" data-dc-dim="module" data-dc-scope="${management?'management':'overview'}">Módulo</button><button class="dc-dim ${dim==='shift'?'active':''}" data-dc-dim="shift" data-dc-scope="${management?'management':'overview'}">Turno</button><button class="dc-dim ${dim==='company'?'active':''}" data-dc-dim="company" data-dc-scope="${management?'management':'overview'}">Empresa</button></div></div>
       <div class="dc-bars">${rows.length?rows.map(x=>`<button type="button" class="dc-bar-row" data-dc-row="${e(x.label)}" data-dc-row-dim="${dim}" data-dc-row-scope="${management?'management':'overview'}"><span>${e(x.label)}</span><span class="dc-track"><i style="width:${Math.max(2,Math.min(100,x.n/max*100))}%"></i></span><strong>${e(dec(x.n)+x.suffix)}</strong></button>`).join(''):'<div class="dc-empty-good">Sin datos para los filtros seleccionados.</div>'}</div>
-      <div class="dc-bar-note">${management?'Toca una fila para abrir el detalle.':'Toca una fila para aplicar ese filtro al cockpit.'}</div>
+      <div class="dc-bar-note">${management?'Toca una fila para abrir el detalle.':'Toca una fila para abrir el detalle.'}</div>
     </section>`;
   }
   function movementCard(an){return `<section class="dc-card dc-span-4"><div class="dc-card-head"><div><h3>Movimientos</h3><p>Situación inmediata de entradas y salidas.</p></div><span class="dc-tag">HOY</span></div><div class="dc-exec-kpis dc-two"><div class="dc-exec-kpi"><span>Subidas</span><strong>${int(an?.mv?.SUBIDA||0)}</strong><small>programadas hoy</small></div><div class="dc-exec-kpi"><span>Bajadas</span><strong>${int(an?.mv?.BAJADA||0)}</strong><small>programadas hoy</small></div><div class="dc-exec-kpi"><span>Pend. llegada</span><strong>${int(an?.pa?.total||0)}</strong><small>por materializar</small></div><div class="dc-exec-kpi"><span>Pend. salida</span><strong>${int(an?.pd?.total||0)}</strong><small>por completar</small></div></div></section>`}
@@ -90,7 +90,7 @@
     return `<div class="dc-shell dc-primary">
       <section class="dc-hero"><div class="dc-hero-top"><div><div class="dc-eyebrow">OPERACIÓN Y ANALÍTICA</div><h2>Centro de Control Operacional</h2><p>Lectura inmediata para decidir: estado, capacidad, movimientos, alertas y proyección.</p></div><span class="dc-status ${s}"><i></i>${statusText(s)}</span></div>
       <div class="dc-hero-grid">${heroKpi('Ocupación',`${int(an.occupied)} / ${int(an.effectiveCapacity)}`,`${pct(an.occupied/an.effectiveCapacity*100)} física`)}${heroKpi('Comprometidas',`${int(an.committed)} / ${int(an.effectiveCapacity)}`,`${pct(an.committedPct)} capacidad`)}${heroKpi('Libres efectivas',int(an.free),`${int(an.blockedToday)} fuera de servicio`)}${heroKpi('Movimientos hoy',`↑ ${int(an.mv?.SUBIDA)} · ↓ ${int(an.mv?.BAJADA)}`,`neto ${signed(Number(an.mv?.SUBIDA||0)-Number(an.mv?.BAJADA||0))}`)}${heroKpi('Integridad',`${int(integrity)}%`,sem?.diag?.critical?`${sem.diag.critical} crítico(s)`:'base controlada')}</div></section>
-      <div class="dc-grid">${filterCard(data)}${attentionCard(data,an,sem)}${forecastCard(an)}${movementCard(an)}${dimensionCard(data,an,false)}</div>
+      <div class="dc-grid">${attentionCard(data,an,sem)}${forecastCard(an)}${movementCard(an)}${dimensionCard(data,an,false)}</div>
     </div>`;
   }
   function deltaText(now,prev,suffix=''){if(prev==null)return 'Sin cierre previo';const d=Number(now||0)-Number(prev||0);return `${d>0?'+':''}${dec(d)}${suffix} vs último cierre`}
@@ -150,7 +150,7 @@
     root.querySelectorAll('[data-dc-day]').forEach(b=>b.addEventListener('click',()=>{const an=currentAnalytics(),x=an?.forecast?.find(r=>r.date===b.dataset.dcDay);if(x)dialog(`Proyección · ${date(x.date)}`,`<div class="bi-dialog-grid"><div><span>Capacidad efectiva</span><strong>${int(x.capacity)}</strong></div><div><span>Ocupadas proyectadas</span><strong>${int(x.physical)}</strong></div><div><span>Reservadas</span><strong>${int(x.reserved)}</strong></div><div><span>Comprometidas</span><strong>${int(x.committed)}</strong></div><div><span>Libres</span><strong>${int(x.free)}</strong></div><div><span>Déficit</span><strong>${int(x.over)}</strong></div></div>`)}));
     root.querySelectorAll('[data-dc-row]').forEach(b=>b.addEventListener('click',()=>{
       const dim=b.dataset.dcRowDim,val=b.dataset.dcRow,rowScope=b.dataset.dcRowScope;
-      if(rowScope==='overview'){applyRowFilter(dim,val);renderOverview();return}
+
       const rows=(data.workers||[]).filter(w=>dim==='module'?norm(w.modulo)===norm(val):dim==='shift'?norm(w.turno)===norm(val):norm(w.empresa)===norm(val));
       dialog(`${dim==='module'?'Módulo':dim==='shift'?'Turno':'Empresa'} · ${val}`,tableWorkers(rows));
     }));

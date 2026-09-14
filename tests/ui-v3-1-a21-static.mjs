@@ -18,7 +18,7 @@ assert.match(
 
 assert.match(
   sw,
-  /ui-v3-1-a21/
+  /ui-v3-1-1-a22/
 );
 
 assert.match(

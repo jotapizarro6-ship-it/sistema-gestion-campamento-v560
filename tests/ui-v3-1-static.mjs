@@ -18,12 +18,12 @@ const css =
 
 assert.match(
   admin,
-  /ui-v3-1-clarity\.css\?v=20260913-v31a1/
+  /ui-v3-1-clarity\.css\?v=20260914-v311a22/
 );
 
 assert.match(
   admin,
-  /ui-v3-1-clarity\.js\?v=20260913-v31a1/
+  /ui-v3-1-clarity\.js\?v=20260914-v311a22/
 );
 
 /*
@@ -67,7 +67,7 @@ assert.match(
 
 assert.match(
   js,
-  /data-v3-open-advanced/
+  /data-v31-open-tool/
 );
 
 assert.match(

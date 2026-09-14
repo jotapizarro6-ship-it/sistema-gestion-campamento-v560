@@ -1949,11 +1949,9 @@
       >
         <div class="v3-card-head">
           <div>
-            <h3>Advanced</h3>
+            <h3>Herramientas especializadas</h3>
             <p>
-              Historial, costos, benchmark, drillthrough
-              y reportes quedan en segundo nivel para
-              mantener limpio el dashboard principal.
+              Costos, drillthrough, historial y reportes quedan en segundo nivel sin repetir datos del dashboard principal.
             </p>
           </div>
 
@@ -1966,17 +1964,16 @@
           <button
             type="button"
             class="v3-advanced-action"
-            data-v3-open-advanced="analysis"
+            data-v31-open-tool="drillthrough"
           >
             <span class="v3-advanced-icon" aria-hidden="true">
               A
             </span>
 
             <span class="v3-advanced-copy">
-              <strong>An\u00e1lisis avanzado</strong>
+              <strong>Drillthrough de dotaci\u00f3n</strong>
               <small>
-                Benchmark, dimensiones, drillthrough
-                y herramientas gerenciales existentes.
+                Explora empresa, turno, m\u00f3dulo, habitaci\u00f3n, cama y trabajador.
               </small>
             </span>
 
@@ -1986,7 +1983,7 @@
           <button
             type="button"
             class="v3-advanced-action"
-            data-v3-open-advanced="cost"
+            data-v31-open-tool="cost"
           >
             <span class="v3-advanced-icon" aria-hidden="true">
               $

@@ -2046,7 +2046,7 @@ test(
 
     await advanced
       .locator(
-        '[data-v3-open-advanced="analysis"]'
+        '[data-v31-open-tool="drillthrough"]'
       )
       .click();
 
@@ -2074,6 +2074,19 @@ test(
       )
     ).toBeVisible();
 
+    // A2.2: selected drillthrough only; repeated analytics stay hidden.
+    await expect(
+      legacy.locator('#drillTable')
+    ).toBeVisible();
+
+    await expect(
+      legacy.locator('#costForm')
+    ).toBeHidden();
+
+    await expect(
+      legacy.locator('.kpi-grid')
+    ).toBeHidden();
+
     const closeAdvanced=
       legacy.locator(
         '[data-v31-close-advanced]'
@@ -2100,7 +2113,7 @@ test(
 
     await advanced
       .locator(
-        '[data-v3-open-advanced="cost"]'
+        '[data-v31-open-tool="cost"]'
       )
       .click();
 
@@ -2115,6 +2128,15 @@ test(
         '#costForm'
       )
     ).toBeVisible();
+
+    // A2.2: selected cost form only; drillthrough and KPI legacy stay hidden.
+    await expect(
+      legacy.locator('#drillTable')
+    ).toBeHidden();
+
+    await expect(
+      legacy.locator('.kpi-grid')
+    ).toBeHidden();
 
     await expect(
       legacy
@@ -2298,6 +2320,272 @@ test(
         '#v3TraceInput'
       )
     ).toBeVisible();
+
+    expect(pageErrors).toEqual([]);
+    expect(backend.unexpected).toEqual([]);
+  }
+);
+
+
+test(
+  'UI V3.1.1 A2.2 elimina filtros redundantes del Resumen Operativo',
+  async({page})=>{
+    const pageErrors=[];
+
+    page.on(
+      'pageerror',
+      error=>pageErrors.push(
+        String(error?.message||error)
+      )
+    );
+
+    const state=
+      dailyCapacityFixture();
+
+    const backend=
+      await login(
+        page,
+        state
+      );
+
+    await openView(
+      page,
+      'overview'
+    );
+
+    const overview=
+      page.locator(
+        '#view-overview'
+      );
+
+    await expect(
+      overview.locator(
+        '.dc-primary'
+      )
+    ).toBeVisible();
+
+    await expect(
+      overview.locator(
+        '.dc-filter-strip'
+      )
+    ).toHaveCount(0);
+
+    await expect(
+      overview.locator(
+        '[data-dc-filter-toggle]'
+      )
+    ).toHaveCount(0);
+
+    expect(pageErrors).toEqual([]);
+    expect(backend.unexpected).toEqual([]);
+  }
+);
+
+test(
+  'UI V3.1.1 A2.2 mobile 412 mantiene deduplicacion funcional',
+  async({page})=>{
+    await page.setViewportSize({
+      width:412,
+      height:915
+    });
+
+    const pageErrors=[];
+
+    page.on(
+      'pageerror',
+      error=>pageErrors.push(
+        String(error?.message||error)
+      )
+    );
+
+    const state=
+      dailyCapacityFixture();
+
+    const backend=
+      await login(
+        page,
+        state
+      );
+
+    await openView(
+      page,
+      'overview'
+    );
+
+    const overview=
+      page.locator(
+        '#view-overview'
+      );
+
+    await expect(
+      overview.locator(
+        '.dc-primary'
+      )
+    ).toBeVisible();
+
+    await expect(
+      overview.locator(
+        '.dc-filter-strip'
+      )
+    ).toHaveCount(0);
+
+    await expect(
+      overview.locator(
+        '[data-dc-filter-toggle]'
+      )
+    ).toHaveCount(0);
+
+    const overviewOverflow=
+      await page.evaluate(
+        ()=>{
+          const doc=
+            document.documentElement;
+
+          return Math.max(
+            0,
+            doc.scrollWidth-
+            doc.clientWidth
+          );
+        }
+      );
+
+    expect(
+      overviewOverflow
+    ).toBe(0);
+
+
+    await openView(
+      page,
+      'management'
+    );
+
+    const management=
+      page.locator(
+        '#view-management'
+      );
+
+    const dashboard=
+      management.locator(
+        '.v3-management'
+      );
+
+    await expect(
+      dashboard.locator(
+        '.v3-kpi'
+      )
+    ).toHaveCount(8);
+
+    const specialized=
+      dashboard.locator(
+        '[data-v3-advanced]'
+      );
+
+    await expect(
+      specialized
+    ).toContainText(
+      'Herramientas especializadas'
+    );
+
+    await expect(
+      specialized
+    ).toContainText(
+      /Drillthrough de dotaci[o\u00f3]n/i
+    );
+
+    await expect(
+      specialized.locator(
+        '[data-v3-open-advanced="analysis"]'
+      )
+    ).toHaveCount(0);
+
+
+    const legacy=
+      management.locator(
+        ':scope > details.dc-legacy-details'
+      );
+
+    await specialized
+      .locator(
+        '[data-v31-open-tool="drillthrough"]'
+      )
+      .click();
+
+    await expect(
+      legacy
+    ).toHaveClass(
+      /v31-modal-open/
+    );
+
+    await expect(
+      legacy.locator(
+        '#drillTable'
+      )
+    ).toBeVisible();
+
+    await expect(
+      legacy.locator(
+        '#costForm'
+      )
+    ).toBeHidden();
+
+    await expect(
+      legacy.locator(
+        '.kpi-grid'
+      )
+    ).toBeHidden();
+
+    await legacy
+      .locator(
+        '[data-v31-close-advanced]'
+      )
+      .click();
+
+    await expect(
+      legacy
+    ).toBeHidden();
+
+
+    await specialized
+      .locator(
+        '[data-v31-open-tool="cost"]'
+      )
+      .click();
+
+    await expect(
+      legacy.locator(
+        '#costForm'
+      )
+    ).toBeVisible();
+
+    await expect(
+      legacy.locator(
+        '#drillTable'
+      )
+    ).toBeHidden();
+
+    await expect(
+      legacy.locator(
+        '.kpi-grid'
+      )
+    ).toBeHidden();
+
+    const managementOverflow=
+      await page.evaluate(
+        ()=>{
+          const doc=
+            document.documentElement;
+
+          return Math.max(
+            0,
+            doc.scrollWidth-
+            doc.clientWidth
+          );
+        }
+      );
+
+    expect(
+      managementOverflow
+    ).toBe(0);
 
     expect(pageErrors).toEqual([]);
     expect(backend.unexpected).toEqual([]);

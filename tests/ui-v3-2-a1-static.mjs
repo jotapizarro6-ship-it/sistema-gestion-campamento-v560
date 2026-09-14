@@ -9,17 +9,17 @@ const sw=fs.readFileSync("service-worker.js","utf8");
 
 assert.match(
   admin,
-  /ui-v3-dashboard\.js\?v=20260914-v32a1/
+  /ui-v3-dashboard\.js\?v=20260914-v321a11/
 );
 
 assert.match(
   admin,
-  /ui-v3-2-a1\.js\?v=20260914-v32a1/
+  /ui-v3-2-a1\.js\?v=20260914-v321a11/
 );
 
 assert.match(
   admin,
-  /ui-v3-2-a1\.css\?v=20260914-v32a1/
+  /ui-v3-2-a1\.css\?v=20260914-v321a11/
 );
 
 assert.equal(
@@ -137,6 +137,47 @@ assert.match(
   /ui-v3-2-a1/
 );
 
+
+assert.match(
+  dashboard,
+  /class="v3-filterbar v3-span-2"/
+);
+
+assert.match(
+  dashboard,
+  /class="v3-card v3-workforce-card v3-span-2"/
+);
+
+assert.match(
+  dashboard,
+  /Descargar resumen Excel/
+);
+
+assert.match(
+  dashboard,
+  /style="width:\$\{sharePct\}%"/
+);
+
+assert.match(
+  dashboard,
+  /MOD \$\{int\(row\.direct\)\} \(\$\{pct\(directPct\)\}\)/
+);
+
+assert.match(
+  dashboard,
+  /MOI \$\{int\(row\.indirect\)\} \(\$\{pct\(indirectPct\)\}\)/
+);
+
+assert.match(
+  css,
+  /v31a2-selection-bar\{grid-column:1\/-1\}/
+);
+
+assert.match(
+  css,
+  /v32-role-table-wrap\{max-height:520px;overflow:auto\}/
+);
+
 console.log(
-  "UI V3.2 A1 lean static contract: OK"
+  "UI V3.2.1 A1.1 expert workforce static contract: OK"
 );

@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260912-v3a10';
+  const VERSION = '20260914-v321a11';
 
   const clean = value =>
     String(value == null ? '' : value).trim();
@@ -545,7 +545,7 @@
 
     return `
       <section
-        class="v3-filterbar"
+        class="v3-filterbar v3-span-2"
         aria-label="Filtros de exploracion"
       >
         <div class="v3-filterbar-head">
@@ -627,7 +627,7 @@
               class="btn btn-primary"
               data-v32-export-xlsx
             >
-              Descargar Excel
+              Descargar resumen Excel
             </button>
           </div>
         </div>
@@ -918,7 +918,7 @@
 
     return `
       <section
-        class="v3-card v3-workforce-card"
+        class="v3-card v3-workforce-card v3-span-2"
         data-v3-workforce-card
       >
         <div class="v3-card-head">
@@ -1027,6 +1027,8 @@
                     row.undefined /
                     rowTotal *
                     100;
+                   const sharePct=
+                     row.total / Math.max(model.totalPeople, 1) * 100;
 
                   return `
                     <button
@@ -1038,12 +1040,12 @@
                       <div class="v3-workforce-row-head">
                         <strong>${esc(row.label)}</strong>
                         <span>
-                          ${int(row.total)} persona(s) · ${pct(row.total / Math.max(model.totalPeople, 1) * 100)}
+                          ${int(row.total)} persona(s) · ${pct(sharePct)}
                         </span>
                       </div>
 
                       <div
-                        class="v3-workforce-stack"
+                        class="v3-workforce-stack" style="width:${sharePct}%"
                         aria-label="${esc(
                           `${dimensionLabel} ${row.label}: MOD ${row.direct}, MOI ${row.indirect}, por definir ${row.undefined}`
                         )}"
@@ -1063,11 +1065,11 @@
                       </div>
 
                       <small>
-                        MOD ${int(row.direct)}
-                        \u00b7 MOI ${int(row.indirect)}
+                        MOD ${int(row.direct)} (${pct(directPct)})
+                        \u00b7 MOI ${int(row.indirect)} (${pct(indirectPct)})
                         ${
                           row.undefined
-                            ? `\u00b7 Por definir ${int(row.undefined)}`
+                            ? `\u00b7 Por definir ${int(row.undefined)} (${pct(undefinedPct)})`
                             : ''
                         }
                       </small>

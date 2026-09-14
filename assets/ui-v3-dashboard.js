@@ -550,7 +550,7 @@
       >
         <div class="v3-filterbar-head">
           <div>
-            <strong>Enfoque de exploraci\u00f3n</strong>
+            <strong>Composición del personal alojado</strong>
             <small>
               Los 8 KPI mantienen el total campamento.
               Los filtros ajustan empresas, m\u00f3dulos,
@@ -562,8 +562,7 @@
             class="v3-filter-scope"
             data-v3-scope
           >
-            ${int(scoped.length)}
-            persona(s) en foco
+            ${int(scoped.length)} de ${int(model.occupied.length)} persona(s) alojadas
           </span>
         </div>
 
@@ -626,9 +625,9 @@
             <button
               type="button"
               class="btn btn-primary"
-              data-v3-open-map
+              data-v32-export-xlsx
             >
-              Abrir mapa de camas
+              Descargar Excel
             </button>
           </div>
         </div>
@@ -924,9 +923,9 @@
       >
         <div class="v3-card-head">
           <div>
-            <h3>Composici\u00f3n MOD / MOI</h3>
+            <h3>Distribución del personal alojado · MOD / MOI</h3>
             <p>
-              Personal alojando dentro del enfoque actual,
+              Cantidad, porcentaje y composición MOD/MOI por empresa, turno o módulo.
               clasificado con CampWorkforceMODMOI.
             </p>
           </div>
@@ -1039,8 +1038,7 @@
                       <div class="v3-workforce-row-head">
                         <strong>${esc(row.label)}</strong>
                         <span>
-                          ${int(row.total)}
-                          persona(s)
+                          ${int(row.total)} persona(s) · ${pct(row.total / Math.max(model.totalPeople, 1) * 100)}
                         </span>
                       </div>
 
@@ -1552,138 +1550,6 @@
               </b>
             </div>
           `).join('')}
-        </div>
-      </section>
-    `;
-  }
-
-  function companyCard(model) {
-    const rows = model.companies;
-    const max =
-      Math.max(
-        ...rows.map(row => row.count),
-        1
-      );
-
-    if (!rows.length) {
-      return `
-        <section class="v3-card v3-span-2">
-          <div class="v3-card-head">
-            <div>
-              <h3>Empresas en campamento</h3>
-              <p>Personal alojando por empresa.</p>
-            </div>
-          </div>
-          <div class="v3-empty">
-            Sin personal alojando para mostrar.
-          </div>
-        </section>
-      `;
-    }
-
-    return `
-      <section class="v3-card v3-span-2">
-        <div class="v3-card-head">
-          <div>
-            <h3>Empresas en campamento</h3>
-            <p>
-              Cantidad alojando, participacion dentro del campamento y composicion MOD / MOI.
-            </p>
-          </div>
-          <span class="v3-tag">
-            ${int(model.validCompanies.length)} EMPRESAS
-          </span>
-        </div>
-
-        <div class="v3-company-list">
-          ${rows.map((row, index) => {
-            const width =
-              Math.max(
-                row.count / max * 100,
-                2
-              );
-
-            const directPct =
-              row.count
-                ? row.direct / row.count * 100
-                : 0;
-
-            const indirectPct =
-              row.count
-                ? row.indirect / row.count * 100
-                : 0;
-
-            const undefinedPct =
-              Math.max(
-                0,
-                100 -
-                directPct -
-                indirectPct
-              );
-
-            return `
-              <button
-                type="button"
-                class="v3-company-row"
-                data-v3-company="${esc(row.label)}"
-                aria-label="${esc(
-                  `${row.label}: ${row.count} personas alojando, ${row.share.toFixed(1)} por ciento del campamento`
-                )}"
-              >
-                <div class="v3-company-name">
-                  <strong>${esc(row.label)}</strong>
-                  <small>
-                    ${int(row.count)} alojando de ${int(row.registered)} registrado(s)
-                    ? ${
-                      row.lodgingPct == null
-                        ? 'proporcion no disponible'
-                        : `${pct(row.lodgingPct)} de su dotación registrada en GARPI`
-                    }
-                  </small>
-                </div>
-
-                <div class="v3-company-track">
-                  <div
-                    class="v3-company-bar"
-                    style="width:${width}%"
-                  >
-                    ${
-                      directPct > 0
-                        ? `<i class="direct" style="width:${directPct}%"></i>`
-                        : ''
-                    }
-                    ${
-                      indirectPct > 0
-                        ? `<i class="indirect" style="width:${indirectPct}%"></i>`
-                        : ''
-                    }
-                    ${
-                      undefinedPct > 0
-                        ? `<i class="undefined" style="width:${undefinedPct}%"></i>`
-                        : ''
-                    }
-                  </div>
-                </div>
-
-                <div class="v3-company-meta">
-                  <span>Campamento ${pct(row.share)}</span>
-                  <span>MOD ${int(row.direct)}</span>
-                  <span>MOI ${int(row.indirect)}</span>
-                  ${
-                    row.undefined
-                      ? `<span>Por definir ${int(row.undefined)}</span>`
-                      : ''
-                  }
-                </div>
-              </button>
-            `;
-          }).join('')}
-        </div>
-
-        <div class="v3-legend">
-          <span><i class="direct"></i> MOD</span>
-          <span><i class="indirect"></i> MOI</span>
-          <span><i class="undefined"></i> Por definir</span>
         </div>
       </section>
     `;
@@ -2203,9 +2069,6 @@
             </button>
           </div>
         </section>
-
-        ${v3FilterBar(model)}
-
         <section
           class="v3-kpi-grid"
           aria-label="Indicadores principales"
@@ -2284,11 +2147,13 @@
         <div class="v3-grid">
           ${executiveSummary(model)}
           ${focusCard(model)}
-          ${companyCard(scoped)}
+          ${v3FilterBar(model)}
+          ${v3WorkforceCard(model)}
+          <section class="v3-card v32-role-card" data-v32-role-card></section>
+
           ${v3ModulePressureCard(model)}
           ${v3HotelMapCard(model)}
           ${moduleCard(scoped)}
-          ${v3WorkforceCard(model)}
           ${forecastCard(model)}
           ${traceCard()}
           ${v3AdvancedCard(model)}
@@ -2929,6 +2794,7 @@
       dashboardHTML(model);
 
     bind(primary, model);
+    window.GarpiUIV32A1?.enhance?.();
   }
 
   const base =

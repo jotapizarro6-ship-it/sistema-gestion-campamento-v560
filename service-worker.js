@@ -1,9 +1,9 @@
 'use strict';
-const CACHE_VERSION='campamento-shell-5.6.1-modern.12-r5-operational-v1-public-clean2-ui-v3-1-1-a22';
+const CACHE_VERSION='campamento-shell-5.6.1-modern.12-r5-operational-v1-public-clean2-ui-v3-2-a1';
 const SHELL=[
   './','./index.html','./admin.html','./manifest.webmanifest',
   './assets/styles.css','./assets/garpi-tech-blue.css','./assets/garpi-tech-blue-c2.css','./assets/garpi-runtime-env.js','./assets/garpi-observability.js','./assets/app-1.js','./assets/app-2a.js','./assets/app-2b.js','./assets/app-3a.js','./assets/app-3b.js','./assets/app-4.js',
-  './assets/ui-experience-fixes.css','./assets/ui-experience-fixes.js','./assets/decision-cockpit.css','./assets/decision-cockpit-bridge.js','./assets/decision-cockpit.js','./assets/ui-v3-dashboard.css','./assets/ui-v3-dashboard.js','./assets/ui-v3-1-clarity.css','./assets/ui-v3-1-clarity.js','./assets/ui-v3-1-a2.css','./assets/ui-v3-1-a2.js',
+  './assets/ui-experience-fixes.css','./assets/ui-experience-fixes.js','./assets/decision-cockpit.css','./assets/decision-cockpit-bridge.js','./assets/decision-cockpit.js','./assets/ui-v3-dashboard.css','./assets/ui-v3-dashboard.js','./assets/ui-v3-1-clarity.css','./assets/ui-v3-1-clarity.js','./assets/ui-v3-1-a2.css','./assets/ui-v3-1-a2.js','./assets/ui-v3-2-a1.css','./assets/ui-v3-2-a1.js',
   './assets/public-assignment.css','./assets/public-assignment-emphasis.css','./assets/public-worker-v2.css','./assets/public-worker-no-duplicate.css','./assets/public-worker-v2.js',
   './assets/ts/public/date.js','./assets/ts/pwa/runtime.js','./assets/ts/analytics/powerbi-engine.js','./assets/ts/charts/performance.js',
   './assets/icons/campamento.svg','./assets/icons/campamento-192.png','./assets/icons/campamento-512.png'

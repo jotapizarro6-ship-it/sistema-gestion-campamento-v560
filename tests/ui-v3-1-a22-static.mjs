@@ -100,7 +100,7 @@ check(
 
 check(
   admin.includes(
-    'assets/ui-v3-dashboard.js?v=20260914-v311a22'
+    'assets/ui-v3-dashboard.js?v=20260914-v32a1'
   ),
   'dashboard cache bust missing'
 );
@@ -117,7 +117,7 @@ check(
 
 check(
   sw.includes(
-    'ui-v3-1-1-a22'
+    'ui-v3-2-a1'
   ),
   'A2.2 service worker cache missing'
 );

@@ -100,7 +100,7 @@ check(
 
 check(
   admin.includes(
-    'assets/ui-v3-dashboard.js?v=20260914-v32a1'
+    'assets/ui-v3-dashboard.js?v=20260914-v321a11'
   ),
   'dashboard cache bust missing'
 );

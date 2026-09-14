@@ -2821,7 +2821,7 @@ test(
       await expect(
         exportButton
       ).toHaveText(
-        'Descargar Excel'
+        'Descargar resumen Excel'
       );
 
       const touchBox=
@@ -2911,6 +2911,64 @@ test(
       width:1440,
       height:900
     });
+
+
+    const expertLayout=
+      await page.evaluate(
+        ()=>{
+          const rect=
+            selector=>
+              document
+                .querySelector(selector)
+                ?.getBoundingClientRect();
+
+          const grid=
+            rect(
+              '#view-management .v3-grid'
+            );
+
+          const filters=
+            rect(
+              '#view-management .v3-filterbar'
+            );
+
+          const context=
+            rect(
+              '#view-management .v31a2-selection-bar'
+            );
+
+          const workforce=
+            rect(
+              '#view-management [data-v3-workforce-card]'
+            );
+
+          return {
+            grid:grid?.width || 0,
+            filters:filters?.width || 0,
+            context:context?.width || 0,
+            workforce:workforce?.width || 0
+          };
+        }
+      );
+
+    expect(
+      expertLayout.grid
+    ).toBeGreaterThan(0);
+
+    expect(
+      expertLayout.filters /
+      expertLayout.grid
+    ).toBeGreaterThan(0.95);
+
+    expect(
+      expertLayout.context /
+      expertLayout.grid
+    ).toBeGreaterThan(0.95);
+
+    expect(
+      expertLayout.workforce /
+      expertLayout.grid
+    ).toBeGreaterThan(0.95);
 
     const focus=
       dashboard
@@ -3021,6 +3079,40 @@ test(
       'aria-label',
       /MOD\s+\d+.*MOI\s+\d+/i
     );
+
+
+    await expect(
+      company
+    ).toContainText(
+      /MOD\s+\d[\d.]*\s+\(\d+(?:[.,]\d+)?%\)/i
+    );
+
+    await expect(
+      company
+    ).toContainText(
+      /MOI\s+\d[\d.]*\s+\(\d+(?:[.,]\d+)?%\)/i
+    );
+
+    const companyShareWidth=
+      await company
+        .locator(
+          '.v3-workforce-stack'
+        )
+        .evaluate(
+          element=>
+            Number.parseFloat(
+              element.style.width ||
+              '0'
+            )
+        );
+
+    expect(
+      companyShareWidth
+    ).toBeGreaterThan(0);
+
+    expect(
+      companyShareWidth
+    ).toBeLessThanOrEqual(100);
 
     const companyName=
       await company.getAttribute(

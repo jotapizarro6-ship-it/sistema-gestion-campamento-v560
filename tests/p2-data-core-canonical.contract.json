@@ -1,0 +1,290 @@
+{
+  "contract": "GARPI_P2_DATA_CORE_CANONICAL",
+  "revision": 1,
+  "semantic_version": "P2-DATA-CORE-V1",
+  "release_strategy": "EXPAND_SHADOW_VALIDATE_CUTOVER",
+  "objective": "Separate durable identity, current operational projection and temporal history while preserving certified GARPI runtime semantics and never fabricating legacy provenance.",
+
+  "global_invariants": [
+    "workers remains the current operational workforce projection until explicit certified cutover",
+    "workers.id is not durable historical person identity",
+    "person_id is the target stable internal person identifier",
+    "normalized valid Chilean RUT is the canonical business key when available",
+    "person identity is never inferred from person_name alone",
+    "historical relationships are never fabricated when evidence is insufficient",
+    "legacy ambiguity remains explicitly unresolved",
+    "reservation and movement are independent business processes",
+    "Capacity V1 semantics remain unchanged during P2 foundations",
+    "operational_revision remains authoritative until explicit certified replacement",
+    "last-write-wins is forbidden",
+    "closed snapshot provenance is never rewritten or fabricated",
+    "P2 foundations are additive before explicit cutover",
+    "destructive legacy history rewrites are forbidden"
+  ],
+
+  "entities": {
+    "person": {
+      "target": true,
+      "internal_identity": "person_id",
+      "business_key": "rut_normalized",
+      "business_key_rule": "unique when a valid canonical RUT is available",
+      "durability": "must survive replacement of workers operational projection",
+      "legacy_rule": "person_name alone never proves identity",
+      "current_sources": [
+        "workers.rut",
+        "reservation_members.rut"
+      ],
+      "status": "TARGET_ENTITY_REQUIRED"
+    },
+
+    "company": {
+      "target": true,
+      "internal_identity": "company_id",
+      "business_key": "canonical company code/name under explicit governance",
+      "current_sources": [
+        "workers.empresa",
+        "movements.company"
+      ],
+      "normalization": "canonical record plus explicit alias mapping",
+      "merge_rule": "never silently merge companies using fuzzy similarity",
+      "status": "TARGET_NORMALIZATION_REQUIRED"
+    },
+
+    "shift": {
+      "target": true,
+      "internal_identity": "shift_id",
+      "business_key": "canonical shift code",
+      "current_sources": [
+        "workers.turno",
+        "movements.shift"
+      ],
+      "merge_rule": "never silently infer equivalent shifts from similar text",
+      "status": "TARGET_NORMALIZATION_REQUIRED"
+    },
+
+    "camp": {
+      "target": true,
+      "internal_identity": "camp_id",
+      "current_source": "bed_inventory.camp",
+      "legacy_rule": "missing camp identity remains unresolved unless deterministic evidence exists",
+      "status": "TARGET_NORMALIZATION_REQUIRED"
+    },
+
+    "module": {
+      "target": true,
+      "internal_identity": "module_id",
+      "parent": "camp",
+      "current_sources": [
+        "bed_inventory.module",
+        "workers.modulo",
+        "reservations.module",
+        "bed_blocks.module"
+      ],
+      "status": "TARGET_NORMALIZATION_REQUIRED"
+    },
+
+    "room": {
+      "target": true,
+      "internal_identity": "room_id",
+      "parent": "module",
+      "current_sources": [
+        "bed_inventory.room",
+        "workers.habitacion",
+        "reservations.room",
+        "bed_blocks.room"
+      ],
+      "status": "TARGET_NORMALIZATION_REQUIRED"
+    },
+
+    "bed": {
+      "target": true,
+      "internal_identity": "bed_id",
+      "parent": "room",
+      "legacy_business_key": "module + room + bed",
+      "current_source": "bed_inventory",
+      "legacy_rule": "existing physical composite key remains supported until certified cutover",
+      "status": "EXISTING_PHYSICAL_FOUNDATION"
+    },
+
+    "assignment": {
+      "target": true,
+      "internal_identity": "assignment_id",
+      "purpose": "temporal person-to-bed occupancy relationship",
+      "current_projection": "workers.modulo + workers.habitacion + workers.cama",
+      "states": [
+        "ACTIVA",
+        "FINALIZADA",
+        "CANCELADA",
+        "LEGACY_UNRESOLVED"
+      ],
+      "temporal_fields": [
+        "valid_from",
+        "valid_to"
+      ],
+      "invariants": [
+        "one person cannot have overlapping ACTIVA assignments in the same operational universe",
+        "one bed cannot have overlapping ACTIVA assignments in the same operational universe",
+        "assignment history never depends on workers.id",
+        "legacy assignment history is never invented"
+      ],
+      "status": "TARGET_ENTITY_REQUIRED"
+    },
+
+    "reservation": {
+      "target": true,
+      "current_table": "reservations",
+      "states": [
+        "PENDIENTE",
+        "CONFIRMADA",
+        "CANCELADA",
+        "ANULADA"
+      ],
+      "active_states": [
+        "PENDIENTE",
+        "CONFIRMADA"
+      ],
+      "inactive_states": [
+        "CANCELADA",
+        "ANULADA"
+      ],
+      "interval_semantics": "[arrival_date,departure_date)",
+      "identity_rule": "canonical person relationships use reservation_members",
+      "legacy_rule": "person_name alone never proves member identity",
+      "status": "EXISTING_WITH_IDENTITY_FOUNDATION"
+    },
+
+    "reservation_member": {
+      "target": true,
+      "current_table": "reservation_members",
+      "current_business_identity": "unique(reservation_id,rut)",
+      "target_person_link": "person_id",
+      "worker_fk": "FORBIDDEN",
+      "legacy_rule": "existing RUT relationship remains supported during migration",
+      "status": "FOUNDATION_EXISTS"
+    },
+
+    "movement": {
+      "target": true,
+      "current_table": "movements",
+      "states": [
+        "PROGRAMADO",
+        "EJECUTADO",
+        "CANCELADO",
+        "LEGACY_UNRESOLVED"
+      ],
+      "historical_rule": "historical movements are never inferred as PROGRAMADO",
+      "current_grain": "aggregate operational movement",
+      "independent_from_reservation": true,
+      "status": "LIFECYCLE_FOUNDATION_EXISTS"
+    },
+
+    "movement_member": {
+      "target": true,
+      "purpose": "optional future person manifest associated with a movement",
+      "person_link": "person_id",
+      "legacy_rule": "never manufacture members from aggregate people_count",
+      "required_for_existing_movements": false,
+      "status": "FUTURE_FOUNDATION"
+    },
+
+    "bed_block": {
+      "target": true,
+      "current_table": "bed_blocks",
+      "purpose": "temporal physical bed unavailability",
+      "target_bed_link": "bed_id",
+      "integrity": "active block cannot overlap active occupancy of the same bed",
+      "status": "EXISTING_NEEDS_CANONICAL_BED_ALIGNMENT"
+    },
+
+    "daily_capacity": {
+      "target": true,
+      "current_table": "daily_capacity",
+      "rule": "exact daily_capacity wins including zero",
+      "fallback": "canonical operational universe when exact daily capacity is absent",
+      "legacy_132": "FORBIDDEN_RUNTIME_FALLBACK",
+      "status": "CAPACITY_V1_CERTIFIED"
+    },
+
+    "snapshot": {
+      "target": true,
+      "current_table": "daily_snapshots",
+      "provenance_required_for_new_closures": true,
+      "legacy_rule": "legacy provenance remains unresolved or nullable when evidence is absent",
+      "immutability": "closed snapshots remain protected",
+      "status": "PROVENANCE_FOUNDATION_EXISTS"
+    },
+
+    "import": {
+      "target": true,
+      "current_table": "import_history",
+      "purpose": "source provenance for operational replacement imports",
+      "invariant": "replacement of workers cannot erase durable identity or temporal history",
+      "status": "EXISTING"
+    },
+
+    "audit_event": {
+      "target": true,
+      "current_table": "audit_log",
+      "target_mode": "APPEND_ONLY",
+      "required_fields": [
+        "occurred_at",
+        "profile",
+        "action",
+        "entity_type",
+        "entity_id",
+        "endpoint",
+        "result",
+        "details"
+      ],
+      "invariants": [
+        "normal application paths cannot update historical audit events",
+        "normal application paths cannot delete historical audit events",
+        "audit events identify the affected business entity whenever known",
+        "audit writes do not silently mutate operational business state"
+      ],
+      "status": "EXISTING_NEEDS_HARDENING"
+    }
+  },
+
+  "concurrency": {
+    "current_contract": "operational_revision",
+    "conflict_semantics": "real HTTP 409 on stale expected revision where applicable",
+    "last_write_wins": "FORBIDDEN",
+    "entity_versioning": "may be added only when backward compatible and justified"
+  },
+
+  "provenance": {
+    "current_foundations": [
+      "source_import_id",
+      "source_operational_revision",
+      "operational_universe_count",
+      "operational_universe_fingerprint",
+      "capacity_source",
+      "semantic_version",
+      "provenance_version"
+    ],
+    "rule": "legacy provenance values are never fabricated"
+  },
+
+  "migration_policy": {
+    "phase_1": "EXPAND",
+    "phase_2": "SHADOW",
+    "phase_3": "VALIDATE",
+    "phase_4": "CUTOVER",
+    "phase_5": "DEPRECATE_LEGACY",
+
+    "forbidden_before_cutover": [
+      "DROP legacy business table",
+      "DROP legacy business column",
+      "TRUNCATE legacy business history",
+      "rewrite historical identity from person_name",
+      "manufacture movement members from people_count",
+      "silent fuzzy company merges",
+      "silent fuzzy shift merges",
+      "remove certified Capacity V1 semantics",
+      "replace operational_revision without certified compatibility"
+    ]
+  },
+
+  "next_phase": "P2.2_SCHEMA_FOUNDATIONS"
+}

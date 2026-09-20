@@ -1,0 +1,247 @@
+{
+    "contract":  "GARPI_P2_4_REFERENTIAL_STATE_INTEGRITY",
+    "version":  "P2.4C-v1",
+    "baseline":  {
+                     "branch":  "p2-data-core-hardening-20260919",
+                     "head":  "a358096e1ead7f1ad13710f3d80642e04c5e76f6",
+                     "tree":  "1614ed6dcc71aabcaefb780daa28f4d231430d84",
+                     "p2_4a":  "CERTIFIED",
+                     "p2_4b":  "CERTIFIED",
+                     "critical_gap_count":  5,
+                     "high_gap_count":  4
+                 },
+    "rollout":  {
+                    "pattern":  [
+                                    "EXPAND",
+                                    "SHADOW",
+                                    "VALIDATE",
+                                    "CUTOVER",
+                                    "DEPRECATE_LEGACY"
+                                ],
+                    "destructive_rewrite":  false,
+                    "fabricate_legacy_identity":  false,
+                    "fabricate_historical_time":  false,
+                    "fuzzy_linking":  false,
+                    "runtime_cutover_in_p2_4c":  false
+                },
+    "assignments":  {
+                        "states":  [
+                                       "ACTIVA",
+                                       "FINALIZADA",
+                                       "CANCELADA",
+                                       "LEGACY_UNRESOLVED"
+                                   ],
+                        "active_states":  [
+                                              "ACTIVA"
+                                          ],
+                        "terminal_states":  [
+                                                "FINALIZADA",
+                                                "CANCELADA"
+                                            ],
+                        "transitions":  {
+                                            "ACTIVA":  [
+                                                           "FINALIZADA",
+                                                           "CANCELADA"
+                                                       ],
+                                            "FINALIZADA":  [
+
+                                                           ],
+                                            "CANCELADA":  [
+
+                                                          ],
+                                            "LEGACY_UNRESOLVED":  [
+
+                                                                  ]
+                                        },
+                        "legacy_resolution":  "LEGACY_UNRESOLVED is not resolved by an ordinary state transition. Resolution requires explicit evidence-backed reconciliation.",
+                        "invariants":  [
+                                           "non-LEGACY_UNRESOLVED requires person_id",
+                                           "non-LEGACY_UNRESOLVED requires bed_id",
+                                           "non-LEGACY_UNRESOLVED requires valid_from",
+                                           "ACTIVA requires valid_to IS NULL",
+                                           "valid_to must be NULL or greater than valid_from",
+                                           "maximum one ACTIVA assignment per person",
+                                           "maximum one ACTIVA assignment per bed",
+                                           "resolved states cannot transition back to LEGACY_UNRESOLVED"
+                                       ]
+                    },
+    "reservations":  {
+                         "states":  [
+                                        "PENDIENTE",
+                                        "CONFIRMADA",
+                                        "CANCELADA",
+                                        "ANULADA"
+                                    ],
+                         "active_states":  [
+                                               "PENDIENTE",
+                                               "CONFIRMADA"
+                                           ],
+                         "terminal_states":  [
+                                                 "CANCELADA",
+                                                 "ANULADA"
+                                             ],
+                         "transitions":  {
+                                             "PENDIENTE":  [
+                                                               "CONFIRMADA",
+                                                               "CANCELADA",
+                                                               "ANULADA"
+                                                           ],
+                                             "CONFIRMADA":  [
+                                                                "CANCELADA",
+                                                                "ANULADA"
+                                                            ],
+                                             "CANCELADA":  [
+
+                                                           ],
+                                             "ANULADA":  [
+
+                                                         ]
+                                         },
+                         "same_state_update":  "idempotent same-state update is allowed but is not a transition",
+                         "terminal_reopen":  false,
+                         "interval":  "[arrival_date,departure_date)",
+                         "temporal_rule":  "departure_date must be NULL or strictly greater than arrival_date",
+                         "canonical_bed":  {
+                                               "target":  "nullable bed_id referencing public.camp_beds(id)",
+                                               "legacy_location":  "module/room/bed remain during EXPAND and SHADOW",
+                                               "populate_only_when":  "exact canonical mapping is provable",
+                                               "missing_mapping":  "UNRESOLVED",
+                                               "ambiguous_mapping":  "CONFLICT",
+                                               "mismatch":  "FAIL_CLOSED",
+                                               "before_cutover":  "legacy location remains operational and bed_id is shadow evidence",
+                                               "after_cutover":  "bed_id becomes authoritative only after explicit validation and cutover"
+                                           },
+                         "overlap":  {
+                                         "rule":  "active reservations on the same exact bed must not overlap",
+                                         "active_states":  [
+                                                               "PENDIENTE",
+                                                               "CONFIRMADA"
+                                                           ],
+                                         "db_object_proof":  "REQUIRED_BEFORE_P2_4_CLOSURE"
+                                     }
+                     },
+    "movements":  {
+                      "states":  [
+                                     "PROGRAMADO",
+                                     "EJECUTADO",
+                                     "CANCELADO",
+                                     "LEGACY_UNRESOLVED"
+                                 ],
+                      "terminal_states":  [
+                                              "EJECUTADO",
+                                              "CANCELADO"
+                                          ],
+                      "transitions":  {
+                                          "PROGRAMADO":  [
+                                                             "EJECUTADO",
+                                                             "CANCELADO"
+                                                         ],
+                                          "EJECUTADO":  [
+
+                                                        ],
+                                          "CANCELADO":  [
+
+                                                        ],
+                                          "LEGACY_UNRESOLVED":  [
+
+                                                                ]
+                                      },
+                      "legacy_rule":  "LEGACY_UNRESOLVED must never be automatically inferred to PROGRAMADO, EJECUTADO or CANCELADO",
+                      "timestamp_rules":  {
+                                              "PROGRAMADO":  "executed_at IS NULL AND cancelled_at IS NULL",
+                                              "EJECUTADO":  "executed_at IS NOT NULL AND cancelled_at IS NULL",
+                                              "CANCELADO":  "cancelled_at IS NOT NULL AND executed_at IS NULL",
+                                              "LEGACY_UNRESOLVED":  "historical timestamp evidence remains as found and missing history is never fabricated"
+                                          }
+                  },
+    "bed_blocks":  {
+                       "states":  [
+                                      "ACTIVO",
+                                      "CERRADO"
+                                  ],
+                       "terminal_states":  [
+                                               "CERRADO"
+                                           ],
+                       "transitions":  {
+                                           "ACTIVO":  [
+                                                          "CERRADO"
+                                                      ],
+                                           "CERRADO":  [
+
+                                                       ]
+                                       },
+                       "interval":  "[start_date,end_date]",
+                       "temporal_rule":  "end_date must be NULL or greater than or equal to start_date",
+                       "canonical_bed":  {
+                                             "target":  "nullable bed_id referencing public.camp_beds(id)",
+                                             "legacy_location":  "module/room/bed remain during EXPAND and SHADOW",
+                                             "populate_only_when":  "exact canonical mapping is provable",
+                                             "missing_mapping":  "UNRESOLVED",
+                                             "ambiguous_mapping":  "CONFLICT",
+                                             "silent_rewrite":  false
+                                         },
+                       "overlap":  {
+                                       "rule":  "two ACTIVO blocks on the same exact bed must not overlap",
+                                       "db_object_proof":  "REQUIRED_BEFORE_P2_4_CLOSURE"
+                                   }
+                   },
+    "cross_entity":  {
+                         "invariants":  [
+                                            "ACTIVA assignment cannot coexist with an effective ACTIVO block on the same canonical bed and operational time",
+                                            "active reservation cannot overlap an effective ACTIVO block on the same canonical bed",
+                                            "active reservations cannot overlap one another on the same canonical bed",
+                                            "cross-entity enforcement must be concurrency-safe",
+                                            "frontend or API validation alone is not sufficient for canonical integrity"
+                                        ],
+                         "legacy_rule":  "legacy textual locations must not be silently equated to canonical bed_id when mapping is absent or ambiguous"
+                     },
+    "temporal_semantics":  {
+                               "reservation":  "[arrival,departure)",
+                               "bed_block":  "[start,end] inclusive",
+                               "finite_block_half_open_equivalent":  "[start,end + 1 day)",
+                               "unknown_legacy_effective_time":  "UNRESOLVED"
+                           },
+    "p2_4b_gaps":  {
+                       "critical":  [
+                                        "reservation state domain not DB-enforced",
+                                        "reservation legal transition graph not DB-enforced",
+                                        "reservation exact bed remains legacy textual relation",
+                                        "bed block exact bed remains legacy textual relation",
+                                        "block/reservation collision protection not DB-enforced"
+                                    ],
+                       "high":  [
+                                    "reservation temporal interval application-only",
+                                    "assignment legal transition graph not DB-enforced",
+                                    "movement legal transition graph not DB-enforced",
+                                    "movement lifecycle/timestamp coherence not DB-enforced"
+                                ]
+                   },
+    "existing_db_claims_requiring_exact_object_proof":  [
+                                                            "reservation same-bed overlap protection",
+                                                            "active bed-block overlap protection",
+                                                            "bed-block allowed status domain"
+                                                        ],
+    "implementation_rules":  [
+                                 "all P2.4 schema work is additive",
+                                 "legacy rows must not be rewritten merely to satisfy new constraints",
+                                 "use staged NOT VALID validation where historic rows may violate new referential rules",
+                                 "row-local state and timestamp coherence belongs in database constraints",
+                                 "previous-state transition legality requires database transition guards",
+                                 "durable location integrity must use canonical bed_id",
+                                 "cross-table collision protection must be transactionally concurrency-safe",
+                                 "workers.id must never become person_id",
+                                 "reservation person_name must never become person identity",
+                                 "aggregate movements must never fabricate individual person identity"
+                             ],
+    "non_goals":  [
+                      "production master population",
+                      "production backfill",
+                      "runtime cutover",
+                      "historical identity reconstruction",
+                      "append-only audit hardening",
+                      "campamento-api source reconciliation",
+                      "push",
+                      "deploy",
+                      "Android changes"
+                  ]
+}

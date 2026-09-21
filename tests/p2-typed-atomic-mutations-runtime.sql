@@ -90,14 +90,15 @@ $p2_atomic_rpc_acl$;
 -- 2. SERVICE_ROLE CAN INVOKE A TYPED RPC
 -- ============================================================================
 
+select value::bigint as service_expected_revision
+from public.settings
+where key = 'operational_revision'
+\gset
+
 set role service_role;
 
 select public.p2_create_movement(
-    (
-        select value::bigint
-        from public.settings
-        where key = 'operational_revision'
-    ),
+    :service_expected_revision,
     date '2099-01-01',
     'SUBIDA',
     'A',
@@ -895,21 +896,19 @@ begin
     end if;
 
 
-    -- Stale row revision must not change cost or advance state.
+    -- A deliberately impossible future row revision must conflict
+    -- without changing the setting or advancing global state.
     v_blocked := false;
 
     begin
         perform public.p2_set_cost_per_bed_day(
             v_after,
             v_new_value + 1,
-            greatest(
-                (
-                    v_result ->
-                    'data' ->
-                    'row_revision'
-                )::bigint - 1,
-                1
-            )
+            (
+                v_result ->
+                'data' ->
+                'row_revision'
+            )::bigint + 99
         );
     exception
         when sqlstate '40001' then
@@ -922,36 +921,6 @@ begin
                 raise;
             end if;
     end;
-
-
-    -- If the row was newly inserted its current revision is 1, so the
-    -- expression above also equals 1 and is not stale. Force a known stale
-    -- value in that case.
-    if not v_blocked
-       and (
-           v_result ->
-           'data' ->
-           'row_revision'
-       )::bigint = 1
-    then
-        begin
-            perform public.p2_set_cost_per_bed_day(
-                v_after,
-                v_new_value + 1,
-                99
-            );
-        exception
-            when sqlstate '40001' then
-                if position(
-                    'P2_ROW_CONFLICT'
-                    in sqlerrm
-                ) > 0 then
-                    v_blocked := true;
-                else
-                    raise;
-                end if;
-        end;
-    end if;
 
 
     if not v_blocked then

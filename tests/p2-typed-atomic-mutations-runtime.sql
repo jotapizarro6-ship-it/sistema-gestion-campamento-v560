@@ -637,7 +637,7 @@ begin
 
     v_before :=
         (
-            v_result ->
+            v_result ->>
             'state_version'
         )::bigint;
 
@@ -766,7 +766,7 @@ begin
     begin
         perform public.p2_upsert_daily_capacity(
             (
-                v_result ->
+                v_result ->>
                 'state_version'
             )::bigint,
             date '2099-03-01',

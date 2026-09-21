@@ -111,7 +111,16 @@ function makeState(movements=[]){
     reservations:[],
 
     movements:
-      clone(movements),
+      clone(movements).map(
+        movement=>({
+          ...movement,
+          row_revision:
+            Number(
+              movement.row_revision||
+              1
+            )
+        })
+      ),
 
     capacities:[
       {
@@ -444,6 +453,7 @@ async function installBackend(
 
         const row={
           id:nextId++,
+          row_revision:1,
 
           movement_date:
             movementDate,
@@ -574,6 +584,33 @@ async function installBackend(
           );
         }
 
+        const expectedRowRevision=
+          Number(
+            body.expected_row_revision
+          );
+
+        if(
+          !Number.isSafeInteger(
+            expectedRowRevision
+          )||
+          expectedRowRevision<1||
+          expectedRowRevision!==
+            Number(
+              row.row_revision
+            )
+        ){
+          return json(
+            route,
+            {
+              ok:false,
+              code:'STATE_CONFLICT',
+              error:
+                'Los datos cambiaron.'
+            },
+            409
+          );
+        }
+
         if(
           String(
             row.lifecycle_status
@@ -634,6 +671,11 @@ async function installBackend(
           row.cancelled_at=
             '2026-09-02T06:25:00.000Z';
         }
+
+        row.row_revision=
+          Number(
+            row.row_revision
+          )+1;
 
         stateVersion++;
 

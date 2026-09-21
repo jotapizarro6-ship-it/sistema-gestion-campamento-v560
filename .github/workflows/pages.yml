@@ -61,6 +61,9 @@ jobs:
         run: node tests/high-volume-performance-smoke.mjs
 
   deploy:
+    # Production publication is intentionally decoupled from merges to main.
+    # A deploy is allowed only through an explicit manual workflow_dispatch.
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     needs: verify
     environment:
       name: github-pages

@@ -157,9 +157,19 @@ assert(
   "revision row lock missing"
 );
 
+const movementBodyMatch =
+  sql.match(
+    /create\s+or\s+replace\s+function\s+public\.p2_create_movement[\s\S]*?as\s+\$p2_create_movement\$([\s\S]*?)\$p2_create_movement\$;/i
+  );
+
 assert(
-  !/update\s+public\.settings[\s\S]*?operational_revision[\s\S]*?p2_create_movement/i.test(
-    sql
+  movementBodyMatch,
+  "movement RPC body not found"
+);
+
+assert(
+  !/update\s+public\.settings[\s\S]*?operational_revision/i.test(
+    movementBodyMatch[1]
   ),
   "movement RPC must not manually double-advance R4 revision"
 );

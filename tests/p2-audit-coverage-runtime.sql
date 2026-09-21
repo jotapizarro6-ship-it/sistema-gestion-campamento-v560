@@ -505,55 +505,7 @@ begin
        set value =
            (
                case
-                   when value ~ '^[0-9]+
-do $p2_audit_foundation_lock$
-declare
-    v_count integer;
-begin
-    select count(*)
-      into v_count
-      from pg_catalog.pg_trigger
-     where tgrelid =
-           'public.audit_log'::regclass
-       and tgname in (
-           'audit_log_p2_no_update_delete',
-           'audit_log_p2_no_truncate'
-       )
-       and not tgisinternal;
-
-    if v_count <> 2 then
-        raise exception
-            'P2_AUDIT_COVERAGE:append_only_foundation_drift:%',
-            v_count;
-    end if;
-
-
-    if has_table_privilege(
-        'service_role',
-        'public.audit_log',
-        'UPDATE'
-    )
-    or has_table_privilege(
-        'service_role',
-        'public.audit_log',
-        'DELETE'
-    )
-    or has_table_privilege(
-        'service_role',
-        'public.audit_log',
-        'TRUNCATE'
-    ) then
-        raise exception
-            'P2_AUDIT_COVERAGE:service_history_mutation';
-    end if;
-end
-$p2_audit_foundation_lock$;
-
-
-select
-    'P2.5 atomic audit coverage runtime: OK'
-    as certification;
-
+                   when value ~ '^[0-9]+$'
                    then (value::bigint + 1)::text
                    else '1'
                end

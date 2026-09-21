@@ -1,0 +1,97 @@
+{
+  "contract": "GARPI_P2_6_CONCURRENCY_PROVENANCE",
+  "revision": 1,
+  "semantic_version": "P2.6-CONCURRENCY-PROVENANCE-V1",
+  "phase": "P2.6A",
+  "objective": "Establish durable per-entity revisions, harden the operational revision primitive, and bind atomic audit events to the operational and row revisions needed for later real optimistic-concurrency RPCs.",
+  "base_main": "393ef87d8b4696fd775fa0fb01dbe04d30e5623d",
+  "principles": [
+    "no last-write-wins for durable business mutations",
+    "global operational revision remains a compatibility fence until typed atomic mutation RPCs replace the current claim-then-write split",
+    "durable mutable entities receive a monotonic row_revision",
+    "row_revision increments only when non-revision row content changes",
+    "audit events capture the operational revision observed in the same database transaction",
+    "audit events capture row_revision before and after when available",
+    "legacy rows are preserved; constant default row_revision=1 is expand-safe",
+    "request/correlation identifiers are propagated only when they can be grounded in actual request evidence",
+    "actor identity is never fabricated"
+  ],
+  "row_revision_tables": [
+    "reservations",
+    "reservation_members",
+    "movements",
+    "bed_blocks",
+    "daily_capacity",
+    "settings",
+    "daily_snapshots",
+    "operational_actions",
+    "master_plan_events",
+    "what_if_scenarios",
+    "import_history",
+    "assignments",
+    "persons",
+    "companies",
+    "company_aliases",
+    "shifts",
+    "shift_aliases",
+    "camps",
+    "camp_modules",
+    "camp_rooms",
+    "camp_beds"
+  ],
+  "database_contract": {
+    "row_revision_column": {
+      "type": "bigint",
+      "not_null": true,
+      "default": 1,
+      "minimum": 1
+    },
+    "row_revision_trigger_function": "public.p2_bump_row_revision()",
+    "row_revision_trigger_name": "p2_row_revision_bu",
+    "operational_revision_function": "public.claim_operational_revision(bigint)",
+    "atomic_conflict_helper": "public.p2_require_operational_revision(bigint)",
+    "conflict_sqlstate": "40001",
+    "conflict_marker": "P2_STATE_CONFLICT"
+  },
+  "audit_provenance": {
+    "automatic_function": "public.p2_audit_row_change()",
+    "details_required": [
+      "transaction_id",
+      "source_operational_revision",
+      "old_row_revision",
+      "new_row_revision"
+    ],
+    "secret_setting_fingerprints_remain_suppressed": true,
+    "operational_revision_setting_remains_excluded_from_business_audit": true
+  },
+  "security": {
+    "claim_operational_revision_search_path": "pg_catalog",
+    "claim_operational_revision_service_execute": true,
+    "atomic_conflict_helper_direct_execute_roles": [],
+    "row_revision_trigger_direct_execute_roles": [],
+    "audit_trigger_direct_execute_roles": []
+  },
+  "acceptance": [
+    "fresh PostgreSQL 17 repository replay succeeds",
+    "all configured durable tables contain row_revision bigint not null default 1",
+    "all configured durable tables have one row revision BEFORE UPDATE trigger",
+    "no-op UPDATE does not bump row_revision",
+    "real row change increments row_revision by exactly one",
+    "claim_operational_revision remains atomic under row lock and uses search_path pg_catalog",
+    "p2_require_operational_revision returns the next revision on exact match",
+    "p2_require_operational_revision raises SQLSTATE 40001 with P2_STATE_CONFLICT on stale expected revision",
+    "failed p2_require_operational_revision does not advance operational revision",
+    "automatic audit events record source_operational_revision and row revisions",
+    "operational_revision settings updates do not create business audit noise",
+    "secret-bearing settings still persist no OLD/NEW fingerprints",
+    "P2.5 append-only and audit coverage tests remain green"
+  ],
+  "deliberately_deferred": [
+    "P2.6B typed atomic mutation RPCs for reservations, movements, blocks, capacities and settings",
+    "P2.6C migration of Edge Function write paths from claim-then-write to atomic mutation RPCs",
+    "P2.6D request_id and correlation_id propagation into semantic and database audit where technically grounded",
+    "P2.6E actor provenance standardization across write APIs",
+    "P2.6F end-to-end real HTTP 409 certification under competing writers",
+    "production deployment and cutover"
+  ]
+}

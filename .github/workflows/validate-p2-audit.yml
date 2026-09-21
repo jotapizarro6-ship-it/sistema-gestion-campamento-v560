@@ -1,0 +1,148 @@
+name: Validar P2.5 Auditoria Append-Only
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "supabase/migrations/**"
+      - "tests/p2-append-only-audit.contract.json"
+      - "tests/p2-append-only-audit-static.mjs"
+      - "tests/p2-append-only-audit-runtime.sql"
+      - ".github/workflows/validate-p2-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  p2-audit-append-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Fijar Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Static contract lock
+        run: node tests/p2-append-only-audit-static.mjs
+
+      - name: PostgreSQL 17 repository replay + append-only runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          container="garpi-p2-audit-pg"
+          port="55432"
+
+          cleanup() {
+            docker rm -f "$container" >/dev/null 2>&1 || true
+          }
+
+          trap cleanup EXIT
+          cleanup
+
+          docker run -d             --name "$container"             -e POSTGRES_PASSWORD=postgres             -p "$port:5432"             postgres:17.11             >/dev/null
+
+          for i in $(seq 1 60); do
+            if docker exec "$container"               pg_isready -U postgres -d postgres               >/dev/null 2>&1
+            then
+              break
+            fi
+
+            if [ "$i" -eq 60 ]; then
+              echo "PostgreSQL 17 did not become ready" >&2
+              exit 1
+            fi
+
+            sleep 1
+          done
+
+          cat > /tmp/garpi-p2-roles.sql <<'SQL'
+          do $roles$
+          begin
+              if not exists (
+                  select 1
+                  from pg_catalog.pg_roles
+                  where rolname = 'anon'
+              ) then
+                  create role anon nologin;
+              end if;
+
+              if not exists (
+                  select 1
+                  from pg_catalog.pg_roles
+                  where rolname = 'authenticated'
+              ) then
+                  create role authenticated nologin;
+              end if;
+
+              if not exists (
+                  select 1
+                  from pg_catalog.pg_roles
+                  where rolname = 'service_role'
+              ) then
+                  create role service_role
+                      nologin
+                      nobypassrls;
+              end if;
+
+              if not exists (
+                  select 1
+                  from pg_catalog.pg_roles
+                  where rolname = 'camp_app'
+              ) then
+                  create role camp_app nologin;
+              end if;
+
+              if not exists (
+                  select 1
+                  from pg_catalog.pg_roles
+                  where rolname = 'replit_app'
+              ) then
+                  create role replit_app nologin;
+              end if;
+          end
+          $roles$;
+
+          create schema if not exists extensions;
+          SQL
+
+          docker exec -i "$container"             psql               -X               -v ON_ERROR_STOP=1               -U postgres               -d postgres             < /tmp/garpi-p2-roles.sql
+
+          applied=0
+          skipped=0
+
+          while IFS= read -r migration; do
+            name="$(basename "$migration")"
+
+            if [ "$name" = "20260827151504_enable_pg_net_for_deploy_checks.sql" ]; then
+              echo "SKIP unsupported isolated extension migration: $name"
+              skipped=$((skipped + 1))
+              continue
+            fi
+
+            echo "APPLY $name"
+
+            docker exec -i "$container"               psql                 -X                 -v ON_ERROR_STOP=1                 -U postgres                 -d postgres               < "$migration"
+
+            applied=$((applied + 1))
+          done < <(
+            git ls-files "supabase/migrations/*.sql" |
+            sort
+          )
+
+          echo "Repository migration replay applied=$applied skipped=$skipped"
+
+          if [ "$skipped" -ne 1 ]; then
+            echo "Expected exactly one pg_net skip, got $skipped" >&2
+            exit 1
+          fi
+
+          docker exec -i "$container"             psql               -X               -v ON_ERROR_STOP=1               -U postgres               -d postgres             < tests/p2-append-only-audit-runtime.sql
+
+          echo "P2.5 append-only audit PG17 certification: GREEN"

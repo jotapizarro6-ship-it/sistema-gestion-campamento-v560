@@ -1,0 +1,87 @@
+{
+  "contract": "GARPI_P2_5_APPEND_ONLY_AUDIT",
+  "revision": 1,
+  "semantic_version": "P2.5-AUDIT-V1",
+  "phase": "P2.5A",
+  "objective": "Harden the existing GARPI audit_log as a durable append-only event store without rewriting legacy history or changing operational business state.",
+  "authority": {
+    "base_main": "0f9cedd56d1fc0213d1f01b05da2dbc125fa3386",
+    "existing_table": "public.audit_log",
+    "existing_shape_preserved": true
+  },
+  "required_fields": [
+    "occurred_at",
+    "profile",
+    "action",
+    "entity_type",
+    "entity_id",
+    "endpoint",
+    "result",
+    "details"
+  ],
+  "invariants": [
+    "historical audit events cannot be updated",
+    "historical audit events cannot be deleted",
+    "audit history cannot be truncated",
+    "service_role has direct SELECT and INSERT only on audit_log",
+    "public, anon, authenticated, camp_app and replit_app have no direct audit_log table privileges",
+    "application roles cannot directly execute the append-only guard function",
+    "legacy audit rows are never rewritten or backfilled during P2.5A",
+    "audit hardening must not mutate operational business state",
+    "audit action is nonblank for new or changed rows",
+    "existing audit event columns and semantics remain backward compatible"
+  ],
+  "database_enforcement": {
+    "guard_function": "public.p2_guard_audit_log_append_only()",
+    "update_delete_trigger": "audit_log_p2_no_update_delete",
+    "truncate_trigger": "audit_log_p2_no_truncate",
+    "new_write_constraint": "audit_log_p2_action_nonblank_chk",
+    "constraint_mode": "NOT_VALID_EXPAND",
+    "rls": "ENABLED",
+    "service_role_table_privileges": [
+      "SELECT",
+      "INSERT"
+    ],
+    "service_role_forbidden_table_privileges": [
+      "UPDATE",
+      "DELETE",
+      "TRUNCATE"
+    ]
+  },
+  "security": {
+    "direct_client_roles_denied": [
+      "public",
+      "anon",
+      "authenticated",
+      "camp_app",
+      "replit_app"
+    ],
+    "guard_execute_grants": [],
+    "sequence_access": "service_role usage/select only when audit_log uses an identity/serial sequence"
+  },
+  "legacy_policy": {
+    "rewrite_existing_events": false,
+    "delete_existing_events": false,
+    "fabricate_missing_actor_or_entity_provenance": false,
+    "backfill_missing_fields": false
+  },
+  "deliberately_deferred": [
+    "P2.5B mutation endpoint audit coverage inventory",
+    "P2.5C complete write-path instrumentation",
+    "P2.5D audit write atomicity and failure semantics",
+    "request and correlation identifiers",
+    "richer actor provenance",
+    "operational deployment to GARPI DB",
+    "P2.6 concurrency and provenance"
+  ],
+  "acceptance": [
+    "migration is idempotent",
+    "fresh PostgreSQL 17 repository replay succeeds",
+    "service_role can insert and select audit events",
+    "service_role cannot update, delete or truncate audit events",
+    "privileged UPDATE DELETE and TRUNCATE are rejected by database triggers with P2_AUDIT_APPEND_ONLY",
+    "guard function search_path is pg_catalog",
+    "external roles have no audit table privileges",
+    "existing P2.1-P2.4 tests remain unaffected"
+  ]
+}

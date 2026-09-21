@@ -9,7 +9,7 @@ const contractRel =
   "tests/p2-audit-coverage.contract.json";
 
 const expectedMigrationBlob =
-  "46d6fe82b5cf0f4ea256e983a80af2f6052c1747";
+  "c390fb7dca287e037d16a2a2f58b1311969d132e";
 
 function assert(value, message) {
   if (!value) {
@@ -209,6 +209,26 @@ assert(
   ),
   "ownership transfer introduced"
 );
+
+assert(
+  sql.includes(
+    "= 'operational_revision'"
+  ),
+  "operational_revision exclusion missing"
+);
+
+for (
+  const secretKey of [
+    "admin_password_hash",
+    "admin_password_salt",
+    "session_secret",
+  ]
+) {
+  assert(
+    sql.includes(secretKey),
+    `secret fingerprint suppression missing: ${secretKey}`
+  );
+}
 
 console.log(
   "P2.5 audit coverage static lock: OK"

@@ -472,7 +472,7 @@ begin
        )::bigint <> 2
        or (
            v_result ->
-           'data' ->
+           'data' ->>
            'status'
        ) <> 'CONFIRMADA'
     then
@@ -658,7 +658,7 @@ begin
        )::bigint <> 2
        or (
            v_result ->
-           'data' ->
+           'data' ->>
            'status'
        ) <> 'CERRADO'
     then

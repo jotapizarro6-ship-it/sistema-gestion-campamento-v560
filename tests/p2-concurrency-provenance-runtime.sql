@@ -69,6 +69,9 @@ begin
           on c.oid = a.attrelid
         join pg_catalog.pg_namespace n
           on n.oid = c.relnamespace
+        left join pg_catalog.pg_attrdef ad
+          on ad.adrelid = a.attrelid
+         and ad.adnum = a.attnum
         where n.nspname = 'public'
           and c.relname = any(v_expected)
           and a.attname = 'row_revision'
@@ -80,9 +83,6 @@ begin
                      ad.adrelid
                  ) <> '1'
           )
-        left join pg_catalog.pg_attrdef ad
-          on ad.adrelid = a.attrelid
-         and ad.adnum = a.attnum
     ) then
         raise exception
             'P2_CONCURRENCY:row_revision_column_contract';

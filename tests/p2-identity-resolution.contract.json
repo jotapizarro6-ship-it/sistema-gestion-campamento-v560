@@ -1,0 +1,194 @@
+{
+  "contract": "GARPI_P2_3_CANONICAL_IDENTITY_RESOLUTION",
+  "version": "P2.3C-r1-v1",
+
+  "principles": {
+    "person_is_not_worker_row": true,
+    "person_is_not_assignment": true,
+    "worker_is_current_operational_projection": true,
+    "workers_durable_identity_forbidden": true,
+    "resolver_is_side_effect_free": true,
+    "preserve_raw_evidence": true,
+    "no_identity_fabrication": true,
+    "no_fuzzy_auto_merge": true,
+    "no_runtime_cutover": true,
+    "no_backfill_in_p2_3c": true
+  },
+
+  "resolution_states": [
+    "RESOLVED",
+    "UNRESOLVED",
+    "CONFLICT"
+  ],
+
+  "input_quality": [
+    "VALID",
+    "INVALID",
+    "MISSING"
+  ],
+
+  "person": {
+    "technical_identity": "person_id",
+    "business_key": "rut_normalized",
+
+    "rut": {
+      "trim": true,
+      "uppercase": true,
+      "accepted_input_characters": "DIGITS_K_DOT_HYPHEN_WHITESPACE",
+      "reject_other_characters": true,
+      "remove_formatting_after_character_validation": "DOT_HYPHEN_WHITESPACE",
+      "canonical_shape": "BODY-DV",
+      "canonical_regex": "^[0-9]{5,9}-[0-9K]$",
+      "checksum": "CHILE_MOD11",
+
+      "missing": {
+        "input_quality": "MISSING",
+        "resolution_state": "UNRESOLVED",
+        "reason": "MISSING_RUT"
+      },
+
+      "invalid": {
+        "input_quality": "INVALID",
+        "resolution_state": "UNRESOLVED",
+        "reason": "INVALID_RUT",
+        "create_person": false
+      }
+    },
+
+    "name": {
+      "identity_key": false,
+      "metadata_only": true,
+      "may_resolve_person_alone": false
+    },
+
+    "existing_person_id": {
+      "valid_fk": "AUTHORITATIVE_REFERENCE",
+      "rut_matches_linked_person": "RESOLVED",
+      "rut_missing": "RESOLVED_BY_EXISTING_ID",
+      "rut_conflicts_with_linked_person": "CONFLICT",
+      "silent_relink": false
+    },
+
+    "rut_resolution": {
+      "zero_candidates": "UNRESOLVED",
+      "one_distinct_candidate": "RESOLVED",
+      "multiple_distinct_candidates": "CONFLICT",
+      "resolver_may_create_person": false
+    }
+  },
+
+  "company": {
+    "technical_identity": "company_id",
+    "canonical_key": "normalized_key",
+
+    "normalization": {
+      "trim": true,
+      "unicode_normalization": "NFD",
+      "remove_combining_marks": true,
+      "uppercase": true,
+      "collapse_internal_whitespace": true,
+      "preserve_punctuation": true
+    },
+
+    "candidate_sources": [
+      "companies.normalized_key",
+      "company_aliases.normalized_key"
+    ],
+
+    "resolution": {
+      "exact_only": true,
+      "zero_distinct_entities": "UNRESOLVED",
+      "one_distinct_entity": "RESOLVED",
+      "multiple_distinct_entities": "CONFLICT",
+      "fuzzy_auto_merge": false,
+      "unknown_label_auto_create": false
+    }
+  },
+
+  "shift": {
+    "technical_identity": "shift_id",
+    "canonical_key": "code",
+
+    "normalization": {
+      "trim": true,
+      "unicode_normalization": "NFD",
+      "remove_combining_marks": true,
+      "uppercase": true,
+      "collapse_internal_whitespace": true,
+      "preserve_punctuation": true
+    },
+
+    "candidate_sources": [
+      "shifts.code",
+      "shift_aliases.normalized_key"
+    ],
+
+    "resolution": {
+      "exact_only": true,
+      "zero_distinct_entities": "UNRESOLVED",
+      "one_distinct_entity": "RESOLVED",
+      "multiple_distinct_entities": "CONFLICT",
+      "fuzzy_auto_merge": false,
+      "unknown_label_auto_create": false
+    }
+  },
+
+  "source_semantics": {
+    "current_worker": {
+      "person": "RUT_ELIGIBLE_FOR_SHADOW_RESOLUTION",
+      "company": "EXACT_CANONICAL_OR_EXPLICIT_ALIAS_ONLY",
+      "shift": "EXACT_CANONICAL_OR_EXPLICIT_ALIAS_ONLY",
+      "runtime_source_remains_workers": true
+    },
+
+    "reservation_member": {
+      "existing_person_id": "VERIFY_FIRST",
+      "rut": "ELIGIBLE_IF_VALID",
+      "name_only": "NEVER_RESOLVE"
+    },
+
+    "legacy_reservation": {
+      "person_name_only": "UNRESOLVED",
+      "invent_person": false
+    },
+
+    "movement_aggregate": {
+      "individual_person_resolution": "FORBIDDEN",
+      "people_count_must_not_expand_to_person_rows": true
+    },
+
+    "historical_snapshot": {
+      "rewrite_to_canonical_ids": "FORBIDDEN",
+      "preserve_denormalized_evidence": true
+    }
+  },
+
+  "conflict_rules": {
+    "same_alias_multiple_entities": "CONFLICT",
+    "canonical_and_alias_different_entities": "CONFLICT",
+    "existing_person_id_vs_valid_rut_mismatch": "CONFLICT",
+    "conflict_requires_review": true,
+    "conflict_auto_fix": false
+  },
+
+  "migration_policy": {
+    "strategy": [
+      "EXPAND",
+      "SHADOW",
+      "VALIDATE",
+      "CUTOVER",
+      "DEPRECATE_LEGACY"
+    ],
+
+    "current_stage": "EXPAND_TO_SHADOW_PREPARATION",
+
+    "p2_3c_actions": {
+      "db_write": false,
+      "backfill": false,
+      "runtime_cutover": false,
+      "worker_replacement_change": false,
+      "snapshot_rewrite": false,
+      "movement_individualization": false
+    }
+  }
+}

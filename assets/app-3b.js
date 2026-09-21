@@ -512,18 +512,32 @@ function renderMovements(){
       return '—';
     }
 
+    const rowRevision=
+      Number(
+        row.row_revision
+      );
+
+    if(
+      !Number.isSafeInteger(rowRevision)||
+      rowRevision<1
+    ){
+      return '<span class="muted">Actualiza los datos</span>';
+    }
+
     return `
       <div class="toolbar">
         <button
           class="btn btn-secondary small-btn"
           type="button"
           data-move-execute="${Number(row.id)}"
+          data-move-row-revision="${rowRevision}"
         >Marcar ejecutado</button>
 
         <button
           class="btn btn-danger small-btn"
           type="button"
           data-move-cancel="${Number(row.id)}"
+          data-move-row-revision="${rowRevision}"
         >Cancelar</button>
       </div>
     `;
@@ -716,7 +730,8 @@ function renderMovements(){
   const changeStatus=
     async(
       id,
-      status
+      status,
+      expectedRowRevision
     )=>{
       try{
         await advApi(
@@ -725,7 +740,9 @@ function renderMovements(){
             method:'POST',
             body:{
               id,
-              status
+              status,
+              expected_row_revision:
+                expectedRowRevision
             },
             token:A.token
           }
@@ -760,7 +777,10 @@ function renderMovements(){
             Number(
               button.dataset.moveExecute
             ),
-            'EJECUTADO'
+            'EJECUTADO',
+            Number(
+              button.dataset.moveRowRevision
+            )
           )
         )
     );
@@ -777,7 +797,10 @@ function renderMovements(){
             Number(
               button.dataset.moveCancel
             ),
-            'CANCELADO'
+            'CANCELADO',
+            Number(
+              button.dataset.moveRowRevision
+            )
           )
         )
     );

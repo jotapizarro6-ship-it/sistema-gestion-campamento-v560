@@ -11,6 +11,12 @@ const ui=read("assets/app-3b.js");
 const raw=read(
   "supabase/functions/campamento-v560-raw/index.ts"
 );
+const safe=read(
+  "supabase/functions/campamento-v560-safe/index.ts"
+);
+const typed=read(
+  "supabase/migrations/20260921043000_p2_typed_atomic_mutation_rpcs.sql"
+);
 const migration=read(
   "supabase/migrations/20260901162000_r3_schema_foundations.sql"
 );
@@ -119,37 +125,63 @@ const checks=[
   ],
 
   [
-    "RAW new PROGRAMADO",
-    /lifecycle_status\s*:\s*"PROGRAMADO"/.test(
+    "SAFE typed movement concurrency exemption",
+    /CONCURRENCY_EXEMPT=new Set\(\[[\s\S]*?'add_movement'[\s\S]*?'movement_status'[\s\S]*?\]\)/.test(
+      safe
+    )
+  ],
+  [
+    "UI expected row revision carrier",
+    ui.includes(
+      "expected_row_revision"
+    )
+  ],
+  [
+    "RAW p2_create_movement",
+    /\.rpc\(\s*["']p2_create_movement["']/.test(
       raw
     )
   ],
   [
-    "RAW movement_status",
+    "RAW p2_transition_movement",
+    /\.rpc\(\s*["']p2_transition_movement["']/.test(
+      raw
+    )
+  ],
+  [
+    "RAW no direct movements writer",
+    !raw.includes(
+      '.from("movements")'
+    )
+  ],
+  [
+    "P2 transition expected row revision",
+    typed.includes(
+      "p_expected_row_revision bigint"
+    )
+  ],
+  [
+    "P2 transition PROGRAMADO guard",
+    typed.includes(
+      "v_row.lifecycle_status <> 'PROGRAMADO'"
+    )
+  ],
+  [
+    "P2 movement terminal states",
+    typed.includes("'EJECUTADO'")&&
+    typed.includes("'CANCELADO'")
+  ],
+  [
+    "RAW row conflict compatibility",
     raw.includes(
-      'a==="movement_status"'
+      "P2_ROW_CONFLICT"
     )
   ],
   [
-    "RAW atomic terminal transition",
-    /\.eq\(\s*"lifecycle_status",\s*"PROGRAMADO"\s*\)/s.test(
-      raw
-    )
-  ],
-  [
-    "RAW EJECUTADO",
-    /lifecycle_status\s*:\s*"EJECUTADO"/.test(
-      raw
-    )
-  ],
-  [
-    "RAW CANCELADO",
-    /lifecycle_status\s*:\s*"CANCELADO"/.test(
-      raw
-    )
-  ],
-  [
-    "RAW terminal conflict",
+    "RAW terminal conflict compatibility",
+    raw.includes(
+      "P2_INVALID_MOVEMENT_TRANSITION"
+    )&&
     raw.includes(
       '"MOVEMENT_TERMINAL"'
     )

@@ -485,6 +485,149 @@ drop function public.p2_audit_runtime_force_failure();
 
 
 -- ============================================================================
+-- TECHNICAL REVISION EXCLUSION
+-- ============================================================================
+
+do $p2_audit_revision_exclusion$
+declare
+    v_before bigint;
+    v_after bigint;
+begin
+    select count(*)
+      into v_before
+      from public.audit_log
+     where entity_type = 'setting'
+       and entity_id = 'operational_revision'
+       and endpoint = 'DATABASE_TRIGGER';
+
+
+    update public.settings
+       set value =
+           (
+               case
+                   when value ~ '^[0-9]+
+do $p2_audit_foundation_lock$
+declare
+    v_count integer;
+begin
+    select count(*)
+      into v_count
+      from pg_catalog.pg_trigger
+     where tgrelid =
+           'public.audit_log'::regclass
+       and tgname in (
+           'audit_log_p2_no_update_delete',
+           'audit_log_p2_no_truncate'
+       )
+       and not tgisinternal;
+
+    if v_count <> 2 then
+        raise exception
+            'P2_AUDIT_COVERAGE:append_only_foundation_drift:%',
+            v_count;
+    end if;
+
+
+    if has_table_privilege(
+        'service_role',
+        'public.audit_log',
+        'UPDATE'
+    )
+    or has_table_privilege(
+        'service_role',
+        'public.audit_log',
+        'DELETE'
+    )
+    or has_table_privilege(
+        'service_role',
+        'public.audit_log',
+        'TRUNCATE'
+    ) then
+        raise exception
+            'P2_AUDIT_COVERAGE:service_history_mutation';
+    end if;
+end
+$p2_audit_foundation_lock$;
+
+
+select
+    'P2.5 atomic audit coverage runtime: OK'
+    as certification;
+
+                   then (value::bigint + 1)::text
+                   else '1'
+               end
+           )
+     where key = 'operational_revision';
+
+
+    select count(*)
+      into v_after
+      from public.audit_log
+     where entity_type = 'setting'
+       and entity_id = 'operational_revision'
+       and endpoint = 'DATABASE_TRIGGER';
+
+
+    if v_after <> v_before then
+        raise exception
+            'P2_AUDIT_COVERAGE:operational_revision_noise:%:%',
+            v_before,
+            v_after;
+    end if;
+end
+$p2_audit_revision_exclusion$;
+
+
+-- ============================================================================
+-- SECRET-BEARING SETTING FINGERPRINT SUPPRESSION
+-- ============================================================================
+
+do $p2_audit_secret_fingerprint$
+declare
+    v_details jsonb;
+begin
+    insert into public.settings(
+        key,
+        value
+    )
+    values (
+        'session_secret',
+        'P2_RUNTIME_SECRET_TEST'
+    )
+    on conflict (key)
+    do update
+       set value = excluded.value;
+
+
+    select details
+      into v_details
+      from public.audit_log
+     where entity_type = 'setting'
+       and entity_id = 'session_secret'
+       and endpoint = 'DATABASE_TRIGGER'
+     order by id desc
+     limit 1;
+
+
+    if v_details is null then
+        raise exception
+            'P2_AUDIT_COVERAGE:secret_setting_event_missing';
+    end if;
+
+
+    if v_details ->> 'old_fingerprint' is not null
+       or v_details ->> 'new_fingerprint' is not null
+    then
+        raise exception
+            'P2_AUDIT_COVERAGE:secret_fingerprint_persisted:%',
+            v_details;
+    end if;
+end
+$p2_audit_secret_fingerprint$;
+
+
+-- ============================================================================
 -- APPEND-ONLY FOUNDATION MUST STILL HOLD
 -- ============================================================================
 

@@ -474,7 +474,7 @@ begin
            v_result ->
            'data' ->
            'status'
-       ) <> to_jsonb('CONFIRMADA'::text)
+       ) <> 'CONFIRMADA'
     then
         raise exception
             'P2_ATOMIC_RPC:reservation_transition:%',
@@ -660,7 +660,7 @@ begin
            v_result ->
            'data' ->
            'status'
-       ) <> to_jsonb('CERRADO'::text)
+       ) <> 'CERRADO'
     then
         raise exception
             'P2_ATOMIC_RPC:block_close:%',

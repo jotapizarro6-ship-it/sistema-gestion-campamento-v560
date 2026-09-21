@@ -1,0 +1,163 @@
+{
+  "contract": "GARPI_P2_5_AUDIT_COVERAGE",
+  "revision": 1,
+  "semantic_version": "P2.5-AUDIT-COVERAGE-V1",
+  "phase": "P2.5B_P2.5C_P2.5D",
+  "objective": "Complete durable audit coverage for business mutations with database-level atomic row-change events while preserving existing semantic application audit events and avoiding high-volume/noise amplification.",
+  "base_main": "9db37a843bd3538d965e428f99fe3f3e0ebf1912",
+  "principles": [
+    "audit_log remains append-only",
+    "critical business mutations are audited in the same PostgreSQL transaction as the business write",
+    "audit failure aborts the associated audited business mutation",
+    "automatic audit events never store full row payloads or sensitive field values",
+    "existing human-readable semantic audit events may coexist with automatic database row-change events",
+    "legacy actor provenance is never fabricated",
+    "high-volume replacement projections are audited at batch/import level rather than one event per replaced row",
+    "technical concurrency counters are excluded from business audit to avoid noisy event amplification"
+  ],
+  "automatic_database_audit": [
+    {"table":"reservations","entity_type":"reservation","id_key":"id"},
+    {"table":"reservation_members","entity_type":"reservation_member","id_key":"id"},
+    {"table":"movements","entity_type":"movement","id_key":"id"},
+    {"table":"bed_blocks","entity_type":"bed_block","id_key":"id"},
+    {"table":"daily_capacity","entity_type":"daily_capacity","id_key":"capacity_date"},
+    {"table":"settings","entity_type":"setting","id_key":"key"},
+    {"table":"daily_snapshots","entity_type":"daily_snapshot","id_key":"snapshot_date"},
+    {"table":"operational_actions","entity_type":"operational_action","id_key":"id"},
+    {"table":"master_plan_events","entity_type":"master_plan_event","id_key":"id"},
+    {"table":"what_if_scenarios","entity_type":"what_if_scenario","id_key":"id"},
+    {"table":"import_history","entity_type":"import","id_key":"id"},
+    {"table":"assignments","entity_type":"assignment","id_key":"id"},
+    {"table":"persons","entity_type":"person","id_key":"id"},
+    {"table":"companies","entity_type":"company","id_key":"id"},
+    {"table":"company_aliases","entity_type":"company_alias","id_key":"id"},
+    {"table":"shifts","entity_type":"shift","id_key":"id"},
+    {"table":"shift_aliases","entity_type":"shift_alias","id_key":"id"},
+    {"table":"camps","entity_type":"camp","id_key":"id"},
+    {"table":"camp_modules","entity_type":"camp_module","id_key":"id"},
+    {"table":"camp_rooms","entity_type":"camp_room","id_key":"id"},
+    {"table":"camp_beds","entity_type":"camp_bed","id_key":"id"}
+  ],
+  "existing_semantic_application_audit": [
+    {
+      "surface":"campamento-control-api",
+      "coverage":[
+        "operational action create/update/delete",
+        "master plan event create/update/delete",
+        "what-if scenario create/update/delete",
+        "explicit frontend audit event"
+      ],
+      "current_atomicity":"post-write best-effort",
+      "target":"retain semantic events; database row-change event provides atomic baseline"
+    },
+    {
+      "surface":"campamento-consults-api",
+      "coverage":["consultation_log cleanup by date"],
+      "current_atomicity":"post-delete batch event",
+      "target":"retain one batch semantic event; do not row-audit consultation_log"
+    },
+    {
+      "surface":"campamento-recovery-api",
+      "coverage":["backup restore verification"],
+      "current_atomicity":"post-operation best-effort",
+      "target":"retain semantic operational event"
+    },
+    {
+      "surface":"campamento-workforce-api",
+      "coverage":["workforce MOD/MOI classification update"],
+      "current_atomicity":"post-settings-write best-effort",
+      "target":"retain semantic event; settings row-change is also audited atomically"
+    }
+  ],
+  "previously_uncovered_application_write_surfaces": [
+    {
+      "surface":"campamento-upload-api",
+      "writes":["replace_current_assignment RPC"],
+      "coverage_strategy":"audit import_history batch row atomically; do not row-audit workers or bed_inventory replacement projection"
+    },
+    {
+      "surface":"campamento-v560-raw",
+      "writes":[
+        "upsert_open_snapshot_r4 RPC",
+        "reservation insert/member writes",
+        "movement insert",
+        "movement lifecycle update",
+        "bed block insert",
+        "bed block close",
+        "reservation status update",
+        "daily_capacity upsert",
+        "settings cost upsert",
+        "snapshot_today"
+      ],
+      "coverage_strategy":"automatic database audit on durable affected business tables"
+    },
+    {
+      "surface":"campamento-v560-safe",
+      "writes":["close_day_r4 RPC"],
+      "coverage_strategy":"automatic audit on daily_snapshots and any durable affected business table"
+    }
+  ],
+  "intentional_exclusions": [
+    {
+      "table_or_surface":"workers",
+      "reason":"replaceable high-volume current workforce projection; batch import provenance is the durable audit unit"
+    },
+    {
+      "table_or_surface":"bed_inventory",
+      "reason":"replaceable high-volume current inventory projection; batch import provenance is the durable audit unit"
+    },
+    {
+      "table_or_surface":"consultation_log",
+      "reason":"potentially high-volume personal lookup telemetry; existing date-cleanup batch event avoids event explosion"
+    },
+    {
+      "table_or_surface":"operational_revision / claim_operational_revision",
+      "reason":"technical concurrency primitive, not a business event; auditing every claim would create high-frequency noise"
+    },
+    {
+      "table_or_surface":"audit_log",
+      "reason":"self-auditing would recurse; audit_log is protected by P2.5A append-only enforcement instead"
+    },
+    {
+      "table_or_surface":"p2_bed_resolution_current / p2_bed_resolution_ledger",
+      "reason":"E1 shadow subsystem already has its own append-only observation ledger and readiness semantics"
+    }
+  ],
+  "automatic_event_contract": {
+    "profile":"SYSTEM",
+    "action_format":"ROW_<INSERT|UPDATE|DELETE>",
+    "endpoint":"DATABASE_TRIGGER",
+    "result":"OK",
+    "entity_type":"explicit trigger argument",
+    "entity_id":"value of explicit trigger id-key argument; deterministic fingerprint fallback only if missing",
+    "details_allowed":[
+      "schema",
+      "table",
+      "operation",
+      "transaction_id",
+      "old_fingerprint",
+      "new_fingerprint"
+    ],
+    "details_forbidden":[
+      "full OLD row",
+      "full NEW row",
+      "passwords",
+      "session secrets",
+      "tokens",
+      "personal row payloads"
+    ]
+  },
+  "atomicity": {
+    "mechanism":"AFTER row trigger calling SECURITY DEFINER audit function in the same transaction",
+    "audit_failure":"business mutation must roll back",
+    "semantic_app_audit_failure":"existing best-effort semantic events are not treated as the atomic enforcement layer",
+    "duplicate_semantics":"automatic row-change and semantic application events may both exist and are intentionally distinguishable"
+  },
+  "deferred_to_p2_6": [
+    "request_id and correlation_id propagation",
+    "authenticated actor identity beyond current safe evidence",
+    "source_operational_revision binding on every audit event",
+    "optimistic entity versioning",
+    "real HTTP 409 standardization across all write APIs"
+  ]
+}

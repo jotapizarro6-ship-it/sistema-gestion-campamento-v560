@@ -416,9 +416,7 @@ begin
 
     v_row_revision :=
         (
-            v_result ->
-            'data' ->
-            'row_revision'
+            v_result -> 'data' ->> 'row_revision'
         )::bigint;
 
 
@@ -470,9 +468,7 @@ begin
         v_result ->> 'state_version'
     )::bigint <> v_after + 1
        or (
-           v_result ->
-           'data' ->
-           'row_revision'
+           v_result -> 'data' ->> 'row_revision'
        )::bigint <> 2
        or (
            v_result ->
@@ -622,9 +618,7 @@ begin
         v_result ->> 'state_version'
     )::bigint <> v_before + 1
        or (
-           v_result ->
-           'data' ->
-           'row_revision'
+           v_result -> 'data' ->> 'row_revision'
        )::bigint <> 1
     then
         raise exception
@@ -660,9 +654,7 @@ begin
         v_result ->> 'state_version'
     )::bigint <> v_before + 1
        or (
-           v_result ->
-           'data' ->
-           'row_revision'
+           v_result -> 'data' ->> 'row_revision'
        )::bigint <> 2
        or (
            v_result ->
@@ -715,9 +707,7 @@ begin
 
     if v_after <> v_before + 1
        or (
-           v_result ->
-           'data' ->
-           'row_revision'
+           v_result -> 'data' ->> 'row_revision'
        )::bigint <> 1
     then
         raise exception
@@ -762,9 +752,7 @@ begin
         v_result ->> 'state_version'
     )::bigint <> v_after + 1
        or (
-           v_result ->
-           'data' ->
-           'row_revision'
+           v_result -> 'data' ->> 'row_revision'
        )::bigint <> 2
     then
         raise exception
@@ -886,9 +874,7 @@ begin
 
 
     if (
-        v_result ->
-        'data' ->
-        'row_revision'
+        v_result -> 'data' ->> 'row_revision'
     )::bigint < 1 then
         raise exception
             'P2_ATOMIC_RPC:cost_row_revision:%',
@@ -905,9 +891,7 @@ begin
             v_after,
             v_new_value + 1,
             (
-                v_result ->
-                'data' ->
-                'row_revision'
+                v_result -> 'data' ->> 'row_revision'
             )::bigint + 99
         );
     exception

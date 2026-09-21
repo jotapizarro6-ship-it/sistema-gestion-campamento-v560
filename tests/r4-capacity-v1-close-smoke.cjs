@@ -208,9 +208,17 @@ assert(
 );
 
 assert(
-  safe.includes(
-    "CONCURRENCY_EXEMPT=new Set(['snapshot_today','close_day'])"
-  )
+  /CONCURRENCY_EXEMPT\s*=\s*new Set\(\[[\s\S]*?'snapshot_today'[\s\S]*?'close_day'[\s\S]*?\]\)/.test(
+    safe
+  ),
+  "snapshot_today and close_day must remain concurrency-exempt"
+);
+
+assert(
+  /CONCURRENCY_EXEMPT\s*=\s*new Set\(\[[\s\S]*?'add_movement'[\s\S]*?'movement_status'[\s\S]*?\]\)/.test(
+    safe
+  ),
+  "typed movement mutations must remain delegated to RPC concurrency"
 );
 
 const closeStart=

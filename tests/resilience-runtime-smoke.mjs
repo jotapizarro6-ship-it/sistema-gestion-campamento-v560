@@ -42,7 +42,16 @@ assert.match(fast,/claim_operational_revision/,'Debe usar el RPC atómico de Pos
 assert.match(fast,/state_version:stateVersion/,'advanced_state debe entregar state_version');
 assert.match(fast,/x-camp-state-version/,'La versión también debe exponerse por cabecera');
 
-assert.match(safe,/CONCURRENCY_EXEMPT=new Set\(\['snapshot_today','close_day'\]\)/,'Snapshot y cierre idempotente no deben invalidar la revisión operacional');
+assert.match(
+  safe,
+  /CONCURRENCY_EXEMPT\s*=\s*new Set\(\[[\s\S]*?'snapshot_today'[\s\S]*?'close_day'[\s\S]*?\]\)/,
+  'Snapshot y cierre idempotente deben permanecer exentos del preclaim'
+);
+assert.match(
+  safe,
+  /CONCURRENCY_EXEMPT\s*=\s*new Set\(\[[\s\S]*?'add_movement'[\s\S]*?'movement_status'[\s\S]*?\]\)/,
+  'Movements tipados deben delegar concurrencia al RPC transaccional'
+);
 assert.match(safe,/action:'claim_revision'/,'La API segura debe reservar revisión antes de mutar');
 
 assert.match(web,/CONCURRENCY_ACTIONS=new Set\(\['save_worker','upload_excel'\]\)/,'Las escrituras web críticas deben usar concurrencia');

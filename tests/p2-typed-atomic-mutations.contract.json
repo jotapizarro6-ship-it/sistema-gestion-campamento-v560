@@ -1,0 +1,107 @@
+{
+  "contract": "GARPI_P2_6_TYPED_ATOMIC_MUTATIONS",
+  "revision": 1,
+  "semantic_version": "P2.6-ATOMIC-MUTATIONS-V1",
+  "phase": "P2.6B",
+  "objective": "Replace claim-then-write semantics with typed PostgreSQL mutation RPCs that lock the global operational revision, enforce row revisions for existing entities, perform business validation and DML in one transaction, and return the resulting state version.",
+  "base_main": "a50bf632f7089ebd81815d17a1317b182c6aa989",
+  "compatibility": {
+    "r4_statement_revision_triggers_remain_active": true,
+    "reason": "Legacy writers remain supported until P2.6C Edge Function cutover is certified.",
+    "rpc_strategy_for_r4_triggered_tables": "lock-and-compare operational_revision without increment; the existing R4 AFTER STATEMENT trigger advances the revision after successful business DML",
+    "rpc_strategy_for_settings": "lock-and-compare operational_revision, mutate the non-revision setting, then advance operational_revision explicitly in the same transaction",
+    "no_double_increment": true
+  },
+  "typed_rpcs": [
+    "public.p2_create_movement",
+    "public.p2_transition_movement",
+    "public.p2_create_reservation",
+    "public.p2_set_reservation_status",
+    "public.p2_create_bed_block",
+    "public.p2_close_bed_block",
+    "public.p2_upsert_daily_capacity",
+    "public.p2_set_cost_per_bed_day"
+  ],
+  "internal_helpers": [
+    "public.p2_lock_operational_revision",
+    "public.p2_require_row_revision",
+    "public.p2_read_operational_revision"
+  ],
+  "concurrency": {
+    "global_expected_revision_required": true,
+    "existing_entity_expected_row_revision_required": true,
+    "global_conflict_sqlstate": "40001",
+    "row_conflict_sqlstate": "40001",
+    "global_conflict_marker": "P2_STATE_CONFLICT",
+    "row_conflict_marker": "P2_ROW_CONFLICT",
+    "not_found_marker": "P2_NOT_FOUND",
+    "no_last_write_wins": true,
+    "conflict_must_not_advance_global_revision": true,
+    "conflict_must_not_change_entity": true
+  },
+  "business_semantics": {
+    "movement": {
+      "create_status": "PROGRAMADO",
+      "terminal_transitions": ["EJECUTADO", "CANCELADO"],
+      "legacy_unresolved_never_promoted": true
+    },
+    "reservation": {
+      "states": ["PENDIENTE", "CONFIRMADA", "CANCELADA", "ANULADA"],
+      "active_states": ["PENDIENTE", "CONFIRMADA"],
+      "interval": "[arrival,departure)",
+      "exact_bed_requires_bed_count": 1,
+      "current_bed_inventory_authoritative_pre_cutover": true
+    },
+    "bed_block": {
+      "states": ["ACTIVO", "CERRADO"],
+      "interval": "[start,end] inclusive",
+      "current_bed_inventory_authoritative_pre_cutover": true
+    },
+    "daily_capacity": {
+      "minimum": 0,
+      "maximum": 10000,
+      "exact_date_key": true
+    },
+    "cost_per_bed_day": {
+      "minimum": 0,
+      "maximum": 100000000,
+      "setting_key": "cost_per_bed_day"
+    }
+  },
+  "security": {
+    "rpc_execution_role": "service_role",
+    "client_roles_denied": ["public", "anon", "authenticated", "camp_app", "replit_app"],
+    "internal_helpers_direct_execute_roles": [],
+    "fixed_search_path": "pg_catalog",
+    "security_definer": true
+  },
+  "audit": {
+    "p2_5_atomic_audit_remains_authoritative": true,
+    "automatic_event_is_same_transaction": true,
+    "source_operational_revision_is_pre_mutation_revision": true,
+    "new_row_revision_is_resulting_entity_revision": true
+  },
+  "acceptance": [
+    "fresh PostgreSQL 17 full repository replay succeeds",
+    "each typed RPC is executable by service_role and denied to client roles",
+    "stale global revision raises SQLSTATE 40001 and changes nothing",
+    "stale row revision raises SQLSTATE 40001 and changes nothing",
+    "successful single-table mutation advances global operational revision exactly once",
+    "movement create and terminal transition are atomic",
+    "reservation exact-bed create validates inventory occupancy block and reservation overlap under the revision lock",
+    "reservation state update requires expected row revision",
+    "bed block create validates inventory occupancy and overlapping reservations/blocks under the revision lock",
+    "bed block close requires expected row revision",
+    "daily capacity create/update uses row revision on existing dates",
+    "cost setting create/update uses row revision and explicitly advances global revision exactly once",
+    "P2.5 append-only and P2.6A provenance regression suites remain green"
+  ],
+  "deferred": [
+    "P2.6C Edge Function cutover to typed RPCs",
+    "P2.6D request/correlation provenance",
+    "P2.6E actor provenance",
+    "P2.6F end-to-end competing-writer HTTP 409 certification",
+    "production deployment",
+    "C08 cutover"
+  ]
+}

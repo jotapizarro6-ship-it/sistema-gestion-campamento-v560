@@ -99,25 +99,61 @@ begin
     end if;
 
 
-    if tg_op in (
-        'UPDATE',
-        'DELETE'
-    ) then
-        v_old_fingerprint :=
-            md5(
-                to_jsonb(old)::text
-            );
+    -- operational_revision is a high-frequency technical concurrency counter,
+    -- not a business event. The settings trigger deliberately ignores it.
+    if tg_table_name = 'settings'
+       and coalesce(
+           v_row ->> 'key',
+           ''
+       ) = 'operational_revision'
+    then
+        if tg_op = 'DELETE' then
+            return old;
+        end if;
+
+        return new;
     end if;
 
 
-    if tg_op in (
-        'INSERT',
-        'UPDATE'
-    ) then
+    -- Secret-bearing settings are still auditable as named setting mutations,
+    -- but their row fingerprints are deliberately suppressed. This avoids
+    -- persisting a stable digest derived from credential material.
+    if tg_table_name = 'settings'
+       and coalesce(
+           v_row ->> 'key',
+           ''
+       ) in (
+           'admin_password_hash',
+           'admin_password_salt',
+           'session_secret'
+       )
+    then
+        v_old_fingerprint :=
+            null;
+
         v_new_fingerprint :=
-            md5(
-                to_jsonb(new)::text
-            );
+            null;
+    else
+        if tg_op in (
+            'UPDATE',
+            'DELETE'
+        ) then
+            v_old_fingerprint :=
+                md5(
+                    to_jsonb(old)::text
+                );
+        end if;
+
+
+        if tg_op in (
+            'INSERT',
+            'UPDATE'
+        ) then
+            v_new_fingerprint :=
+                md5(
+                    to_jsonb(new)::text
+                );
+        end if;
     end if;
 
 

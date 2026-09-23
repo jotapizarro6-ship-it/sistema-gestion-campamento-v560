@@ -62,7 +62,16 @@ function makeState(reservations=[]){
 
     blocks:[],
 
-    reservations:clone(reservations),
+    reservations:clone(reservations).map(
+      row=>({
+        ...row,
+        row_revision:
+          Number.isSafeInteger(Number(row.row_revision)) &&
+          Number(row.row_revision)>0
+            ? Number(row.row_revision)
+            : 1
+      })
+    ),
 
     movements:[],
 
@@ -416,7 +425,8 @@ async function installBackend(
             b.notes||''
           ).trim(),
 
-          status:'PENDIENTE'
+          status:'PENDIENTE',
+          row_revision:1
         };
 
         state.reservations.push(created);
@@ -502,16 +512,34 @@ async function installBackend(
           );
         }
 
+        const expectedRowRevision=
+          Number(b.expected_row_revision);
+
+        if(
+          !Number.isSafeInteger(expectedRowRevision) ||
+          expectedRowRevision<1 ||
+          expectedRowRevision!==Number(row.row_revision)
+        ){
+          return json(
+            route,
+            {
+              ok:false,
+              code:'ROW_CONFLICT',
+              error:'La reserva cambió en otra sesión.'
+            },
+            409
+          );
+        }
+
         row.status=status;
+        row.row_revision++;
 
         stateVersion++;
 
         return json(route,{
           ok:true,
-          data:{
-            id,
-            status
-          }
+          state_version:String(stateVersion),
+          data:clone(row)
         });
       }
 
@@ -846,7 +874,8 @@ test(
         stateVersion:'41',
         body:{
           id:9,
-          status:'CONFIRMADA'
+          status:'CONFIRMADA',
+          expected_row_revision:1
         }
       });
 
@@ -876,7 +905,8 @@ test(
         stateVersion:'42',
         body:{
           id:9,
-          status:'ANULADA'
+          status:'ANULADA',
+          expected_row_revision:2
         }
       });
 

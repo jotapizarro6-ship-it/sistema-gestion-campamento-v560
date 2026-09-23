@@ -31,7 +31,13 @@ const CONCURRENCY_EXEMPT=new Set([
   // P2.6C: these actions delegate concurrency to the typed
   // PostgreSQL mutation RPC inside the business transaction.
   'add_movement',
-  'movement_status'
+  'movement_status',
+  'add_res_advanced',
+  'add_block',
+  'update_capacity',
+  'update_cost',
+  'reservation_status',
+  'close_block'
 ]);
 function today(){const p=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const m=Object.fromEntries(p.map(x=>[x.type,x.value]));return `${m.year}-${m.month}-${m.day}`}
 async function upstream(req:Request,url:string,body?:ArrayBuffer){const h=new Headers();const auth=req.headers.get('authorization');if(auth)h.set('authorization',auth);const ct=req.headers.get('content-type');if(ct)h.set('content-type',ct);const init:any={method:req.method,headers:h};if(req.method!=='GET'&&req.method!=='HEAD'&&body!==undefined)init.body=body;return await fetch(url,init)}

@@ -420,8 +420,158 @@ async function snapshot(closeDay=false,force=false){
   return persisted.snapshot||persisted;
 }
 
-async function addReservation(b:any){const arrival=clean(b.arrival_date),departure=clean(b.departure_date)||null,name=clean(b.person_name),count=Number(b.bed_count||1);let module=clean(b.module),room=clean(b.room),bed=clean(b.bed).toUpperCase();if(!arrival||!name)return {ok:false,error:"Fecha de llegada y nombre son obligatorios."};if(!validDate(arrival)||(departure&&!validDate(departure)))return {ok:false,error:"Las fechas de la reserva no son válidas."};if(departure&&departure<=arrival)return {ok:false,error:"La salida debe ser posterior a la llegada."};if(!Number.isInteger(count)||count<1||count>1000)return {ok:false,error:"La cantidad de camas debe estar entre 1 y 1.000."};if(bed&&(!module||!room))return {ok:false,error:"Si selecciona una cama exacta, debe indicar también módulo y habitación."};if(module&&room&&bed&&count!==1)return {ok:false,error:"Una reserva con cama exacta debe corresponder a 1 cama."};const s=await state();if(module&&room&&bed){const inv=s.inventory.find((x:any)=>key(x.module,x.room,x.bed)===key(module,room,bed));if(!inv)return {ok:false,error:"No fue posible identificar esa cama en el inventario actual."};module=inv.module;room=inv.room;bed=inv.bed;const occ=s.workers.find((x:any)=>clean(x.rut)&&key(x.modulo,x.habitacion,x.cama)===key(module,room,bed));if(occ)return {ok:false,error:`La cama indicada figura actualmente ocupada por ${occ.nombre||"un trabajador"}.`};const end=departure||"9999-12-31";if(s.blocks.some((x:any)=>plain(x.status)==="ACTIVO"&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.start_date)<end&&(!clean(x.end_date)||clean(x.end_date)>=arrival)))return {ok:false,error:"Esa cama está fuera de servicio durante la reserva."};if(s.reservations.some((x:any)=>active(x)&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.arrival_date)<end&&(!clean(x.departure_date)||clean(x.departure_date)>arrival)))return {ok:false,error:"Esa cama ya tiene una reserva que se cruza con las fechas indicadas."}}const stamp=now(),{data,error}=await db.from("reservations").insert({arrival_date:arrival,departure_date:departure,person_name:name,role_area:clean(b.role_area),module:module||null,room:room||null,bed:bed||null,bed_count:count,notes:clean(b.notes),status:"PENDIENTE",created_at:stamp,updated_at:stamp}).select("*").single();if(error)throw error;return {ok:true,data}}
-async function addBlock(b:any){let module=clean(b.module),room=clean(b.room),bed=clean(b.bed).toUpperCase();const start=clean(b.start_date),end=clean(b.end_date)||null,reason=clean(b.reason)||"Fuera de servicio";if(!module||!room||!bed)return {ok:false,error:"Indica módulo, habitación y cama para el bloqueo."};if(!validDate(start)||(end&&!validDate(end)))return {ok:false,error:"Las fechas del bloqueo no son válidas."};if(end&&end<start)return {ok:false,error:"La fecha de término no puede ser anterior al inicio."};const s=await state(),inv=s.inventory.find((x:any)=>key(x.module,x.room,x.bed)===key(module,room,bed));if(!inv)return {ok:false,error:"No fue posible identificar esa cama en el inventario actual."};module=inv.module;room=inv.room;bed=inv.bed;if(start<=today()){const occ=s.workers.find((x:any)=>clean(x.rut)&&key(x.modulo,x.habitacion,x.cama)===key(module,room,bed));if(occ)return {ok:false,error:`No se puede bloquear desde hoy una cama ocupada por ${occ.nombre||"un trabajador"}.`}}const e=end||"9999-12-31";if(s.blocks.some((x:any)=>plain(x.status)==="ACTIVO"&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.start_date)<=e&&(!clean(x.end_date)||clean(x.end_date)>=start)))return {ok:false,error:"Ya existe un bloqueo activo que se cruza con esas fechas."};const rr=s.reservations.find((x:any)=>active(x)&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.arrival_date)<=e&&(!clean(x.departure_date)||clean(x.departure_date)>start));if(rr)return {ok:false,error:`No se puede bloquear: existe una reserva cruzada para ${rr.person_name}.`};const stamp=now(),{data,error}=await db.from("bed_blocks").insert({module,room,bed,start_date:start,end_date:end,reason,status:"ACTIVO",created_at:stamp,updated_at:stamp}).select("*").single();if(error)throw error;return {ok:true,data}}
+async function addReservation(b:any,expected:number){const arrival=clean(b.arrival_date),departure=clean(b.departure_date)||null,name=clean(b.person_name),count=Number(b.bed_count||1);let module=clean(b.module),room=clean(b.room),bed=clean(b.bed).toUpperCase();if(!arrival||!name)return {ok:false,error:"Fecha de llegada y nombre son obligatorios."};if(!validDate(arrival)||(departure&&!validDate(departure)))return {ok:false,error:"Las fechas de la reserva no son válidas."};if(departure&&departure<=arrival)return {ok:false,error:"La salida debe ser posterior a la llegada."};if(!Number.isInteger(count)||count<1||count>1000)return {ok:false,error:"La cantidad de camas debe estar entre 1 y 1.000."};if(bed&&(!module||!room))return {ok:false,error:"Si selecciona una cama exacta, debe indicar también módulo y habitación."};if(module&&room&&bed&&count!==1)return {ok:false,error:"Una reserva con cama exacta debe corresponder a 1 cama."};const s=await state();if(module&&room&&bed){const inv=s.inventory.find((x:any)=>key(x.module,x.room,x.bed)===key(module,room,bed));if(!inv)return {ok:false,error:"No fue posible identificar esa cama en el inventario actual."};module=inv.module;room=inv.room;bed=inv.bed;const occ=s.workers.find((x:any)=>clean(x.rut)&&key(x.modulo,x.habitacion,x.cama)===key(module,room,bed));if(occ)return {ok:false,error:`La cama indicada figura actualmente ocupada por ${occ.nombre||"un trabajador"}.`};const end=departure||"9999-12-31";if(s.blocks.some((x:any)=>plain(x.status)==="ACTIVO"&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.start_date)<end&&(!clean(x.end_date)||clean(x.end_date)>=arrival)))return {ok:false,error:"Esa cama está fuera de servicio durante la reserva."};if(s.reservations.some((x:any)=>active(x)&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.arrival_date)<end&&(!clean(x.departure_date)||clean(x.departure_date)>arrival)))return {ok:false,error:"Esa cama ya tiene una reserva que se cruza con las fechas indicadas."}}const {
+  data,
+  error
+}=
+  await db.rpc(
+    "p2_create_reservation",
+    {
+      p_expected_revision:
+        expected,
+      p_arrival_date:
+        arrival,
+      p_departure_date:
+        departure,
+      p_person_name:
+        name,
+      p_role_area:
+        clean(b.role_area),
+      p_module:
+        module,
+      p_room:
+        room,
+      p_bed:
+        bed,
+      p_bed_count:
+        count,
+      p_notes:
+        clean(b.notes)
+    }
+  );
+
+if(error){
+  const message=
+    String(
+      error.message||
+      error.details||
+      error.code||
+      "P2_CREATE_RESERVATION_FAILED"
+    );
+
+  if(
+    error.code==="40001"||
+    message.includes("P2_STATE_CONFLICT")||
+    message.includes("P2_ROW_CONFLICT")
+  ){
+    return {
+      ok:false,
+      code:"STATE_CONFLICT",
+      error:
+        "Los datos cambiaron en otra sesión. Actualiza la información antes de guardar para evitar sobrescribir cambios recientes.",
+      detail:message
+    };
+  }
+
+  throw error;
+}
+
+const result=
+  data&&
+  typeof data==="object"&&
+  !Array.isArray(data)
+    ? data
+    : null;
+
+if(
+  !result||
+  result.ok!==true||
+  !/^\d+$/.test(
+    String(
+      result.state_version||""
+    )
+  )
+){
+  throw new Error(
+    "P2_CREATE_RESERVATION_INVALID_RESULT"
+  );
+}
+
+return result;
+}
+async function addBlock(b:any,expected:number){let module=clean(b.module),room=clean(b.room),bed=clean(b.bed).toUpperCase();const start=clean(b.start_date),end=clean(b.end_date)||null,reason=clean(b.reason)||"Fuera de servicio";if(!module||!room||!bed)return {ok:false,error:"Indica módulo, habitación y cama para el bloqueo."};if(!validDate(start)||(end&&!validDate(end)))return {ok:false,error:"Las fechas del bloqueo no son válidas."};if(end&&end<start)return {ok:false,error:"La fecha de término no puede ser anterior al inicio."};const s=await state(),inv=s.inventory.find((x:any)=>key(x.module,x.room,x.bed)===key(module,room,bed));if(!inv)return {ok:false,error:"No fue posible identificar esa cama en el inventario actual."};module=inv.module;room=inv.room;bed=inv.bed;if(start<=today()){const occ=s.workers.find((x:any)=>clean(x.rut)&&key(x.modulo,x.habitacion,x.cama)===key(module,room,bed));if(occ)return {ok:false,error:`No se puede bloquear desde hoy una cama ocupada por ${occ.nombre||"un trabajador"}.`}}const e=end||"9999-12-31";if(s.blocks.some((x:any)=>plain(x.status)==="ACTIVO"&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.start_date)<=e&&(!clean(x.end_date)||clean(x.end_date)>=start)))return {ok:false,error:"Ya existe un bloqueo activo que se cruza con esas fechas."};const rr=s.reservations.find((x:any)=>active(x)&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.arrival_date)<=e&&(!clean(x.departure_date)||clean(x.departure_date)>start));if(rr)return {ok:false,error:`No se puede bloquear: existe una reserva cruzada para ${rr.person_name}.`};const {
+  data,
+  error
+}=
+  await db.rpc(
+    "p2_create_bed_block",
+    {
+      p_expected_revision:
+        expected,
+      p_module:
+        module,
+      p_room:
+        room,
+      p_bed:
+        bed,
+      p_start_date:
+        start,
+      p_end_date:
+        end,
+      p_reason:
+        reason
+    }
+  );
+
+if(error){
+  const message=
+    String(
+      error.message||
+      error.details||
+      error.code||
+      "P2_CREATE_BED_BLOCK_FAILED"
+    );
+
+  if(
+    error.code==="40001"||
+    message.includes("P2_STATE_CONFLICT")||
+    message.includes("P2_ROW_CONFLICT")
+  ){
+    return {
+      ok:false,
+      code:"STATE_CONFLICT",
+      error:
+        "Los datos cambiaron en otra sesión. Actualiza la información antes de guardar para evitar sobrescribir cambios recientes.",
+      detail:message
+    };
+  }
+
+  throw error;
+}
+
+const result=
+  data&&
+  typeof data==="object"&&
+  !Array.isArray(data)
+    ? data
+    : null;
+
+if(
+  !result||
+  result.ok!==true||
+  !/^\d+$/.test(
+    String(
+      result.state_version||""
+    )
+  )
+){
+  throw new Error(
+    "P2_CREATE_BED_BLOCK_INVALID_RESULT"
+  );
+}
+
+return result;
+}
 Deno.serve(async(req:Request)=>{try{if(req.method==="OPTIONS")return new Response(null,{status:204,headers});if(!await admin(req))return out({ok:false,error:"No autorizado"},401);const u=new URL(req.url),a=u.searchParams.get("action")||"";
 if(req.method==="GET"&&a==="advanced_state")return out({ok:true,data:await state()});
 if(req.method==="POST"&&a==="add_movement"){
@@ -787,12 +937,745 @@ if(req.method==="POST"&&a==="movement_status"){
   });
 }
 
-if(req.method==="POST"&&a==="add_block"){const x=await addBlock(await body(req));return out(x,x.ok?200:400)}
-if(req.method==="POST"&&a==="close_block"){const b=await body(req),{data,error}=await db.from("bed_blocks").update({status:"CERRADO",updated_at:now()}).eq("id",Number(b.id)).select("id,status").maybeSingle();if(error)throw error;return out({ok:!!data,data,error:data?null:"Bloqueo no encontrado"},data?200:404)}
-if(req.method==="POST"&&a==="add_res_advanced"){const x=await addReservation(await body(req));return out(x,x.ok?200:400)}
-if(req.method==="POST"&&a==="reservation_status"){const b=await body(req),status=plain(b.status||"ANULADA");if(!["PENDIENTE","CONFIRMADA","ANULADA","CANCELADA"].includes(status))return out({ok:false,error:"Estado de reserva no válido."},400);const {data,error}=await db.from("reservations").update({status,updated_at:now()}).eq("id",Number(b.id)).select("id,status").maybeSingle();if(error)throw error;return out({ok:!!data,data,error:data?null:"Reserva no encontrada"},data?200:404)}
-if(req.method==="POST"&&a==="update_capacity"){const b=await body(req),d=clean(b.capacity_date)||today(),c=Number(b.capacity);if(!validDate(d))return out({ok:false,error:"La fecha de capacidad no es válida."},400);if(!Number.isInteger(c)||c<0||c>10000)return out({ok:false,error:"La capacidad debe estar entre 0 y 10.000 camas."},400);const {error}=await db.from("daily_capacity").upsert({capacity_date:d,capacity:c,updated_at:now()},{onConflict:"capacity_date"});if(error)throw error;return out({ok:true,data:{capacity_date:d,capacity:c}})}
-if(req.method==="POST"&&a==="update_cost"){const b=await body(req),v=Number(b.cost_per_bed_day);if(!Number.isFinite(v)||v<0||v>100000000)return out({ok:false,error:"El costo por cama-día debe ser igual o mayor a $0."},400);const {error}=await db.from("settings").upsert({key:"cost_per_bed_day",value:String(v)},{onConflict:"key"});if(error)throw error;return out({ok:true,data:{cost_per_bed_day:v}})}
+if(req.method==="POST"&&a==="add_block"){
+  const expectedRaw=
+    clean(
+      u.searchParams.get(
+        "state_version"
+      )
+    );
+
+  const expected=
+    /^\d+$/.test(expectedRaw)
+      ? Number(expectedRaw)
+      : Number.NaN;
+
+  if(
+    !Number.isSafeInteger(expected)||
+    expected<1
+  ){
+    return out(
+      {
+        ok:false,
+        code:"STATE_CONFLICT",
+        error:
+          "Actualiza los datos antes de guardar."
+      },
+      409
+    );
+  }
+
+  const x=
+    await addBlock(
+      await body(req),
+      expected
+    );
+
+  return out(
+    x,
+    x.ok
+      ? 200
+      : (
+          x.code==="STATE_CONFLICT"
+            ? 409
+            : 400
+        )
+  );
+}
+if(req.method==="POST"&&a==="close_block"){
+  const b=await body(req);
+  const id=Number(b.id);
+
+  if(!Number.isSafeInteger(id)||id<1){
+    return out(
+      {
+        ok:false,
+        error:"El bloqueo indicado no es válido."
+      },
+      400
+    );
+  }
+
+  const expectedRaw=
+    clean(
+      u.searchParams.get("state_version")
+    );
+
+  const expected=
+    /^\d+$/.test(expectedRaw)
+      ? Number(expectedRaw)
+      : Number.NaN;
+
+  if(!Number.isSafeInteger(expected)||expected<1){
+    return out(
+      {
+        ok:false,
+        code:"STATE_CONFLICT",
+        error:"Actualiza los datos antes de guardar."
+      },
+      409
+    );
+  }
+
+  const expectedRow=
+    Number(
+      b.expected_row_revision
+    );
+
+  if(!Number.isSafeInteger(expectedRow)||expectedRow<1){
+    return out(
+      {
+        ok:false,
+        code:"ROW_CONFLICT",
+        error:"Actualiza los datos antes de cerrar el bloqueo."
+      },
+      409
+    );
+  }
+
+  const {data,error}=
+    await db.rpc(
+      "p2_close_bed_block",
+      {
+        p_expected_revision:expected,
+        p_block_id:id,
+        p_expected_row_revision:expectedRow
+      }
+    );
+
+  if(error){
+    const message=
+      String(
+        error.message||
+        error.details||
+        error.code||
+        "P2_CLOSE_BED_BLOCK_FAILED"
+      );
+
+    if(
+      error.code==="40001"||
+      message.includes("P2_STATE_CONFLICT")||
+      message.includes("P2_ROW_CONFLICT")||
+      message.includes("P2_EXPECTED_ROW_REVISION_REQUIRED")
+    ){
+      return out(
+        {
+          ok:false,
+          code:"STATE_CONFLICT",
+          error:
+            "Los datos cambiaron en otra sesión. Actualiza la información antes de guardar para evitar sobrescribir cambios recientes.",
+          detail:message
+        },
+        409
+      );
+    }
+
+    if(
+      error.code==="P0002"||
+      message.includes("P2_NOT_FOUND")
+    ){
+      return out(
+        {
+          ok:false,
+          error:"Bloqueo no encontrado."
+        },
+        404
+      );
+    }
+
+    if(
+      error.code==="22023"||
+      error.code==="23514"
+    ){
+      return out(
+        {
+          ok:false,
+          error:message
+        },
+        400
+      );
+    }
+
+    throw error;
+  }
+
+  const result=
+    data&&
+    typeof data==="object"&&
+    !Array.isArray(data)
+      ? data
+      : null;
+
+  if(
+    !result||
+    result.ok!==true||
+    !result.data||
+    typeof result.data!=="object"||
+    !/^\d+$/.test(
+      String(result.state_version||"")
+    )
+  ){
+    throw new Error(
+      "P2_CLOSE_BED_BLOCK_INVALID_RESULT"
+    );
+  }
+
+  return out(result);
+}
+if(req.method==="POST"&&a==="add_res_advanced"){
+  const expectedRaw=
+    clean(
+      u.searchParams.get(
+        "state_version"
+      )
+    );
+
+  const expected=
+    /^\d+$/.test(expectedRaw)
+      ? Number(expectedRaw)
+      : Number.NaN;
+
+  if(
+    !Number.isSafeInteger(expected)||
+    expected<1
+  ){
+    return out(
+      {
+        ok:false,
+        code:"STATE_CONFLICT",
+        error:
+          "Actualiza los datos antes de guardar."
+      },
+      409
+    );
+  }
+
+  const x=
+    await addReservation(
+      await body(req),
+      expected
+    );
+
+  return out(
+    x,
+    x.ok
+      ? 200
+      : (
+          x.code==="STATE_CONFLICT"
+            ? 409
+            : 400
+        )
+  );
+}
+if(req.method==="POST"&&a==="reservation_status"){
+  const b=await body(req);
+  const id=Number(b.id);
+  const status=plain(b.status||"ANULADA");
+
+  if(!Number.isSafeInteger(id)||id<1){
+    return out(
+      {ok:false,error:"La reserva indicada no es válida."},
+      400
+    );
+  }
+
+  if(!["PENDIENTE","CONFIRMADA","ANULADA","CANCELADA"].includes(status)){
+    return out(
+      {ok:false,error:"Estado de reserva no válido."},
+      400
+    );
+  }
+
+  const expectedRaw=
+    clean(
+      u.searchParams.get("state_version")
+    );
+
+  const expected=
+    /^\d+$/.test(expectedRaw)
+      ? Number(expectedRaw)
+      : Number.NaN;
+
+  if(!Number.isSafeInteger(expected)||expected<1){
+    return out(
+      {
+        ok:false,
+        code:"STATE_CONFLICT",
+        error:"Actualiza los datos antes de guardar."
+      },
+      409
+    );
+  }
+
+  const expectedRow=
+    Number(
+      b.expected_row_revision
+    );
+
+  if(!Number.isSafeInteger(expectedRow)||expectedRow<1){
+    return out(
+      {
+        ok:false,
+        code:"ROW_CONFLICT",
+        error:"Actualiza los datos antes de cambiar el estado de la reserva."
+      },
+      409
+    );
+  }
+
+  const {data,error}=
+    await db.rpc(
+      "p2_set_reservation_status",
+      {
+        p_expected_revision:expected,
+        p_reservation_id:id,
+        p_expected_row_revision:expectedRow,
+        p_status:status
+      }
+    );
+
+  if(error){
+    const message=
+      String(
+        error.message||
+        error.details||
+        error.code||
+        "P2_SET_RESERVATION_STATUS_FAILED"
+      );
+
+    if(
+      error.code==="40001"||
+      message.includes("P2_STATE_CONFLICT")||
+      message.includes("P2_ROW_CONFLICT")||
+      message.includes("P2_EXPECTED_ROW_REVISION_REQUIRED")
+    ){
+      return out(
+        {
+          ok:false,
+          code:"STATE_CONFLICT",
+          error:
+            "Los datos cambiaron en otra sesión. Actualiza la información antes de guardar para evitar sobrescribir cambios recientes.",
+          detail:message
+        },
+        409
+      );
+    }
+
+    if(
+      error.code==="P0002"||
+      message.includes("P2_NOT_FOUND")
+    ){
+      return out(
+        {
+          ok:false,
+          error:"Reserva no encontrada."
+        },
+        404
+      );
+    }
+
+    if(
+      error.code==="22023"||
+      error.code==="23514"
+    ){
+      return out(
+        {
+          ok:false,
+          error:message
+        },
+        400
+      );
+    }
+
+    throw error;
+  }
+
+  const result=
+    data&&
+    typeof data==="object"&&
+    !Array.isArray(data)
+      ? data
+      : null;
+
+  if(
+    !result||
+    result.ok!==true||
+    !result.data||
+    typeof result.data!=="object"||
+    !/^\d+$/.test(
+      String(result.state_version||"")
+    )
+  ){
+    throw new Error(
+      "P2_SET_RESERVATION_STATUS_INVALID_RESULT"
+    );
+  }
+
+  return out(result);
+}
+if(req.method==="POST"&&a==="update_capacity"){
+  const b=
+    await body(req);
+
+  const d=
+    clean(
+      b.capacity_date
+    )||
+    today();
+
+  const c=
+    Number(
+      b.capacity
+    );
+
+  if(!validDate(d)){
+    return out(
+      {
+        ok:false,
+        error:
+          "La fecha de capacidad no es válida."
+      },
+      400
+    );
+  }
+
+  if(
+    !Number.isInteger(c)||
+    c<0||
+    c>10000
+  ){
+    return out(
+      {
+        ok:false,
+        error:
+          "La capacidad debe estar entre 0 y 10.000 camas."
+      },
+      400
+    );
+  }
+
+  const expectedRaw=
+    clean(
+      u.searchParams.get(
+        "state_version"
+      )
+    );
+
+  const expected=
+    /^\d+$/.test(
+      expectedRaw
+    )
+      ? Number(expectedRaw)
+      : Number.NaN;
+
+  if(
+    !Number.isSafeInteger(
+      expected
+    )||
+    expected<1
+  ){
+    return out(
+      {
+        ok:false,
+        code:"STATE_CONFLICT",
+        error:
+          "Actualiza los datos antes de guardar."
+      },
+      409
+    );
+  }
+
+  const expectedRowRaw=
+    b.expected_row_revision;
+
+  let expectedRow:null|number=
+    null;
+
+  if(
+    expectedRowRaw!==null&&
+    expectedRowRaw!==undefined&&
+    String(
+      expectedRowRaw
+    ).trim()!==""
+  ){
+    expectedRow=
+      Number(
+        expectedRowRaw
+      );
+
+    if(
+      !Number.isSafeInteger(
+        expectedRow
+      )||
+      expectedRow<1
+    ){
+      return out(
+        {
+          ok:false,
+          code:"ROW_CONFLICT",
+          error:
+            "Actualiza los datos antes de guardar la capacidad."
+        },
+        409
+      );
+    }
+  }
+
+  const {
+    data,
+    error
+  }=
+    await db.rpc(
+      "p2_upsert_daily_capacity",
+      {
+        p_expected_revision:
+          expected,
+        p_capacity_date:
+          d,
+        p_capacity:
+          c,
+        p_expected_row_revision:
+          expectedRow
+      }
+    );
+
+  if(error){
+    const message=
+      String(
+        error.message||
+        error.details||
+        error.code||
+        "P2_UPSERT_DAILY_CAPACITY_FAILED"
+      );
+
+    if(
+      error.code==="40001"||
+      message.includes(
+        "P2_STATE_CONFLICT"
+      )||
+      message.includes(
+        "P2_ROW_CONFLICT"
+      )||
+      message.includes(
+        "P2_EXPECTED_ROW_REVISION_REQUIRED"
+      )
+    ){
+      return out(
+        {
+          ok:false,
+          code:"STATE_CONFLICT",
+          error:
+            "Los datos cambiaron en otra sesión. Actualiza la información antes de guardar para evitar sobrescribir cambios recientes.",
+          detail:
+            message
+        },
+        409
+      );
+    }
+
+    throw error;
+  }
+
+  const result=
+    data&&
+    typeof data==="object"&&
+    !Array.isArray(data)
+      ? data
+      : null;
+
+  if(
+    !result||
+    result.ok!==true||
+    !/^\d+$/.test(
+      String(
+        result.state_version||
+        ""
+      )
+    )||
+    !result.data||
+    typeof result.data!=="object"
+  ){
+    throw new Error(
+      "P2_UPSERT_DAILY_CAPACITY_INVALID_RESULT"
+    );
+  }
+
+  return out(
+    result
+  );
+}
+if(req.method==="POST"&&a==="update_cost"){
+  const b=
+    await body(req);
+
+  const v=
+    Number(
+      b.cost_per_bed_day
+    );
+
+  if(
+    !Number.isFinite(v)||
+    v<0||
+    v>100000000
+  ){
+    return out(
+      {
+        ok:false,
+        error:
+          "El costo por cama-día debe ser igual o mayor a $0."
+      },
+      400
+    );
+  }
+
+  const expectedRaw=
+    clean(
+      u.searchParams.get(
+        "state_version"
+      )
+    );
+
+  const expected=
+    /^\d+$/.test(
+      expectedRaw
+    )
+      ? Number(expectedRaw)
+      : Number.NaN;
+
+  if(
+    !Number.isSafeInteger(
+      expected
+    )||
+    expected<1
+  ){
+    return out(
+      {
+        ok:false,
+        code:"STATE_CONFLICT",
+        error:
+          "Actualiza los datos antes de guardar."
+      },
+      409
+    );
+  }
+
+  const expectedRowRaw=
+    b.expected_row_revision;
+
+  let expectedRow:null|number=
+    null;
+
+  if(
+    expectedRowRaw!==null&&
+    expectedRowRaw!==undefined&&
+    String(
+      expectedRowRaw
+    ).trim()!==""
+  ){
+    expectedRow=
+      Number(
+        expectedRowRaw
+      );
+
+    if(
+      !Number.isSafeInteger(
+        expectedRow
+      )||
+      expectedRow<1
+    ){
+      return out(
+        {
+          ok:false,
+          code:"ROW_CONFLICT",
+          error:
+            "Actualiza los datos antes de guardar el costo."
+        },
+        409
+      );
+    }
+  }
+
+  const {
+    data,
+    error
+  }=
+    await db.rpc(
+      "p2_set_cost_per_bed_day",
+      {
+        p_expected_revision:
+          expected,
+        p_value:
+          v,
+        p_expected_row_revision:
+          expectedRow
+      }
+    );
+
+  if(error){
+    const message=
+      String(
+        error.message||
+        error.details||
+        error.code||
+        "P2_SET_COST_PER_BED_DAY_FAILED"
+      );
+
+    if(
+      error.code==="40001"||
+      message.includes(
+        "P2_STATE_CONFLICT"
+      )||
+      message.includes(
+        "P2_ROW_CONFLICT"
+      )||
+      message.includes(
+        "P2_EXPECTED_ROW_REVISION_REQUIRED"
+      )
+    ){
+      return out(
+        {
+          ok:false,
+          code:"STATE_CONFLICT",
+          error:
+            "Los datos cambiaron en otra sesión. Actualiza la información antes de guardar para evitar sobrescribir cambios recientes.",
+          detail:
+            message
+        },
+        409
+      );
+    }
+
+    throw error;
+  }
+
+  const result=
+    data&&
+    typeof data==="object"&&
+    !Array.isArray(data)
+      ? data
+      : null;
+
+  if(
+    !result||
+    result.ok!==true||
+    !/^\d+$/.test(
+      String(
+        result.state_version||
+        ""
+      )
+    )||
+    !result.data||
+    typeof result.data!=="object"
+  ){
+    throw new Error(
+      "P2_SET_COST_PER_BED_DAY_INVALID_RESULT"
+    );
+  }
+
+  return out(
+    result
+  );
+}
 if(req.method==="POST"&&a==="snapshot_today")return out({ok:true,data:await snapshot(false,false)});
 if(req.method==="POST"&&a==="close_day")return out(
   {

@@ -75,15 +75,94 @@
     const timer=setTimeout(()=>controller.abort(new DOMException('Tiempo de espera agotado','AbortError')),timeout);
     return {signal:controller.signal,clear:()=>{clearTimeout(timer);if(externalSignal&&onAbort)externalSignal.removeEventListener('abort',onAbort)}};
   }
-  async function captureStateVersion(u,res){
-    if((u.searchParams.get('action')||'')!=='advanced_state'||!res.ok)return;
-    try{const data=await res.clone().json();const state=appState();if(state&&data?.state_version)state.stateVersion=String(data.state_version)}catch{}
+  async function captureStateVersion(u,method,res){
+    if(!res.ok)return false;
+
+    const action=
+      u.searchParams.get('action')||'';
+
+    if(
+      action!=='advanced_state'&&
+      !shouldAttachVersion(u,method)
+    ){
+      return false;
+    }
+
+    try{
+      const data=
+        await res.clone().json();
+
+      const version=
+        String(
+          data?.state_version||''
+        ).trim();
+
+      if(!/^\d+$/.test(version)){
+        return false;
+      }
+
+      const parsed=
+        Number.parseInt(
+          version,
+          10
+        );
+
+      if(
+        !Number.isSafeInteger(parsed)||
+        parsed<1
+      ){
+        return false;
+      }
+
+      const state=
+        appState();
+
+      if(!state){
+        return false;
+      }
+
+      state.stateVersion=
+        String(parsed);
+
+      return true;
+    }catch{
+      return false;
+    }
   }
-  function advanceAfterMutation(u,method,res){
-    if(!res.ok||!shouldAttachVersion(u,method))return;
-    const state=appState();if(!state)return;
-    const current=Number.parseInt(String(state.stateVersion||''),10);
-    state.stateVersion=Number.isFinite(current)?String(current+1):null;
+
+  function advanceAfterMutation(
+    u,
+    method,
+    res,
+    versionCaptured=false
+  ){
+    if(
+      !res.ok||
+      !shouldAttachVersion(u,method)||
+      versionCaptured
+    ){
+      return;
+    }
+
+    const state=
+      appState();
+
+    if(!state){
+      return;
+    }
+
+    const current=
+      Number.parseInt(
+        String(
+          state.stateVersion||''
+        ),
+        10
+      );
+
+    state.stateVersion=
+      Number.isFinite(current)
+        ? String(current+1)
+        : null;
   }
 
   async function performCampFetch(u,init,method){
@@ -99,7 +178,21 @@
         if(res.status===401&&!SESSION_EXEMPT_ACTIONS.has(action))expireSession();
         if(res.status===409){metrics.conflicts++;metrics.last_error_code='STATE_CONFLICT';markConflict()}
         else if(res.ok)markMetric({last_error_code:null,last_success_at:new Date().toISOString()});
-        await captureStateVersion(u,res);advanceAfterMutation(u,method,res);return res;
+        const versionCaptured=
+          await captureStateVersion(
+            u,
+            method,
+            res
+          );
+
+        advanceAfterMutation(
+          u,
+          method,
+          res,
+          versionCaptured
+        );
+
+        return res;
       }catch(err){
         ctl.clear();lastError=err;
         if(err?.name==='AbortError'){metrics.timeouts++;metrics.last_error_code='TIMEOUT'}else metrics.last_error_code=err?.code||'NETWORK_ERROR';

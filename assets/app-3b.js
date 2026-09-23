@@ -337,7 +337,80 @@ function renderManagementCapacityAvailable(){const d=A.data,an=analytics(d),cost
 <div class="grid-4 mt"><div class="panel"><div class="eyebrow">Camas-día mes</div><h2>${fmtInt(currentMonthBD)}</h2><div class="muted">cierres confirmados</div></div><div class="panel"><div class="eyebrow">Costo mes</div><h2 class="clp">${fmtCLP(currentMonthBD*cost)}</h2><div class="muted">a ${fmtCLP(cost)} / cama-día</div></div><div class="panel"><div class="eyebrow">Proyección 30 días</div><h2>${fmtInt(proj30)}</h2><div class="muted">camas-día comprometidas proyectadas</div></div><div class="panel"><div class="eyebrow">Costo proyectado</div><h2 class="clp">${fmtCLP(proj30*cost)}</h2><div class="muted">30 días</div></div></div>
 <div class="grid-2 mt"><section class="panel"><h3>Camas-día por empresa</h3>${table(bed.company.slice(0,20),[{label:'Empresa',key:'label'},{label:'Camas-día',key:'n'},{label:'Costo',render:r=>fmtCLP(r.n*cost)}],{limit:20})}</section><section class="panel"><h3>Benchmark histórico</h3><div class="metric-row"><span>Promedio comprometido reciente</span><strong>${an.histAvg==null?'Sin datos':fmt1(an.histAvg)+'%'}</strong></div><div class="metric-row"><span>Máximo ocupadas (30 días)</span><strong>${max30}</strong></div><div class="metric-row"><span>Mínimo ocupadas (30 días)</span><strong>${min30}</strong></div><div class="metric-row"><span>Costo cama-día</span><strong>${fmtCLP(cost)}</strong></div><form id="costForm" class="toolbar mt"><label class="field"><span>Actualizar costo CLP/cama-día</span><input id="costValue" type="number" min="0" step="1" value="${cost}"></label><button class="btn btn-primary">Guardar costo</button></form></section></div>
 <section class="panel mt"><div class="section-head"><div><h3>Drillthrough de dotación</h3><div class="muted">Explora empresa → turno → módulo → habitación → cama → trabajador</div></div><div class="toolbar"><label class="field small"><span>Dimensión</span><select id="drillDim"><option value="empresa">Empresa</option><option value="turno">Turno</option><option value="modulo">Módulo</option><option value="habitacion">Habitación</option><option value="cama">Cama</option><option value="especialidad">Especialidad</option></select></label><label class="field"><span>Valor</span><select id="drillValue"></select></label></div></div><div id="drillTable"></div></section>`;
-  $('#costForm').addEventListener('submit',async e=>{e.preventDefault();try{await advApi('update_cost',{method:'POST',body:{cost_per_bed_day:Number($('#costValue').value)},token:A.token});showMessage('Costo por cama-día actualizado.');await loadAll({snapshot:false})}catch(err){showMessage(err.message,'error')}});
+  $('#costForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+
+  try{
+    const revisions=
+      A.data?.
+        settings_row_revisions;
+
+    if(
+      !revisions||
+      !Object.prototype.hasOwnProperty.call(
+        revisions,
+        'cost_per_bed_day'
+      )
+    ){
+      throw new Error(
+        'Actualiza los datos antes de guardar el costo.'
+      );
+    }
+
+    const tokenRaw=
+      revisions.cost_per_bed_day;
+
+    let expectedRowRevision=
+      null;
+
+    if(tokenRaw!==null){
+      expectedRowRevision=
+        Number(
+          tokenRaw
+        );
+
+      if(
+        !Number.isSafeInteger(
+          expectedRowRevision
+        )||
+        expectedRowRevision<1
+      ){
+        throw new Error(
+          'Actualiza los datos antes de guardar el costo.'
+        );
+      }
+    }
+
+    await advApi(
+      'update_cost',
+      {
+        method:'POST',
+        body:{
+          cost_per_bed_day:
+            Number(
+              $('#costValue').value
+            ),
+          expected_row_revision:
+            expectedRowRevision
+        },
+        token:A.token
+      }
+    );
+
+    showMessage(
+      'Costo por cama-día actualizado.'
+    );
+
+    await loadAll({
+      snapshot:false
+    });
+  }catch(err){
+    showMessage(
+      err.message,
+      'error'
+    );
+  }
+});
   const dim=$('#drillDim'),val=$('#drillValue');dim.value=A.drillDim;const refresh=()=>{A.drillDim=dim.value;const values=[...new Set(d.workers.map(w=>clean(w[A.drillDim])||'SIN DATO'))].sort((a,b)=>a.localeCompare(b,'es'));if(!values.includes(A.drillValue))A.drillValue=values[0]||'';val.innerHTML=values.map(x=>`<option ${x===A.drillValue?'selected':''}>${esc(x)}</option>`).join('');renderDrill()};const renderDrill=()=>{A.drillValue=val.value;const rows=d.workers.filter(w=>(clean(w[A.drillDim])||'SIN DATO')===A.drillValue);$('#drillTable').innerHTML=table(rows,[{label:'RUT',key:'rut'},{label:'Trabajador',key:'nombre'},{label:'Empresa',key:'empresa'},{label:'Turno',key:'turno'},{label:'Módulo',key:'modulo'},{label:'Hab.',key:'habitacion'},{label:'Cama',key:'cama'},{label:'Especialidad',key:'especialidad'}],{limit:300})};dim.addEventListener('change',refresh);val.addEventListener('change',renderDrill);refresh()}
 
 function renderManagement(){

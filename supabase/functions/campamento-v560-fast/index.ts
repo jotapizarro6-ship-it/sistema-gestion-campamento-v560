@@ -18,6 +18,105 @@ function ub64(s:string){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4
 async function isAdmin(req:Request){const h=req.headers.get('authorization')||'';if(!h.startsWith('Bearer '))return false;const [p,s]=h.slice(7).split('.');if(!p||!s)return false;try{if(Date.now()>JSON.parse(ub64(p)).exp)return false}catch{return false}const secret=await cfg();return !!secret&&(await sign(secret,p))===s}
 function out(x:any,status=200,extra:Record<string,string>={}){return new Response(JSON.stringify(x),{status,headers:{...cors,'content-type':'application/json; charset=utf-8',...extra}})}
 async function revision(){const {data,error}=await db.from('settings').select('value').eq('key','operational_revision').maybeSingle();if(error)throw error;const n=Number.parseInt(String(data?.value||'1'),10);return Number.isFinite(n)&&n>0?n:1}
+async function readCostObservation(){
+  const {data,error}=
+    await db
+      .from('settings')
+      .select('value,row_revision')
+      .eq('key','cost_per_bed_day')
+      .maybeSingle();
+
+  if(error)throw error;
+
+  if(!data){
+    return {
+      exists:false,
+      value:null,
+      rowRevision:null
+    };
+  }
+
+  const rowRevision=
+    Number(
+      data.row_revision
+    );
+
+  if(
+    !Number.isSafeInteger(
+      rowRevision
+    )||
+    rowRevision<1
+  ){
+    throw new Error(
+      'COST_ROW_REVISION_UNAVAILABLE'
+    );
+  }
+
+  return {
+    exists:true,
+    value:String(
+      data.value??
+      ''
+    ),
+    rowRevision
+  };
+}
+
+function decorateCostObservation(
+  data:any,
+  observation:{
+    exists:boolean;
+    value:string|null;
+    rowRevision:number|null
+  }
+){
+  if(
+    !data||
+    typeof data!=='object'||
+    Array.isArray(data)
+  ){
+    throw new Error(
+      'STATE_DATA_INVALID'
+    );
+  }
+
+  const settings=
+    data.settings&&
+    typeof data.settings==='object'&&
+    !Array.isArray(data.settings)
+      ? data.settings
+      : {};
+
+  data.settings=
+    settings;
+
+  const revisions=
+    data.settings_row_revisions&&
+    typeof data.settings_row_revisions==='object'&&
+    !Array.isArray(
+      data.settings_row_revisions
+    )
+      ? data.settings_row_revisions
+      : {};
+
+  data.settings_row_revisions=
+    revisions;
+
+  if(observation.exists){
+    settings.cost_per_bed_day=
+      observation.value;
+
+    revisions.cost_per_bed_day=
+      observation.rowRevision;
+  }else{
+    delete settings.cost_per_bed_day;
+
+    revisions.cost_per_bed_day=
+      null;
+  }
+
+  return data;
+}
 async function claim(expectedRaw:string){
   const expected=/^\d+$/.test(expectedRaw)?Number(expectedRaw):null;
   const {data,error}=await db.rpc('claim_operational_revision',{p_expected:expected});
@@ -34,7 +133,27 @@ async function fallbackState(req:Request,u:URL){
   const h=new Headers();const auth=req.headers.get('authorization');if(auth)h.set('authorization',auth);
   const r=await fetch(RAW+u.search,{method:'GET',headers:h});
   const text=await r.text();let payload:any;try{payload=JSON.parse(text)}catch{payload={ok:false,error:text||`HTTP ${r.status}`}}
-  if(r.ok&&payload?.ok&&payload?.data){payload.state_version=String(await revision());payload.server_time=new Date().toISOString();payload.state_engine='raw-fallback'}
+  if(r.ok&&payload?.ok&&payload?.data){
+    const costObservation=
+      await readCostObservation();
+
+    payload.data=
+      decorateCostObservation(
+        payload.data,
+        costObservation
+      );
+
+    payload.state_version=
+      String(
+        await revision()
+      );
+
+    payload.server_time=
+      new Date().toISOString();
+
+    payload.state_engine=
+      'raw-fallback';
+  }
   return out(payload,r.status,{'x-camp-state-engine':'raw-fallback','x-camp-state-version':String(payload?.state_version||'')});
 }
 
@@ -63,8 +182,22 @@ Deno.serve(async(req:Request)=>{
       const started=performance.now();
       const {data,error}=await db.rpc('campamento_state_v2');
       if(error){console.warn('campamento_state_v2 fallback',error.message);return await fallbackState(req,u)}
-      const stateVersion=String(await revision());
-      return out({ok:true,data,state_version:stateVersion,server_time:new Date().toISOString(),state_engine:'v2'},200,{'server-timing':`dbstate;dur=${(performance.now()-started).toFixed(1)}`,'x-camp-state-engine':'v2','x-camp-state-version':stateVersion});
+
+      const costObservation=
+        await readCostObservation();
+
+      const decoratedData=
+        decorateCostObservation(
+          data,
+          costObservation
+        );
+
+      const stateVersion=
+        String(
+          await revision()
+        );
+
+      return out({ok:true,data:decoratedData,state_version:stateVersion,server_time:new Date().toISOString(),state_engine:'v2'},200,{'server-timing':`dbstate;dur=${(performance.now()-started).toFixed(1)}`,'x-camp-state-engine':'v2','x-camp-state-version':stateVersion});
     }
     return await proxy(req,u);
   }catch(e){console.error(e);return out({ok:false,error:'Error temporal del servidor'},500)}

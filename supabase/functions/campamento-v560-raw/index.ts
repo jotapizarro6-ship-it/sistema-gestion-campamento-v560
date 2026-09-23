@@ -14,6 +14,77 @@ function ub64(s:string){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4
 async function admin(req:Request){const h=req.headers.get("authorization")||"";if(!h.startsWith("Bearer "))return false;const [p,s]=h.slice(7).split(".");if(!p||!s)return false;try{if(Date.now()>JSON.parse(ub64(p)).exp)return false}catch{return false}const c=await cfg(["session_secret"]);return !!c.session_secret&&(await sign(c.session_secret,p))===s}
 const headers={"access-control-allow-origin":"*","access-control-allow-headers":"authorization,content-type","access-control-allow-methods":"GET,POST,OPTIONS","cache-control":"no-store","x-content-type-options":"nosniff"};
 const out=(x:any,status=200)=>new Response(JSON.stringify(x),{status,headers:{...headers,"content-type":"application/json; charset=utf-8"}});
+type RequestTrace={
+  requestId:string;
+  correlationId:string;
+};
+
+function traceToken(v:any){
+  const s=clean(v).slice(0,128);
+  return /^[A-Za-z0-9._:-]{1,128}$/.test(s)?s:"";
+}
+
+function requestTrace(u:URL):RequestTrace{
+  return {
+    requestId:crypto.randomUUID(),
+    correlationId:traceToken(
+      u.searchParams.get("cid")
+    )
+  };
+}
+
+function tracedDb(trace:RequestTrace){
+  const h:Record<string,string>={
+    "x-request-id":trace.requestId
+  };
+
+  if(trace.correlationId){
+    h["x-correlation-id"]=
+      trace.correlationId;
+  }
+
+  return createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    {
+      auth:{
+        persistSession:false
+      },
+      global:{
+        headers:h
+      }
+    }
+  );
+}
+const requestRpcDb=Symbol("requestRpcDb");
+
+function bindRpcDb(value:any,rpcDb:any){
+  if(value&&typeof value==="object"){
+    Object.defineProperty(
+      value,
+      requestRpcDb,
+      {
+        value:rpcDb,
+        enumerable:false,
+        writable:false,
+        configurable:false
+      }
+    );
+  }
+
+  return value;
+}
+
+function bodyRpcDb(value:any){
+  if(value&&typeof value==="object"){
+    const scoped=value[requestRpcDb];
+    if(scoped){
+      return scoped;
+    }
+  }
+
+  return db;
+}
 async function body(req:Request){return await req.json().catch(()=>({}))}
 async function rows(table:string,select="*",apply?:(q:any)=>any){let all:any[]=[];for(let i=0;i<20000;i+=1000){let q=db.from(table).select(select).range(i,i+999);if(apply)q=apply(q);const {data,error}=await q;if(error)throw error;all.push(...(data||[]));if((data||[]).length<1000)break}return all}
 const active=(r:any)=>["PENDIENTE","CONFIRMADA"].includes(plain(r.status));
@@ -420,11 +491,11 @@ async function snapshot(closeDay=false,force=false){
   return persisted.snapshot||persisted;
 }
 
-async function addReservation(b:any,expected:number){const arrival=clean(b.arrival_date),departure=clean(b.departure_date)||null,name=clean(b.person_name),count=Number(b.bed_count||1);let module=clean(b.module),room=clean(b.room),bed=clean(b.bed).toUpperCase();if(!arrival||!name)return {ok:false,error:"Fecha de llegada y nombre son obligatorios."};if(!validDate(arrival)||(departure&&!validDate(departure)))return {ok:false,error:"Las fechas de la reserva no son válidas."};if(departure&&departure<=arrival)return {ok:false,error:"La salida debe ser posterior a la llegada."};if(!Number.isInteger(count)||count<1||count>1000)return {ok:false,error:"La cantidad de camas debe estar entre 1 y 1.000."};if(bed&&(!module||!room))return {ok:false,error:"Si selecciona una cama exacta, debe indicar también módulo y habitación."};if(module&&room&&bed&&count!==1)return {ok:false,error:"Una reserva con cama exacta debe corresponder a 1 cama."};const s=await state();if(module&&room&&bed){const inv=s.inventory.find((x:any)=>key(x.module,x.room,x.bed)===key(module,room,bed));if(!inv)return {ok:false,error:"No fue posible identificar esa cama en el inventario actual."};module=inv.module;room=inv.room;bed=inv.bed;const occ=s.workers.find((x:any)=>clean(x.rut)&&key(x.modulo,x.habitacion,x.cama)===key(module,room,bed));if(occ)return {ok:false,error:`La cama indicada figura actualmente ocupada por ${occ.nombre||"un trabajador"}.`};const end=departure||"9999-12-31";if(s.blocks.some((x:any)=>plain(x.status)==="ACTIVO"&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.start_date)<end&&(!clean(x.end_date)||clean(x.end_date)>=arrival)))return {ok:false,error:"Esa cama está fuera de servicio durante la reserva."};if(s.reservations.some((x:any)=>active(x)&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.arrival_date)<end&&(!clean(x.departure_date)||clean(x.departure_date)>arrival)))return {ok:false,error:"Esa cama ya tiene una reserva que se cruza con las fechas indicadas."}}const {
+async function addReservation(b:any,expected:number){const rpcDb=bodyRpcDb(b);const arrival=clean(b.arrival_date),departure=clean(b.departure_date)||null,name=clean(b.person_name),count=Number(b.bed_count||1);let module=clean(b.module),room=clean(b.room),bed=clean(b.bed).toUpperCase();if(!arrival||!name)return {ok:false,error:"Fecha de llegada y nombre son obligatorios."};if(!validDate(arrival)||(departure&&!validDate(departure)))return {ok:false,error:"Las fechas de la reserva no son válidas."};if(departure&&departure<=arrival)return {ok:false,error:"La salida debe ser posterior a la llegada."};if(!Number.isInteger(count)||count<1||count>1000)return {ok:false,error:"La cantidad de camas debe estar entre 1 y 1.000."};if(bed&&(!module||!room))return {ok:false,error:"Si selecciona una cama exacta, debe indicar también módulo y habitación."};if(module&&room&&bed&&count!==1)return {ok:false,error:"Una reserva con cama exacta debe corresponder a 1 cama."};const s=await state();if(module&&room&&bed){const inv=s.inventory.find((x:any)=>key(x.module,x.room,x.bed)===key(module,room,bed));if(!inv)return {ok:false,error:"No fue posible identificar esa cama en el inventario actual."};module=inv.module;room=inv.room;bed=inv.bed;const occ=s.workers.find((x:any)=>clean(x.rut)&&key(x.modulo,x.habitacion,x.cama)===key(module,room,bed));if(occ)return {ok:false,error:`La cama indicada figura actualmente ocupada por ${occ.nombre||"un trabajador"}.`};const end=departure||"9999-12-31";if(s.blocks.some((x:any)=>plain(x.status)==="ACTIVO"&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.start_date)<end&&(!clean(x.end_date)||clean(x.end_date)>=arrival)))return {ok:false,error:"Esa cama está fuera de servicio durante la reserva."};if(s.reservations.some((x:any)=>active(x)&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.arrival_date)<end&&(!clean(x.departure_date)||clean(x.departure_date)>arrival)))return {ok:false,error:"Esa cama ya tiene una reserva que se cruza con las fechas indicadas."}}const {
   data,
   error
 }=
-  await db.rpc(
+  await rpcDb.rpc(
     "p2_create_reservation",
     {
       p_expected_revision:
@@ -499,11 +570,11 @@ if(
 
 return result;
 }
-async function addBlock(b:any,expected:number){let module=clean(b.module),room=clean(b.room),bed=clean(b.bed).toUpperCase();const start=clean(b.start_date),end=clean(b.end_date)||null,reason=clean(b.reason)||"Fuera de servicio";if(!module||!room||!bed)return {ok:false,error:"Indica módulo, habitación y cama para el bloqueo."};if(!validDate(start)||(end&&!validDate(end)))return {ok:false,error:"Las fechas del bloqueo no son válidas."};if(end&&end<start)return {ok:false,error:"La fecha de término no puede ser anterior al inicio."};const s=await state(),inv=s.inventory.find((x:any)=>key(x.module,x.room,x.bed)===key(module,room,bed));if(!inv)return {ok:false,error:"No fue posible identificar esa cama en el inventario actual."};module=inv.module;room=inv.room;bed=inv.bed;if(start<=today()){const occ=s.workers.find((x:any)=>clean(x.rut)&&key(x.modulo,x.habitacion,x.cama)===key(module,room,bed));if(occ)return {ok:false,error:`No se puede bloquear desde hoy una cama ocupada por ${occ.nombre||"un trabajador"}.`}}const e=end||"9999-12-31";if(s.blocks.some((x:any)=>plain(x.status)==="ACTIVO"&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.start_date)<=e&&(!clean(x.end_date)||clean(x.end_date)>=start)))return {ok:false,error:"Ya existe un bloqueo activo que se cruza con esas fechas."};const rr=s.reservations.find((x:any)=>active(x)&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.arrival_date)<=e&&(!clean(x.departure_date)||clean(x.departure_date)>start));if(rr)return {ok:false,error:`No se puede bloquear: existe una reserva cruzada para ${rr.person_name}.`};const {
+async function addBlock(b:any,expected:number){const rpcDb=bodyRpcDb(b);let module=clean(b.module),room=clean(b.room),bed=clean(b.bed).toUpperCase();const start=clean(b.start_date),end=clean(b.end_date)||null,reason=clean(b.reason)||"Fuera de servicio";if(!module||!room||!bed)return {ok:false,error:"Indica módulo, habitación y cama para el bloqueo."};if(!validDate(start)||(end&&!validDate(end)))return {ok:false,error:"Las fechas del bloqueo no son válidas."};if(end&&end<start)return {ok:false,error:"La fecha de término no puede ser anterior al inicio."};const s=await state(),inv=s.inventory.find((x:any)=>key(x.module,x.room,x.bed)===key(module,room,bed));if(!inv)return {ok:false,error:"No fue posible identificar esa cama en el inventario actual."};module=inv.module;room=inv.room;bed=inv.bed;if(start<=today()){const occ=s.workers.find((x:any)=>clean(x.rut)&&key(x.modulo,x.habitacion,x.cama)===key(module,room,bed));if(occ)return {ok:false,error:`No se puede bloquear desde hoy una cama ocupada por ${occ.nombre||"un trabajador"}.`}}const e=end||"9999-12-31";if(s.blocks.some((x:any)=>plain(x.status)==="ACTIVO"&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.start_date)<=e&&(!clean(x.end_date)||clean(x.end_date)>=start)))return {ok:false,error:"Ya existe un bloqueo activo que se cruza con esas fechas."};const rr=s.reservations.find((x:any)=>active(x)&&key(x.module,x.room,x.bed)===key(module,room,bed)&&clean(x.arrival_date)<=e&&(!clean(x.departure_date)||clean(x.departure_date)>start));if(rr)return {ok:false,error:`No se puede bloquear: existe una reserva cruzada para ${rr.person_name}.`};const {
   data,
   error
 }=
-  await db.rpc(
+  await rpcDb.rpc(
     "p2_create_bed_block",
     {
       p_expected_revision:
@@ -572,7 +643,7 @@ if(
 
 return result;
 }
-Deno.serve(async(req:Request)=>{try{if(req.method==="OPTIONS")return new Response(null,{status:204,headers});if(!await admin(req))return out({ok:false,error:"No autorizado"},401);const u=new URL(req.url),a=u.searchParams.get("action")||"";
+Deno.serve(async(req:Request)=>{try{if(req.method==="OPTIONS")return new Response(null,{status:204,headers});if(!await admin(req))return out({ok:false,error:"No autorizado"},401);const u=new URL(req.url),trace=requestTrace(u),rpcDb=tracedDb(trace),a=u.searchParams.get("action")||"";
 if(req.method==="GET"&&a==="advanced_state")return out({ok:true,data:await state()});
 if(req.method==="POST"&&a==="add_movement"){
   const b=await body(req);
@@ -657,7 +728,7 @@ if(req.method==="POST"&&a==="add_movement"){
     data,
     error
   }=
-    await db.rpc(
+    await rpcDb.rpc(
       "p2_create_movement",
       {
         p_expected_revision:
@@ -830,7 +901,7 @@ if(req.method==="POST"&&a==="movement_status"){
     data,
     error
   }=
-    await db.rpc(
+    await rpcDb.rpc(
       "p2_transition_movement",
       {
         p_expected_revision:
@@ -967,7 +1038,10 @@ if(req.method==="POST"&&a==="add_block"){
 
   const x=
     await addBlock(
-      await body(req),
+      bindRpcDb(
+        await body(req),
+        rpcDb
+      ),
       expected
     );
 
@@ -1034,7 +1108,7 @@ if(req.method==="POST"&&a==="close_block"){
   }
 
   const {data,error}=
-    await db.rpc(
+    await rpcDb.rpc(
       "p2_close_bed_block",
       {
         p_expected_revision:expected,
@@ -1152,7 +1226,10 @@ if(req.method==="POST"&&a==="add_res_advanced"){
 
   const x=
     await addReservation(
-      await body(req),
+      bindRpcDb(
+        await body(req),
+        rpcDb
+      ),
       expected
     );
 
@@ -1224,7 +1301,7 @@ if(req.method==="POST"&&a==="reservation_status"){
   }
 
   const {data,error}=
-    await db.rpc(
+    await rpcDb.rpc(
       "p2_set_reservation_status",
       {
         p_expected_revision:expected,
@@ -1425,7 +1502,7 @@ if(req.method==="POST"&&a==="update_capacity"){
     data,
     error
   }=
-    await db.rpc(
+    await rpcDb.rpc(
       "p2_upsert_daily_capacity",
       {
         p_expected_revision:
@@ -1599,7 +1676,7 @@ if(req.method==="POST"&&a==="update_cost"){
     data,
     error
   }=
-    await db.rpc(
+    await rpcDb.rpc(
       "p2_set_cost_per_bed_day",
       {
         p_expected_revision:

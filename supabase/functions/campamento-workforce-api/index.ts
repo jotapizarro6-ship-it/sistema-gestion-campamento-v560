@@ -34,6 +34,44 @@ function ub64(s:string){
   while(s.length%4)s+="=";
   return atob(s);
 }
+type RequestTrace={
+  requestId:string;
+  correlationId:string;
+};
+
+function traceToken(v:any){
+  const s=String(v??"").trim().slice(0,128);
+  return /^[A-Za-z0-9._:-]{1,128}$/.test(s)?s:"";
+}
+
+function requestTrace(u:URL):RequestTrace{
+  return {
+    requestId:crypto.randomUUID(),
+    correlationId:traceToken(
+      u.searchParams.get("cid")
+    )
+  };
+}
+
+function traceDetails(details:any,trace?:RequestTrace){
+  const out=
+    details&&typeof details==="object"&&!Array.isArray(details)
+      ? {...details}
+      : {};
+
+  delete out.request_id;
+  delete out.correlation_id;
+
+  if(!trace)return out;
+
+  out.request_id=trace.requestId;
+
+  if(trace.correlationId){
+    out.correlation_id=trace.correlationId;
+  }
+
+  return out;
+}
 async function isAdmin(req:Request){
   const h=req.headers.get("authorization")??"";
   if(!h.startsWith("Bearer "))return false;
@@ -50,8 +88,8 @@ function fold(v:any){return String(v??"").normalize("NFD").replace(/[\u0300-\u03
 function parseRules(raw:any){try{const x=JSON.parse(String(raw??"{}"));return x&&typeof x==="object"&&!Array.isArray(x)?x:{}}catch{return {}}}
 function validClass(v:any){const x=String(v??"").toUpperCase();return ["DIRECTA","INDIRECTA","POR_DEFINIR"].includes(x)?x:""}
 async function saveRules(rules:Record<string,string>){const {error}=await db.from("settings").upsert({key:RULE_KEY,value:JSON.stringify(rules)},{onConflict:"key"});if(error)throw error}
-async function audit(category:string,classification:string){
-  const {error}=await db.from("audit_log").insert({occurred_at:new Date().toISOString(),profile:"ADMINISTRADOR",action:"UPDATE_WORKFORCE_CLASSIFICATION",entity_type:"workforce_category",entity_id:category,endpoint:"campamento-workforce-api",result:"OK",details:{classification}});
+async function audit(category:string,classification:string,trace?:RequestTrace){
+  const {error}=await db.from("audit_log").insert({occurred_at:new Date().toISOString(),profile:"ADMINISTRADOR",action:"UPDATE_WORKFORCE_CLASSIFICATION",entity_type:"workforce_category",entity_id:category,endpoint:"campamento-workforce-api",result:"OK",details:traceDetails({classification},trace)});
   if(error)console.warn("No fue posible registrar auditoría MOD/MOI",error.message);
 }
 async function reserveRevision(req:Request,expected:string){
@@ -69,6 +107,15 @@ Deno.serve(async(req:Request)=>{
     if(!await isAdmin(req))return json({ok:false,error:"No autorizado"},401);
 
     const u=new URL(req.url);
+    const trace=requestTrace(u);
+    const requestAudit=(
+      category:string,
+      classification:string
+    )=>audit(
+      category,
+      classification,
+      trace
+    );
     const settings=await cfg([RULE_KEY]);
     const rules=parseRules(settings[RULE_KEY]);
     if(req.method==="GET")return json({ok:true,rules});
@@ -83,7 +130,7 @@ Deno.serve(async(req:Request)=>{
     if(!key||!classification)return json({ok:false,error:"Categoría o clasificación no válida"},400);
     rules[key]=classification;
     await saveRules(rules);
-    await audit(category,classification);
+    await requestAudit(category,classification);
     return json({ok:true,category,key,classification,rules});
   }catch(e){
     console.error(e);

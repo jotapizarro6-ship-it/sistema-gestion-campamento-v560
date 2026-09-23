@@ -50,9 +50,15 @@ const contract =
     )
   );
 
+const canonicalRaw = Buffer.from(
+  raw
+    .toString("utf8")
+    .replace(/\r\n/g, "\n"),
+  "utf8"
+);
 const blobHeader =
   Buffer.from(
-    `blob ${raw.length}\0`,
+    `blob ${canonicalRaw.length}\0`,
     "utf8"
   );
 
@@ -60,7 +66,7 @@ const blob =
   crypto
     .createHash("sha1")
     .update(blobHeader)
-    .update(raw)
+    .update(canonicalRaw)
     .digest("hex");
 
 assert(

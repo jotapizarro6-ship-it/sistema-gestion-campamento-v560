@@ -32,6 +32,44 @@ function ub64(s:string){
   while(s.length%4)s+="=";
   return atob(s);
 }
+type RequestTrace={
+  requestId:string;
+  correlationId:string;
+};
+
+function traceToken(v:any){
+  const s=String(v??"").trim().slice(0,128);
+  return /^[A-Za-z0-9._:-]{1,128}$/.test(s)?s:"";
+}
+
+function requestTrace(u:URL):RequestTrace{
+  return {
+    requestId:crypto.randomUUID(),
+    correlationId:traceToken(
+      u.searchParams.get("cid")
+    )
+  };
+}
+
+function traceDetails(details:any,trace?:RequestTrace){
+  const out=
+    details&&typeof details==="object"&&!Array.isArray(details)
+      ? {...details}
+      : {};
+
+  delete out.request_id;
+  delete out.correlation_id;
+
+  if(!trace)return out;
+
+  out.request_id=trace.requestId;
+
+  if(trace.correlationId){
+    out.correlation_id=trace.correlationId;
+  }
+
+  return out;
+}
 async function isAdmin(req:Request){
   const h=req.headers.get("authorization")??"";
   if(!h.startsWith("Bearer "))return false;
@@ -84,7 +122,7 @@ async function deleteForDate(dateKey:string){
   }
   return ids.size;
 }
-async function auditDelete(dateKey:string,deleted:number){
+async function auditDelete(dateKey:string,deleted:number,trace?:RequestTrace){
   const {error}=await db.from("audit_log").insert({
     occurred_at:new Date().toISOString(),
     profile:"ADMINISTRADOR",
@@ -93,7 +131,7 @@ async function auditDelete(dateKey:string,deleted:number){
     entity_id:dateKey,
     endpoint:"campamento-consults-api",
     result:"OK",
-    details:{date:dateKey,deleted_count:deleted,timezone:TZ}
+    details:traceDetails({date:dateKey,deleted_count:deleted,timezone:TZ},trace)
   });
   if(error)console.warn("No fue posible registrar auditoría de limpieza",error.message);
 }
@@ -105,6 +143,7 @@ Deno.serve(async(req:Request)=>{
     if(!await isAdmin(req))return json({ok:false,error:"No autorizado"},401);
 
     const u=new URL(req.url);
+    const trace=requestTrace(u);
     const action=u.searchParams.get("action")??"";
 
     if(req.method==="GET"&&action==="delete_preview"){
@@ -118,7 +157,7 @@ Deno.serve(async(req:Request)=>{
       const date=validDateKey(u.searchParams.get("date"));
       if(!date)return json({ok:false,error:"Fecha no válida"},400);
       const deleted=await deleteForDate(date);
-      await auditDelete(date,deleted);
+      await auditDelete(date,deleted,trace);
       return json({ok:true,date,deleted,timezone:TZ});
     }
 

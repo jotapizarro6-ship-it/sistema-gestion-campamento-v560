@@ -136,7 +136,16 @@ function makeState({
     ],
 
     blocks:
-      clone(blocks),
+      clone(blocks).map(
+        row=>({
+          ...row,
+          row_revision:
+            Number.isSafeInteger(Number(row.row_revision)) &&
+            Number(row.row_revision)>0
+              ? Number(row.row_revision)
+              : 1
+        })
+      ),
 
     reservations:
       clone(reservations),
@@ -656,7 +665,8 @@ async function installBackend(
 
           reason,
 
-          status:'ACTIVO'
+          status:'ACTIVO',
+          row_revision:1
         };
 
         state.blocks.push(
@@ -744,8 +754,31 @@ async function installBackend(
           );
         }
 
+        const expectedRowRevision=
+          Number(
+            body.expected_row_revision
+          );
+
+        if(
+          !Number.isSafeInteger(expectedRowRevision) ||
+          expectedRowRevision<1 ||
+          expectedRowRevision!==Number(row.row_revision)
+        ){
+          return json(
+            route,
+            {
+              ok:false,
+              code:'ROW_CONFLICT',
+              error:'El bloqueo cambió en otra sesión.'
+            },
+            409
+          );
+        }
+
         row.status=
           'CERRADO';
+
+        row.row_revision++;
 
         stateVersion++;
 
@@ -753,13 +786,10 @@ async function installBackend(
           route,
           {
             ok:true,
-            data:{
-              id:
-                Number(row.id),
-
-              status:
-                'CERRADO'
-            }
+            state_version:
+              String(stateVersion),
+            data:
+              clone(row)
           }
         );
       }
@@ -1340,7 +1370,8 @@ test(
       stateVersion:'61',
 
       body:{
-        id:10
+        id:10,
+        expected_row_revision:1
       }
     });
 
